@@ -21,15 +21,15 @@ func TestAPI(t *testing.T) {
 	header := auth.MockAuthHeader()
 
 	tests := []test.APITestCase{
-		{"get all", "GET", "/connections", "", nil, http.StatusOK, `*"total_count":1*`},
-		{"get 123", "GET", "/connections/123", "", nil, http.StatusOK, `*connection123*`},
-		{"get unknown", "GET", "/connections/1234", "", nil, http.StatusNotFound, ""},
+		{"get all", "GET", "/connections", "", header, http.StatusOK, `*"total_count":1*`},
+		{"get 123", "GET", "/connections/123", "", header, http.StatusOK, `*connection123*`},
+		{"get unknown", "GET", "/connections/1234", "", header, http.StatusNotFound, ""},
 		{"create ok", "POST", "/connections", `{"name":"test"}`, header, http.StatusCreated, "*test*"},
-		{"create ok count", "GET", "/connections", "", nil, http.StatusOK, `*"total_count":2*`},
+		{"create ok count", "GET", "/connections", "", header, http.StatusOK, `*"total_count":2*`},
 		{"create auth error", "POST", "/connections", `{"name":"test"}`, nil, http.StatusUnauthorized, ""},
 		{"create input error", "POST", "/connections", `"name":"test"}`, header, http.StatusBadRequest, ""},
 		{"update ok", "PUT", "/connections/123", `{"name":"connectionxyz"}`, header, http.StatusOK, "*connectionxyz*"},
-		{"update verify", "GET", "/connections/123", "", nil, http.StatusOK, `*connectionxyz*`},
+		{"update verify", "GET", "/connections/123", "", header, http.StatusOK, `*connectionxyz*`},
 		{"update auth error", "PUT", "/connections/123", `{"name":"connectionxyz"}`, nil, http.StatusUnauthorized, ""},
 		{"update input error", "PUT", "/connections/123", `"name":"connectionxyz"}`, header, http.StatusBadRequest, ""},
 		{"delete ok", "DELETE", "/connections/123", ``, header, http.StatusOK, "*connectionxyz*"},
