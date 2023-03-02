@@ -1,4 +1,4 @@
-package connection
+package message
 
 import (
 	"net/http"
@@ -13,15 +13,15 @@ import (
 func RegisterHandlers(r *routing.RouteGroup, service Service, authHandler routing.Handler, logger log.Logger) {
 	res := resource{service, logger}
 
-	// the following endpoints require a valid JWT
+	r.Get("/connections/<connection_id>/messages/<id>", res.get)
+	r.Get("/connections/<connection_id>/messages", res.query)
+
 	r.Use(authHandler)
 
-	r.Get("/connections/<id>", res.get)
-	r.Get("/connections", res.query)
-
-	r.Post("/connections", res.create)
-	r.Put("/connections/<id>", res.update)
-	r.Delete("/connections/<id>", res.delete)
+	// the following endpoints require a valid JWT
+	r.Post("/connections/<connection_id>/messages", res.create)
+	r.Put("/connections/<connection_id>/messages/<id>", res.update)
+	r.Delete("/connections/<connection_id>/messages/<id>", res.delete)
 }
 
 type resource struct {
@@ -30,12 +30,12 @@ type resource struct {
 }
 
 func (r resource) get(c *routing.Context) error {
-	connection, err := r.service.Get(c.Request.Context(), c.Param("id"))
+	message, err := r.service.Get(c.Request.Context(), c.Param("id"))
 	if err != nil {
 		return err
 	}
 
-	return c.Write(connection)
+	return c.Write(message)
 }
 
 func (r resource) query(c *routing.Context) error {
@@ -45,48 +45,48 @@ func (r resource) query(c *routing.Context) error {
 		return err
 	}
 	pages := pagination.NewFromRequest(c.Request, count)
-	connections, err := r.service.Query(ctx, pages.Offset(), pages.Limit())
+	messages, err := r.service.Query(ctx, c.Param("connection_id"), pages.Offset(), pages.Limit())
 	if err != nil {
 		return err
 	}
-	pages.Items = connections
+	pages.Items = messages
 	return c.Write(pages)
 }
 
 func (r resource) create(c *routing.Context) error {
-	var input CreateConnectionRequest
+	var input CreateMessageRequest
 	if err := c.Read(&input); err != nil {
 		r.logger.With(c.Request.Context()).Info(err)
 		return errors.BadRequest("")
 	}
-	connection, err := r.service.Create(c.Request.Context(), input)
+	message, err := r.service.Create(c.Request.Context(), c.Param("connection_id"), input)
 	if err != nil {
 		return err
 	}
 
-	return c.WriteWithStatus(connection, http.StatusCreated)
+	return c.WriteWithStatus(message, http.StatusCreated)
 }
 
 func (r resource) update(c *routing.Context) error {
-	var input UpdateConnectionRequest
+	var input UpdateMessageRequest
 	if err := c.Read(&input); err != nil {
 		r.logger.With(c.Request.Context()).Info(err)
 		return errors.BadRequest("")
 	}
 
-	connection, err := r.service.Update(c.Request.Context(), c.Param("id"), input)
+	message, err := r.service.Update(c.Request.Context(), c.Param("id"), input)
 	if err != nil {
 		return err
 	}
 
-	return c.Write(connection)
+	return c.Write(message)
 }
 
 func (r resource) delete(c *routing.Context) error {
-	connection, err := r.service.Delete(c.Request.Context(), c.Param("id"))
+	message, err := r.service.Delete(c.Request.Context(), c.Param("id"))
 	if err != nil {
 		return err
 	}
 
-	return c.Write(connection)
+	return c.Write(message)
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/qiangxue/go-rest-api/internal/connection"
 	"github.com/qiangxue/go-rest-api/internal/errors"
 	"github.com/qiangxue/go-rest-api/internal/healthcheck"
+	"github.com/qiangxue/go-rest-api/internal/message"
 	"github.com/qiangxue/go-rest-api/pkg/accesslog"
 	"github.com/qiangxue/go-rest-api/pkg/dbcontext"
 	"github.com/qiangxue/go-rest-api/pkg/log"
@@ -90,6 +91,11 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 
 	connection.RegisterHandlers(rg.Group(""),
 		connection.NewService(connection.NewRepository(db, logger), logger),
+		authHandler, logger,
+	)
+
+	message.RegisterHandlers(rg.Group(""),
+		message.NewService(message.NewRepository(db, logger), logger),
 		authHandler, logger,
 	)
 
