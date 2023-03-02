@@ -74,12 +74,13 @@ At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. 
 * `DELETE /v1/connections/:id`: deletes an connection
 
 
-- [ ] GET  /connections
-- [ ] GET  /connections/:id
-- [ ] GET  /connections/:id/messages
-- [ ] POST /connections/:id/messages
-- [ ] GET  /connections/:id/messages/:id
-- [ ] PUT  /connections/:id/messages/:id
+- [x] GET  /connections
+- [x] GET  /connections/:id
+
+- [x] GET  /connections/:id/messages
+- [x] POST /connections/:id/messages
+- [x] GET  /connections/:id/messages/:id
+- [x] PUT  /connections/:id/messages/:id
 - [ ] GET  /connections/:id/messages/:id/responses
 - 
 - [ ] GET  /groups
