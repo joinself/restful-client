@@ -1,4 +1,4 @@
-package connection
+package fact
 
 import (
 	"context"
@@ -15,51 +15,57 @@ import (
 func TestRepository(t *testing.T) {
 	logger, _ := log.NewForTest()
 	db := test.DB(t)
-	test.ResetTables(t, db, "fact", "message")
-	test.ResetTables(t, db, "connection")
+	test.ResetTables(t, db, "fact")
 	repo := NewRepository(db, logger)
 
 	ctx := context.Background()
+	connection := "connection"
 
 	// initial count
 	count, err := repo.Count(ctx)
 	assert.Nil(t, err)
 
+	// create a new connection
+	err = test.CreateConnection(ctx, db, connection)
+	assert.Nil(t, err)
+
 	// create
-	err = repo.Create(ctx, entity.Connection{
-		ID:        "test1",
-		Name:      "connection1",
-		Selfid:    "0111111111",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+	err = repo.Create(ctx, entity.Fact{
+		ID:           "test1",
+		ConnectionID: connection,
+		Body:         "fact1",
+		IAT:          time.Now(),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	})
 	assert.Nil(t, err)
 	count2, _ := repo.Count(ctx)
 	assert.Equal(t, 1, count2-count)
 
 	// get
-	connection, err := repo.Get(ctx, "test1")
+	fact, err := repo.Get(ctx, "test1")
 	assert.Nil(t, err)
-	assert.Equal(t, "connection1", connection.Name)
+	assert.Equal(t, "fact1", fact.Body)
 	_, err = repo.Get(ctx, "test0")
 	assert.Equal(t, sql.ErrNoRows, err)
 
 	// update
-	err = repo.Update(ctx, entity.Connection{
-		ID:        "test1",
-		Name:      "connection1 updated",
-		Selfid:    "1111111111",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+	err = repo.Update(ctx, entity.Fact{
+		ID:           "test1",
+		ConnectionID: connection,
+		Body:         "fact1 updated",
+		IAT:          time.Now(),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	})
 	assert.Nil(t, err)
-	connection, _ = repo.Get(ctx, "test1")
-	assert.Equal(t, "connection1 updated", connection.Name)
+	fact, _ = repo.Get(ctx, "test1")
+	assert.Equal(t, "fact1 updated", fact.Body)
 
 	// query
-	connections, err := repo.Query(ctx, 0, count2)
+	facts, err := repo.Query(ctx, connection, 0, count2)
 	assert.Nil(t, err)
-	assert.Equal(t, count2, len(connections))
+	assert.Equal(t, count2, len(facts))
 
 	// delete
 	err = repo.Delete(ctx, "test1")
