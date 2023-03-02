@@ -90,9 +90,9 @@ At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. 
 - [ ] PUT  /groups/:id/messages/:id
 - [ ] GET  /groups/:id/messages/:id/responses
 - 
-- [ ] GET  /connections/:id/facts
-- [ ] GET  /connections/:id/facts/:id
-- [ ] POST /connections/:id/facts/:id
+- [x] GET  /connections/:id/facts
+- [x] GET  /connections/:id/facts/:id
+- [x] POST /connections/:id/facts/:id
 	
 
 Try the URL `http://localhost:8080/healthcheck` in a browser, and you should see something like `"OK v1.0.0"` displayed.

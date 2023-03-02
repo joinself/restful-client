@@ -15,7 +15,7 @@ import (
 func TestRepository(t *testing.T) {
 	logger, _ := log.NewForTest()
 	db := test.DB(t)
-	test.ResetTables(t, db, "fact")
+	test.ResetTables(t, db, "fact", "message", "connection")
 	repo := NewRepository(db, logger)
 
 	ctx := context.Background()
@@ -65,6 +65,7 @@ func TestRepository(t *testing.T) {
 	// query
 	facts, err := repo.Query(ctx, connection, 0, count2)
 	assert.Nil(t, err)
+
 	assert.Equal(t, count2, len(facts))
 
 	// delete
