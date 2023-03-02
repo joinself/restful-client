@@ -13,12 +13,10 @@ import (
 func RegisterHandlers(r *routing.RouteGroup, service Service, authHandler routing.Handler, logger log.Logger) {
 	res := resource{service, logger}
 
+	// the following endpoints require a valid JWT
+	r.Use(authHandler)
 	r.Get("/connections/<connection_id>/messages/<id>", res.get)
 	r.Get("/connections/<connection_id>/messages", res.query)
-
-	r.Use(authHandler)
-
-	// the following endpoints require a valid JWT
 	r.Post("/connections/<connection_id>/messages", res.create)
 	r.Put("/connections/<connection_id>/messages/<id>", res.update)
 	r.Delete("/connections/<connection_id>/messages/<id>", res.delete)
