@@ -5,17 +5,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/qiangxue/go-rest-api/internal/auth"
-	"github.com/qiangxue/go-rest-api/internal/entity"
-	"github.com/qiangxue/go-rest-api/internal/test"
-	"github.com/qiangxue/go-rest-api/pkg/log"
+	"github.com/joinself/restful-client/internal/auth"
+	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/internal/test"
+	"github.com/joinself/restful-client/pkg/log"
 )
 
 func TestAPI(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 	repo := &mockRepository{items: []entity.Connection{
-		{"123", "connection123", "1112223334", time.Now(), time.Now()},
+		{"123", "connection123", time.Now(), time.Now()},
 	}}
 	RegisterHandlers(router.Group(""), NewService(repo, logger), auth.MockAuthHandler, logger)
 	header := auth.MockAuthHeader()
@@ -24,7 +24,7 @@ func TestAPI(t *testing.T) {
 		{"get all", "GET", "/connections", "", header, http.StatusOK, `*"total_count":1*`},
 		{"get 123", "GET", "/connections/123", "", header, http.StatusOK, `*connection123*`},
 		{"get unknown", "GET", "/connections/1234", "", header, http.StatusNotFound, ""},
-		{"create ok", "POST", "/connections", `{"name":"test"}`, header, http.StatusCreated, "*test*"},
+		{"create ok", "POST", "/connections", `{"selfid": "sid1", "name":"test"}`, header, http.StatusCreated, "*test*"},
 		{"create ok count", "GET", "/connections", "", header, http.StatusOK, `*"total_count":2*`},
 		{"create auth error", "POST", "/connections", `{"name":"test"}`, nil, http.StatusUnauthorized, ""},
 		{"create input error", "POST", "/connections", `"name":"test"}`, header, http.StatusBadRequest, ""},

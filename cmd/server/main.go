@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	lg "log"
 	"net/http"
 	"os"
 	"time"
@@ -13,17 +14,19 @@ import (
 	routing "github.com/go-ozzo/ozzo-routing/v2"
 	"github.com/go-ozzo/ozzo-routing/v2/content"
 	"github.com/go-ozzo/ozzo-routing/v2/cors"
+	"github.com/joinself/restful-client/internal/auth"
+	"github.com/joinself/restful-client/internal/config"
+	"github.com/joinself/restful-client/internal/connection"
+	"github.com/joinself/restful-client/internal/errors"
+	"github.com/joinself/restful-client/internal/fact"
+	"github.com/joinself/restful-client/internal/healthcheck"
+	"github.com/joinself/restful-client/internal/message"
+	"github.com/joinself/restful-client/internal/self"
+	"github.com/joinself/restful-client/pkg/accesslog"
+	"github.com/joinself/restful-client/pkg/dbcontext"
+	"github.com/joinself/restful-client/pkg/log"
+	selfsdk "github.com/joinself/self-go-sdk"
 	_ "github.com/lib/pq"
-	"github.com/qiangxue/go-rest-api/internal/auth"
-	"github.com/qiangxue/go-rest-api/internal/config"
-	"github.com/qiangxue/go-rest-api/internal/connection"
-	"github.com/qiangxue/go-rest-api/internal/errors"
-	"github.com/qiangxue/go-rest-api/internal/fact"
-	"github.com/qiangxue/go-rest-api/internal/healthcheck"
-	"github.com/qiangxue/go-rest-api/internal/message"
-	"github.com/qiangxue/go-rest-api/pkg/accesslog"
-	"github.com/qiangxue/go-rest-api/pkg/dbcontext"
-	"github.com/qiangxue/go-rest-api/pkg/log"
 )
 
 // Version indicates the current version of the application.
@@ -75,6 +78,11 @@ func main() {
 
 // buildHandler sets up the HTTP routing and builds an HTTP handler.
 func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.Handler {
+	client, err := setupSelfClient(cfg)
+	if err != nil {
+		lg.Fatalf("failed to setup self client: %v", err.Error())
+	}
+
 	router := routing.New()
 
 	router.Use(
@@ -89,19 +97,22 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	rg := router.Group("/v1")
 
 	authHandler := auth.Handler(cfg.JWTSigningKey)
+	connectionRepo := connection.NewRepository(db, logger)
+	messageRepo := message.NewRepository(db, logger)
+	factRepo := fact.NewRepository(db, logger)
 
 	connection.RegisterHandlers(rg.Group(""),
-		connection.NewService(connection.NewRepository(db, logger), logger),
+		connection.NewService(connectionRepo, logger),
 		authHandler, logger,
 	)
 
 	message.RegisterHandlers(rg.Group(""),
-		message.NewService(message.NewRepository(db, logger), logger),
+		message.NewService(messageRepo, logger, client),
 		authHandler, logger,
 	)
 
 	fact.RegisterHandlers(rg.Group(""),
-		fact.NewService(fact.NewRepository(db, logger), logger),
+		fact.NewService(factRepo, logger),
 		authHandler, logger,
 	)
 
@@ -110,7 +121,22 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		logger,
 	)
 
+	self.RegisterHandlers(
+		self.NewService(client, connectionRepo, factRepo, messageRepo, logger),
+		logger,
+	)
+
 	return router
+}
+
+func setupSelfClient(cfg *config.Config) (*selfsdk.Client, error) {
+	return selfsdk.New(selfsdk.Config{
+		SelfAppID:           cfg.SelfAppID,
+		SelfAppDeviceSecret: cfg.SelfAppDeviceSecret,
+		StorageKey:          cfg.SelfStorageKey,
+		StorageDir:          cfg.SelfStorageDir,
+		Environment:         cfg.SelfEnv,
+	})
 }
 
 // logDBQuery returns a logging function that can be used to log SQL queries.

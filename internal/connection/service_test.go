@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/qiangxue/go-rest-api/internal/entity"
-	"github.com/qiangxue/go-rest-api/pkg/log"
+	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/pkg/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +19,7 @@ func TestCreateConnectionRequest_Validate(t *testing.T) {
 		model     CreateConnectionRequest
 		wantError bool
 	}{
-		{"success", CreateConnectionRequest{Name: "test"}, false},
+		{"success", CreateConnectionRequest{SelfID: "selfid", Name: "test"}, false},
 		{"required", CreateConnectionRequest{Name: ""}, true},
 		{"too long", CreateConnectionRequest{Name: "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"}, true},
 	}
@@ -60,10 +60,10 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, 0, count)
 
 	// successful creation
-	connection, err := s.Create(ctx, CreateConnectionRequest{Name: "test"})
+	id := "selfid"
+	connection, err := s.Create(ctx, CreateConnectionRequest{SelfID: id, Name: "test"})
 	assert.Nil(t, err)
-	assert.NotEmpty(t, connection.ID)
-	id := connection.ID
+	assert.Equal(t, id, connection.ID)
 	assert.Equal(t, "test", connection.Name)
 	assert.NotEmpty(t, connection.CreatedAt)
 	assert.NotEmpty(t, connection.UpdatedAt)
@@ -77,12 +77,12 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, 1, count)
 
 	// unexpected error in creation
-	_, err = s.Create(ctx, CreateConnectionRequest{Name: "error"})
+	_, err = s.Create(ctx, CreateConnectionRequest{SelfID: "selfid2", Name: "error"})
 	assert.Equal(t, errCRUD, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
-	_, _ = s.Create(ctx, CreateConnectionRequest{Name: "test2"})
+	_, _ = s.Create(ctx, CreateConnectionRequest{SelfID: "selfid2", Name: "test2"})
 
 	// update
 	connection, err = s.Update(ctx, id, UpdateConnectionRequest{Name: "test updated"})

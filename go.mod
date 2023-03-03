@@ -1,4 +1,4 @@
-module github.com/qiangxue/go-rest-api
+module github.com/joinself/restful-client
 
 go 1.13
 
@@ -8,9 +8,10 @@ require (
 	github.com/go-ozzo/ozzo-routing/v2 v2.3.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.1.0
 	github.com/google/uuid v1.1.1
+	github.com/joinself/self-go-sdk v0.0.0-20230302153353-29d80294d4a0
 	github.com/lib/pq v1.2.0
 	github.com/qiangxue/go-env v1.0.0
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.7.0
 	go.uber.org/atomic v1.5.1 // indirect
 	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/zap v1.13.0

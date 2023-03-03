@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/qiangxue/go-rest-api/internal/entity"
-	"github.com/qiangxue/go-rest-api/internal/test"
-	"github.com/qiangxue/go-rest-api/pkg/log"
+	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/internal/test"
+	"github.com/joinself/restful-client/pkg/log"
 	"github.com/stretchr/testify/assert"
 )
 

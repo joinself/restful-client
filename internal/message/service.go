@@ -5,8 +5,10 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/qiangxue/go-rest-api/internal/entity"
-	"github.com/qiangxue/go-rest-api/pkg/log"
+	"github.com/google/uuid"
+	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/pkg/log"
+	selfsdk "github.com/joinself/self-go-sdk"
 )
 
 // Service encapsulates usecase logic for messages.
@@ -54,11 +56,12 @@ func (m UpdateMessageRequest) Validate() error {
 type service struct {
 	repo   Repository
 	logger log.Logger
+	client *selfsdk.Client
 }
 
 // NewService creates a new message service.
-func NewService(repo Repository, logger log.Logger) Service {
-	return service{repo, logger}
+func NewService(repo Repository, logger log.Logger, client *selfsdk.Client) Service {
+	return service{repo, logger, client}
 }
 
 // Get returns the message with the specified the message ID.
@@ -77,10 +80,15 @@ func (s service) Create(ctx context.Context, connection string, req CreateMessag
 	}
 	id := entity.GenerateID()
 	now := time.Now()
+	cid := req.CID
+	if cid == "" {
+		cid = uuid.New().String()
+	}
 	err := s.repo.Create(ctx, entity.Message{
 		ID:           id,
+		ISS:          "me",
 		ConnectionID: connection,
-		CID:          req.CID,
+		CID:          cid,
 		RID:          req.RID,
 		Body:         req.Body,
 		IAT:          req.IAT,
@@ -90,6 +98,15 @@ func (s service) Create(ctx context.Context, connection string, req CreateMessag
 	if err != nil {
 		return Message{}, err
 	}
+
+	// Send the message to the connection.
+	if s.client != nil {
+		_, err = s.client.ChatService().Message([]string{connection}, req.Body)
+		if err != nil {
+			return Message{}, err
+		}
+	}
+
 	return s.Get(ctx, id)
 }
 

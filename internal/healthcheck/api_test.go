@@ -1,10 +1,11 @@
 package healthcheck
 
 import (
-	"github.com/qiangxue/go-rest-api/internal/test"
-	"github.com/qiangxue/go-rest-api/pkg/log"
 	"net/http"
 	"testing"
+
+	"github.com/joinself/restful-client/internal/test"
+	"github.com/joinself/restful-client/pkg/log"
 )
 
 func TestAPI(t *testing.T) {
