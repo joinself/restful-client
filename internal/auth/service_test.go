@@ -2,11 +2,12 @@ package auth
 
 import (
 	"context"
-	"github.com/qiangxue/go-rest-api/internal/entity"
-	"github.com/qiangxue/go-rest-api/internal/errors"
-	"github.com/qiangxue/go-rest-api/pkg/log"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/internal/errors"
+	"github.com/joinself/restful-client/pkg/log"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_service_Authenticate(t *testing.T) {

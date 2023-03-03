@@ -3,9 +3,9 @@ package connection
 import (
 	"context"
 
-	"github.com/qiangxue/go-rest-api/internal/entity"
-	"github.com/qiangxue/go-rest-api/pkg/dbcontext"
-	"github.com/qiangxue/go-rest-api/pkg/log"
+	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/pkg/dbcontext"
+	"github.com/joinself/restful-client/pkg/log"
 )
 
 // Repository encapsulates the logic to access connections from the data source.

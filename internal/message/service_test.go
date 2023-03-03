@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/qiangxue/go-rest-api/internal/entity"
-	"github.com/qiangxue/go-rest-api/pkg/log"
+	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/pkg/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,7 +51,7 @@ func TestUpdateMessageRequest_Validate(t *testing.T) {
 
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
-	s := NewService(&mockRepository{}, logger)
+	s := NewService(&mockRepository{}, logger, nil)
 
 	ctx := context.Background()
 

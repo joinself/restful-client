@@ -2,11 +2,12 @@ package auth
 
 import (
 	"context"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/qiangxue/go-rest-api/internal/entity"
-	"github.com/qiangxue/go-rest-api/internal/errors"
-	"github.com/qiangxue/go-rest-api/pkg/log"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/internal/errors"
+	"github.com/joinself/restful-client/pkg/log"
 )
 
 // Service encapsulates the authentication logic.

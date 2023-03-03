@@ -5,8 +5,8 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/qiangxue/go-rest-api/internal/entity"
-	"github.com/qiangxue/go-rest-api/pkg/log"
+	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/pkg/log"
 )
 
 // Service encapsulates usecase logic for facts.

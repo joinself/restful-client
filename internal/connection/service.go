@@ -5,8 +5,8 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/qiangxue/go-rest-api/internal/entity"
-	"github.com/qiangxue/go-rest-api/pkg/log"
+	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/pkg/log"
 )
 
 // Service encapsulates usecase logic for connections.
@@ -26,11 +26,19 @@ type Connection struct {
 
 // CreateConnectionRequest represents an connection creation request.
 type CreateConnectionRequest struct {
-	Name string `json:"name"`
+	SelfID string `json:"selfid"`
+	Name   string `json:"name"`
 }
 
 // Validate validates the CreateConnectionRequest fields.
 func (m CreateConnectionRequest) Validate() error {
+	err := validation.ValidateStruct(&m,
+		validation.Field(&m.SelfID, validation.Required, validation.Length(0, 128)),
+	)
+	if err != nil {
+		return err
+	}
+
 	return validation.ValidateStruct(&m,
 		validation.Field(&m.Name, validation.Required, validation.Length(0, 128)),
 	)
@@ -72,9 +80,14 @@ func (s service) Create(ctx context.Context, req CreateConnectionRequest) (Conne
 	if err := req.Validate(); err != nil {
 		return Connection{}, err
 	}
-	id := entity.GenerateID()
+	id := req.SelfID
+	existing, err := s.Get(ctx, id)
+	if err == nil {
+		return existing, nil
+	}
+
 	now := time.Now()
-	err := s.repo.Create(ctx, entity.Connection{
+	err = s.repo.Create(ctx, entity.Connection{
 		ID:        id,
 		Name:      req.Name,
 		CreatedAt: now,

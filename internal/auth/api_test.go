@@ -2,11 +2,12 @@ package auth
 
 import (
 	"context"
-	"github.com/qiangxue/go-rest-api/internal/errors"
-	"github.com/qiangxue/go-rest-api/internal/test"
-	"github.com/qiangxue/go-rest-api/pkg/log"
 	"net/http"
 	"testing"
+
+	"github.com/joinself/restful-client/internal/errors"
+	"github.com/joinself/restful-client/internal/test"
+	"github.com/joinself/restful-client/pkg/log"
 )
 
 type mockService struct{}

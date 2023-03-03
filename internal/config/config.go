@@ -1,11 +1,12 @@
 package config
 
 import (
-	"github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/qiangxue/go-env"
-	"github.com/qiangxue/go-rest-api/pkg/log"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/joinself/restful-client/pkg/log"
+	"github.com/qiangxue/go-env"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -23,6 +24,12 @@ type Config struct {
 	JWTSigningKey string `yaml:"jwt_signing_key" env:"JWT_SIGNING_KEY,secret"`
 	// JWT expiration in hours. Defaults to 72 hours (3 days)
 	JWTExpiration int `yaml:"jwt_expiration" env:"JWT_EXPIRATION"`
+	// Self config variables
+	SelfAppID           string `yaml:"self_app_id" env:"SELF_APP_ID"`
+	SelfAppDeviceSecret string `yaml:"self_device_secret" env:"SELF_APP_DEVICE_SECRET"`
+	SelfStorageKey      string `yaml:"self_storage_key" env:"SELF_STORAGE_KEY"`
+	SelfStorageDir      string `yaml:"self_storage_dir" env:"SELF_STORAGE_DIR"`
+	SelfEnv             string `yaml:"self_env" env:"SELF_ENV"`
 }
 
 // Validate validates the application configuration.

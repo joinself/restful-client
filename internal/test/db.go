@@ -7,12 +7,11 @@ import (
 	"testing"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
-	"github.com/google/uuid"
+	"github.com/joinself/restful-client/internal/config"
+	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/pkg/dbcontext"
+	"github.com/joinself/restful-client/pkg/log"
 	_ "github.com/lib/pq" // initialize posgresql for test
-	"github.com/qiangxue/go-rest-api/internal/config"
-	"github.com/qiangxue/go-rest-api/internal/entity"
-	"github.com/qiangxue/go-rest-api/pkg/dbcontext"
-	"github.com/qiangxue/go-rest-api/pkg/log"
 )
 
 var db *dbcontext.DB
@@ -68,8 +67,7 @@ func CreateConnection(ctx context.Context, db *dbcontext.DB, id string) error {
 	}
 
 	return db.With(ctx).Model(&entity.Connection{
-		ID:     id,
-		Name:   "connection_" + id,
-		Selfid: uuid.New().String(),
+		ID:   id,
+		Name: "connection_" + id,
 	}).Insert()
 }
