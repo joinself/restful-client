@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
@@ -69,8 +68,7 @@ func (s *service) onChatMessageHook() {
 		}
 
 		// Create the input message.
-		s.mRepo.Create(context.Background(), entity.Message{
-			ID:           uuid.New().String(),
+		s.mRepo.Create(context.Background(), &entity.Message{
 			ConnectionID: c.ID,
 			ISS:          cm.ISS,
 			Body:         cm.Body,

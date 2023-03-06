@@ -2,6 +2,7 @@ package message
 
 import (
 	"net/http"
+	"strconv"
 
 	routing "github.com/go-ozzo/ozzo-routing/v2"
 	"github.com/joinself/restful-client/internal/errors"
@@ -22,13 +23,23 @@ func RegisterHandlers(r *routing.RouteGroup, service Service, authHandler routin
 	r.Delete("/connections/<connection_id>/messages/<id>", res.delete)
 }
 
+var (
+	// LastMessage specifies the message id from what you want to get new messages.
+	LastMessage = "last_message_id"
+)
+
 type resource struct {
 	service Service
 	logger  log.Logger
 }
 
 func (r resource) get(c *routing.Context) error {
-	message, err := r.service.Get(c.Request.Context(), c.Param("id"))
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return err
+	}
+
+	message, err := r.service.Get(c.Request.Context(), id)
 	if err != nil {
 		return err
 	}
@@ -42,11 +53,18 @@ func (r resource) query(c *routing.Context) error {
 	if err != nil {
 		return err
 	}
+
+	messagesSince, err := strconv.Atoi(c.Request.URL.Query().Get(LastMessage))
+	if err != nil {
+		messagesSince = 0
+	}
+
 	pages := pagination.NewFromRequest(c.Request, count)
-	messages, err := r.service.Query(ctx, c.Param("connection_id"), pages.Offset(), pages.Limit())
+	messages, err := r.service.Query(ctx, c.Param("connection_id"), messagesSince, pages.Offset(), pages.Limit())
 	if err != nil {
 		return err
 	}
+
 	pages.Items = messages
 	return c.Write(pages)
 }
@@ -72,7 +90,11 @@ func (r resource) update(c *routing.Context) error {
 		return errors.BadRequest("")
 	}
 
-	message, err := r.service.Update(c.Request.Context(), c.Param("id"), input)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return err
+	}
+	message, err := r.service.Update(c.Request.Context(), id, input)
 	if err != nil {
 		return err
 	}
@@ -81,7 +103,12 @@ func (r resource) update(c *routing.Context) error {
 }
 
 func (r resource) delete(c *routing.Context) error {
-	message, err := r.service.Delete(c.Request.Context(), c.Param("id"))
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return err
+	}
+
+	message, err := r.service.Delete(c.Request.Context(), id)
 	if err != nil {
 		return err
 	}
