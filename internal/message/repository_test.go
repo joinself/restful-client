@@ -30,28 +30,28 @@ func TestRepository(t *testing.T) {
 	assert.Nil(t, err)
 
 	// create
-	err = repo.Create(ctx, entity.Message{
-		ID:           "test1",
+	msg := entity.Message{
 		ConnectionID: connection,
 		Body:         "message1",
 		IAT:          time.Now(),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
-	})
+	}
+	err = repo.Create(ctx, &msg)
 	assert.Nil(t, err)
 	count2, _ := repo.Count(ctx)
 	assert.Equal(t, 1, count2-count)
 
 	// get
-	message, err := repo.Get(ctx, "test1")
+	message, err := repo.Get(ctx, msg.ID)
 	assert.Nil(t, err)
 	assert.Equal(t, "message1", message.Body)
-	_, err = repo.Get(ctx, "test0")
+	_, err = repo.Get(ctx, 0)
 	assert.Equal(t, sql.ErrNoRows, err)
 
 	// update
 	err = repo.Update(ctx, entity.Message{
-		ID:           "test1",
+		ID:           msg.ID,
 		ConnectionID: connection,
 		Body:         "message1 updated",
 		IAT:          time.Now(),
@@ -59,19 +59,19 @@ func TestRepository(t *testing.T) {
 		UpdatedAt:    time.Now(),
 	})
 	assert.Nil(t, err)
-	message, _ = repo.Get(ctx, "test1")
+	message, _ = repo.Get(ctx, msg.ID)
 	assert.Equal(t, "message1 updated", message.Body)
 
 	// query
-	messages, err := repo.Query(ctx, connection, 0, count2)
+	messages, err := repo.Query(ctx, connection, 0, 0, count2)
 	assert.Nil(t, err)
 	assert.Equal(t, count2, len(messages))
 
 	// delete
-	err = repo.Delete(ctx, "test1")
+	err = repo.Delete(ctx, msg.ID)
 	assert.Nil(t, err)
-	_, err = repo.Get(ctx, "test1")
+	_, err = repo.Get(ctx, msg.ID)
 	assert.Equal(t, sql.ErrNoRows, err)
-	err = repo.Delete(ctx, "test1")
+	err = repo.Delete(ctx, msg.ID)
 	assert.Equal(t, sql.ErrNoRows, err)
 }
