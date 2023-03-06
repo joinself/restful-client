@@ -6,7 +6,7 @@ import (
 
 // Message represents a message record.
 type Message struct {
-	ID           string    `json:"id"`
+	ID           int       `json:"id"`
 	ConnectionID string    `json:"-"`
 	ISS          string    `json:"iss"`
 	CID          string    `json:"cid"`

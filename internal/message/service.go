@@ -13,12 +13,12 @@ import (
 
 // Service encapsulates usecase logic for messages.
 type Service interface {
-	Get(ctx context.Context, id string) (Message, error)
-	Query(ctx context.Context, connection string, offset, limit int) ([]Message, error)
+	Get(ctx context.Context, id int) (Message, error)
+	Query(ctx context.Context, connection string, messagesSince int, offset, limit int) ([]Message, error)
 	Count(ctx context.Context) (int, error)
 	Create(ctx context.Context, connection string, input CreateMessageRequest) (Message, error)
-	Update(ctx context.Context, id string, input UpdateMessageRequest) (Message, error)
-	Delete(ctx context.Context, id string) (Message, error)
+	Update(ctx context.Context, id int, input UpdateMessageRequest) (Message, error)
+	Delete(ctx context.Context, id int) (Message, error)
 }
 
 // Message represents the data about an message.
@@ -65,7 +65,7 @@ func NewService(repo Repository, logger log.Logger, client *selfsdk.Client) Serv
 }
 
 // Get returns the message with the specified the message ID.
-func (s service) Get(ctx context.Context, id string) (Message, error) {
+func (s service) Get(ctx context.Context, id int) (Message, error) {
 	message, err := s.repo.Get(ctx, id)
 	if err != nil {
 		return Message{}, err
@@ -78,14 +78,12 @@ func (s service) Create(ctx context.Context, connection string, req CreateMessag
 	if err := req.Validate(); err != nil {
 		return Message{}, err
 	}
-	id := entity.GenerateID()
 	now := time.Now()
 	cid := req.CID
 	if cid == "" {
 		cid = uuid.New().String()
 	}
-	err := s.repo.Create(ctx, entity.Message{
-		ID:           id,
+	msg := entity.Message{
 		ISS:          "me",
 		ConnectionID: connection,
 		CID:          cid,
@@ -94,7 +92,13 @@ func (s service) Create(ctx context.Context, connection string, req CreateMessag
 		IAT:          req.IAT,
 		CreatedAt:    now,
 		UpdatedAt:    now,
-	})
+	}
+	err := s.repo.Create(ctx, &msg)
+	println("......")
+	println("......")
+	println(msg.ID)
+	println("......")
+	println("......")
 	if err != nil {
 		return Message{}, err
 	}
@@ -107,11 +111,11 @@ func (s service) Create(ctx context.Context, connection string, req CreateMessag
 		}
 	}
 
-	return s.Get(ctx, id)
+	return s.Get(ctx, msg.ID)
 }
 
 // Update updates the message with the specified ID.
-func (s service) Update(ctx context.Context, id string, req UpdateMessageRequest) (Message, error) {
+func (s service) Update(ctx context.Context, id int, req UpdateMessageRequest) (Message, error) {
 	if err := req.Validate(); err != nil {
 		return Message{}, err
 	}
@@ -130,7 +134,7 @@ func (s service) Update(ctx context.Context, id string, req UpdateMessageRequest
 }
 
 // Delete deletes the message with the specified ID.
-func (s service) Delete(ctx context.Context, id string) (Message, error) {
+func (s service) Delete(ctx context.Context, id int) (Message, error) {
 	message, err := s.Get(ctx, id)
 	if err != nil {
 		return Message{}, err
@@ -147,8 +151,8 @@ func (s service) Count(ctx context.Context) (int, error) {
 }
 
 // Query returns the messages with the specified offset and limit.
-func (s service) Query(ctx context.Context, connection string, offset, limit int) ([]Message, error) {
-	items, err := s.repo.Query(ctx, connection, offset, limit)
+func (s service) Query(ctx context.Context, connection string, messagesSince int, offset, limit int) ([]Message, error) {
+	items, err := s.repo.Query(ctx, connection, messagesSince, offset, limit)
 	if err != nil {
 		return nil, err
 	}
