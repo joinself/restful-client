@@ -24,4 +24,4 @@ testdata/postgres
 .pid
 
 # self storage
-./storage
+storage
