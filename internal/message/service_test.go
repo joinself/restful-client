@@ -62,8 +62,6 @@ func Test_service_CRUD(t *testing.T) {
 	// successful creation
 	message, err := s.Create(ctx, "connection", CreateMessageRequest{Body: "test"})
 	assert.Nil(t, err)
-	assert.NotEmpty(t, message.ID)
-	id := message.ID
 	assert.Equal(t, "test", message.Body)
 	assert.NotEmpty(t, message.CreatedAt)
 	assert.NotEmpty(t, message.UpdatedAt)
@@ -88,7 +86,7 @@ func Test_service_CRUD(t *testing.T) {
 	message, err = s.Update(ctx, id, UpdateMessageRequest{Body: "test updated"})
 	assert.Nil(t, err)
 	assert.Equal(t, "test updated", message.Body)
-	_, err = s.Update(ctx, "none", UpdateMessageRequest{Body: "test updated"})
+	_, err = s.Update(ctx, 1, UpdateMessageRequest{Body: "test updated"})
 	assert.NotNil(t, err)
 
 	// validation error in update
@@ -104,7 +102,7 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, 2, count)
 
 	// get
-	_, err = s.Get(ctx, "none")
+	_, err = s.Get(ctx, 1)
 	assert.NotNil(t, err)
 	message, err = s.Get(ctx, id)
 	assert.Nil(t, err)
@@ -112,11 +110,11 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, id, message.ID)
 
 	// query
-	messages, _ := s.Query(ctx, "connection", 0, 0)
+	messages, _ := s.Query(ctx, "connection", 0, 0, 0)
 	assert.Equal(t, 2, len(messages))
 
 	// delete
-	_, err = s.Delete(ctx, "none")
+	_, err = s.Delete(ctx, 1)
 	assert.NotNil(t, err)
 	message, err = s.Delete(ctx, id)
 	assert.Nil(t, err)
@@ -129,7 +127,7 @@ type mockRepository struct {
 	items []entity.Message
 }
 
-func (m mockRepository) Get(ctx context.Context, id string) (entity.Message, error) {
+func (m mockRepository) Get(ctx context.Context, id int) (entity.Message, error) {
 	for _, item := range m.items {
 		if item.ID == id {
 			return item, nil
@@ -142,15 +140,15 @@ func (m mockRepository) Count(ctx context.Context) (int, error) {
 	return len(m.items), nil
 }
 
-func (m mockRepository) Query(ctx context.Context, connection string, offset, limit int) ([]entity.Message, error) {
+func (m mockRepository) Query(ctx context.Context, connection string, lasMessageID, offset, limit int) ([]entity.Message, error) {
 	return m.items, nil
 }
 
-func (m *mockRepository) Create(ctx context.Context, message entity.Message) error {
+func (m *mockRepository) Create(ctx context.Context, message *entity.Message) error {
 	if message.Body == "error" {
 		return errCRUD
 	}
-	m.items = append(m.items, message)
+	m.items = append(m.items, *message)
 	return nil
 }
 
@@ -167,7 +165,7 @@ func (m *mockRepository) Update(ctx context.Context, message entity.Message) err
 	return nil
 }
 
-func (m *mockRepository) Delete(ctx context.Context, id string) error {
+func (m *mockRepository) Delete(ctx context.Context, id int) error {
 	for i, item := range m.items {
 		if item.ID == id {
 			m.items[i] = m.items[len(m.items)-1]

@@ -94,11 +94,6 @@ func (s service) Create(ctx context.Context, connection string, req CreateMessag
 		UpdatedAt:    now,
 	}
 	err := s.repo.Create(ctx, &msg)
-	println("......")
-	println("......")
-	println(msg.ID)
-	println("......")
-	println("......")
 	if err != nil {
 		return Message{}, err
 	}
