@@ -112,7 +112,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	)
 
 	fact.RegisterHandlers(rg.Group(""),
-		fact.NewService(factRepo, logger),
+		fact.NewService(factRepo, logger, client.FactService()),
 		authHandler, logger,
 	)
 

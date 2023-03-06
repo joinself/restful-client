@@ -62,6 +62,7 @@ func Test_service_CRUD(t *testing.T) {
 	// successful creation
 	message, err := s.Create(ctx, "connection", CreateMessageRequest{Body: "test"})
 	assert.Nil(t, err)
+	id := message.ID
 	assert.Equal(t, "test", message.Body)
 	assert.NotEmpty(t, message.CreatedAt)
 	assert.NotEmpty(t, message.UpdatedAt)

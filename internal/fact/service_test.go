@@ -19,9 +19,9 @@ func TestCreateFactRequest_Validate(t *testing.T) {
 		model     CreateFactRequest
 		wantError bool
 	}{
-		{"success", CreateFactRequest{Body: "test"}, false},
-		{"required", CreateFactRequest{Body: ""}, true},
-		{"too long", CreateFactRequest{Body: "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"}, true},
+		{"success", CreateFactRequest{Fact: "test"}, false},
+		{"required", CreateFactRequest{Fact: ""}, true},
+		{"too long", CreateFactRequest{Fact: "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -51,7 +51,7 @@ func TestUpdateFactRequest_Validate(t *testing.T) {
 
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
-	s := NewService(&mockRepository{}, logger)
+	s := NewService(&mockRepository{}, logger, nil)
 
 	ctx := context.Background()
 
@@ -60,29 +60,29 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, 0, count)
 
 	// successful creation
-	fact, err := s.Create(ctx, "connection", CreateFactRequest{Body: "test"})
+	fact, err := s.Create(ctx, "connection", CreateFactRequest{Fact: "test"})
 	assert.Nil(t, err)
 	assert.NotEmpty(t, fact.ID)
 	id := fact.ID
-	assert.Equal(t, "test", fact.Body)
+	assert.Equal(t, "test", fact.Fact.Fact)
 	assert.NotEmpty(t, fact.CreatedAt)
 	assert.NotEmpty(t, fact.UpdatedAt)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
 	// validation error in creation
-	_, err = s.Create(ctx, "connection", CreateFactRequest{Body: ""})
+	_, err = s.Create(ctx, "connection", CreateFactRequest{Fact: ""})
 	assert.NotNil(t, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
 	// unexpected error in creation
-	_, err = s.Create(ctx, "connection", CreateFactRequest{Body: "error"})
+	_, err = s.Create(ctx, "connection", CreateFactRequest{Fact: "error"})
 	assert.Equal(t, errCRUD, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
-	_, _ = s.Create(ctx, "connection", CreateFactRequest{Body: "test2"})
+	_, _ = s.Create(ctx, "connection", CreateFactRequest{Fact: "test2"})
 
 	// update
 	fact, err = s.Update(ctx, id, UpdateFactRequest{Body: "test updated"})
@@ -147,7 +147,7 @@ func (m mockRepository) Query(ctx context.Context, connection string, offset, li
 }
 
 func (m *mockRepository) Create(ctx context.Context, fact entity.Fact) error {
-	if fact.Body == "error" {
+	if fact.Fact == "error" {
 		return errCRUD
 	}
 	m.items = append(m.items, fact)
@@ -175,5 +175,9 @@ func (m *mockRepository) Delete(ctx context.Context, id string) error {
 			break
 		}
 	}
+	return nil
+}
+
+func (m *mockRepository) SetStatus(ctx context.Context, id string, status string) error {
 	return nil
 }

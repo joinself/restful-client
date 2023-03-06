@@ -15,16 +15,16 @@ func TestAPI(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 	repo := &mockRepository{items: []entity.Fact{
-		{"123", "connection", "", "source", "value", time.Now(), time.Now(), time.Now()},
+		{"123", "connection", "", "cid", "jti", "status", "source", "field", "value", time.Now(), time.Now(), time.Now()},
 	}}
-	RegisterHandlers(router.Group(""), NewService(repo, logger), auth.MockAuthHandler, logger)
+	RegisterHandlers(router.Group(""), NewService(repo, logger, nil), auth.MockAuthHandler, logger)
 	header := auth.MockAuthHeader()
 
 	tests := []test.APITestCase{
 		{"get all", "GET", "/connections/connection/facts", "", header, http.StatusOK, `*"total_count":1*`},
 		{"get 123", "GET", "/connections/connection/facts/123", "", header, http.StatusOK, `*123*`},
 		{"get unknown", "GET", "/connections/connection/facts/1234", "", header, http.StatusNotFound, ""},
-		{"create ok", "POST", "/connections/connection/facts", `{"body":"test"}`, header, http.StatusCreated, "*test*"},
+		{"create ok", "POST", "/connections/connection/facts", `{"fact":"test"}`, header, http.StatusCreated, "*test*"},
 		{"create ok count", "GET", "/connections/connection/facts", "", header, http.StatusOK, `*"total_count":2*`},
 		{"create auth error", "POST", "/connections/connection/facts", `{"body":"test"}`, nil, http.StatusUnauthorized, ""},
 		{"create input error", "POST", "/connections/connection/facts", `"body":"test"}`, header, http.StatusBadRequest, ""},
