@@ -2,6 +2,7 @@ package fact
 
 import (
 	"context"
+	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/joinself/restful-client/internal/entity"
@@ -23,6 +24,8 @@ type Repository interface {
 	Update(ctx context.Context, fact entity.Fact) error
 	// Delete removes the fact with given ID from the storage.
 	Delete(ctx context.Context, id string) error
+	// SetStatus updates the fact identified by the given id with the given status.
+	SetStatus(ctx context.Context, id string, status string) error
 }
 
 // repository persists facts in database
@@ -81,4 +84,14 @@ func (r repository) Query(ctx context.Context, connection string, offset, limit 
 		Limit(int64(limit)).
 		All(&facts)
 	return facts, err
+}
+
+func (r repository) SetStatus(ctx context.Context, id string, status string) error {
+	fact, err := r.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+	fact.Status = status
+	fact.UpdatedAt = time.Now()
+	return r.Update(ctx, fact)
 }

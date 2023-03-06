@@ -7,6 +7,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/self-go-sdk/fact"
 )
 
 // Service encapsulates usecase logic for facts.
@@ -19,6 +20,10 @@ type Service interface {
 	Delete(ctx context.Context, id string) (Fact, error)
 }
 
+type FactService interface {
+	Request(*fact.FactRequest) (*fact.FactResponse, error)
+}
+
 // Fact represents the data about an fact.
 type Fact struct {
 	entity.Fact
@@ -29,6 +34,7 @@ type CreateFactRequest struct {
 	CID    string    `json:"cid"`
 	RID    string    `json:"rid"`
 	Source string    `json:"source`
+	Fact   string    `json:"fact`
 	Body   string    `json:"body"`
 	IAT    time.Time `json:"iat"`
 }
@@ -36,7 +42,7 @@ type CreateFactRequest struct {
 // Validate validates the CreateFactRequest fields.
 func (m CreateFactRequest) Validate() error {
 	return validation.ValidateStruct(&m,
-		validation.Field(&m.Body, validation.Required, validation.Length(0, 128)),
+		validation.Field(&m.Fact, validation.Required, validation.Length(0, 128)),
 	)
 }
 
@@ -55,11 +61,12 @@ func (m UpdateFactRequest) Validate() error {
 type service struct {
 	repo   Repository
 	logger log.Logger
+	client FactService
 }
 
 // NewService creates a new fact service.
-func NewService(repo Repository, logger log.Logger) Service {
-	return service{repo, logger}
+func NewService(repo Repository, logger log.Logger, client FactService) Service {
+	return service{repo, logger, client}
 }
 
 // Get returns the fact with the specified the fact ID.
@@ -78,19 +85,32 @@ func (s service) Create(ctx context.Context, connection string, req CreateFactRe
 	}
 	id := entity.GenerateID()
 	now := time.Now()
-	err := s.repo.Create(ctx, entity.Fact{
+
+	println("......")
+	println(req.Fact)
+	println("......")
+
+	f := entity.Fact{
 		ID:           id,
 		ConnectionID: connection,
 		ISS:          "me", // TODO: use current app selfid
 		Source:       req.Source,
+		Fact:         req.Fact,
 		Body:         req.Body,
 		IAT:          req.IAT,
 		CreatedAt:    now,
 		UpdatedAt:    now,
-	})
+	}
+	err := s.repo.Create(ctx, f)
 	if err != nil {
 		return Fact{}, err
 	}
+
+	// Send the message to the connection.
+	if s.client != nil {
+		go s.sendRequest(f)
+	}
+
 	return s.Get(ctx, id)
 }
 
@@ -141,4 +161,48 @@ func (s service) Query(ctx context.Context, connection string, offset, limit int
 		result = append(result, Fact{item})
 	}
 	return result, nil
+}
+
+// sendRequest sends a request to the specified connection through Self Network.
+func (s service) sendRequest(f entity.Fact) {
+	if s.client == nil {
+		s.logger.Debug("skipping as self is not initialized")
+		return
+	}
+
+	resp, err := s.client.Request(&fact.FactRequest{
+		SelfID:      f.ConnectionID,
+		Description: "info",
+		Facts:       []fact.Fact{{Fact: f.Fact, Sources: []string{f.Source}}},
+		Expiry:      time.Minute * 5,
+	})
+	if err != nil {
+		err = s.repo.SetStatus(context.Background(), f.ID, "errored")
+		if err != nil {
+			s.logger.Errorf("failed to update status: %v", err)
+		}
+
+		s.logger.Errorf("failed to send request: %v", err)
+		return
+	}
+
+	if len(resp.Facts) != 1 {
+		err = s.repo.SetStatus(context.Background(), f.ID, "errored")
+		if err != nil {
+			s.logger.Errorf("failed to update status: %v", err)
+		}
+		s.logger.Errorf("unexpected fact response")
+		return
+	}
+
+	err = s.repo.SetStatus(context.Background(), f.ID, "received")
+	if err != nil {
+		s.logger.Errorf("failed to update status: %v", err)
+		return
+	}
+
+	// Create the relative attestations.
+	for _, v := range resp.Facts[0].AttestedValues() {
+		println(" - " + v)
+	}
 }
