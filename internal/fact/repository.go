@@ -15,7 +15,7 @@ type Repository interface {
 	// Get returns the fact with the specified fact ID.
 	Get(ctx context.Context, id string) (entity.Fact, error)
 	// Count returns the number of facts.
-	Count(ctx context.Context) (int, error)
+	Count(ctx context.Context, query QueryParams) (int, error)
 	// Query returns the list of facts with the given offset and limit.
 	Query(ctx context.Context, query QueryParams, offset, limit int) ([]entity.Fact, error)
 	// Create saves a new fact in the storage.
@@ -73,9 +73,18 @@ func (r repository) Delete(ctx context.Context, id string) error {
 }
 
 // Count returns the number of the fact records in the database.
-func (r repository) Count(ctx context.Context) (int, error) {
+func (r repository) Count(ctx context.Context, query QueryParams) (int, error) {
 	var count int
-	err := r.db.With(ctx).Select("COUNT(*)").From("fact").Row(&count)
+	sql := r.db.With(ctx).Select("COUNT(*)").From("fact")
+	sql.Where(&dbx.HashExp{"connection_id": query.Connection})
+	if query.Source != "" {
+		sql = sql.AndWhere(&dbx.HashExp{"source": query.Source})
+	}
+	if query.Fact != "" {
+		sql = sql.AndWhere(&dbx.HashExp{"fact": query.Fact})
+	}
+
+	err := sql.Row(&count)
 	return count, err
 }
 
