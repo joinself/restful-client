@@ -1,1 +1,1 @@
-DROP TABLE facts;
+DROP TABLE fact;

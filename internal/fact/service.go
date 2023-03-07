@@ -5,6 +5,8 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/google/uuid"
+	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/self-go-sdk/fact"
@@ -13,7 +15,7 @@ import (
 // Service encapsulates usecase logic for facts.
 type Service interface {
 	Get(ctx context.Context, id string) (Fact, error)
-	Query(ctx context.Context, connection string, offset, limit int) ([]Fact, error)
+	Query(ctx context.Context, params QueryParams, offset, limit int) ([]Fact, error)
 	Count(ctx context.Context) (int, error)
 	Create(ctx context.Context, connection string, input CreateFactRequest) (Fact, error)
 	Update(ctx context.Context, id string, input UpdateFactRequest) (Fact, error)
@@ -27,6 +29,7 @@ type FactService interface {
 // Fact represents the data about an fact.
 type Fact struct {
 	entity.Fact
+	Attestations []entity.Attestation `json:"attestations"`
 }
 
 // CreateFactRequest represents an fact creation request.
@@ -60,13 +63,14 @@ func (m UpdateFactRequest) Validate() error {
 
 type service struct {
 	repo   Repository
+	atRepo attestation.Repository
 	logger log.Logger
 	client FactService
 }
 
 // NewService creates a new fact service.
-func NewService(repo Repository, logger log.Logger, client FactService) Service {
-	return service{repo, logger, client}
+func NewService(repo Repository, atRepo attestation.Repository, logger log.Logger, client FactService) Service {
+	return service{repo, atRepo, logger, client}
 }
 
 // Get returns the fact with the specified the fact ID.
@@ -75,7 +79,17 @@ func (s service) Get(ctx context.Context, id string) (Fact, error) {
 	if err != nil {
 		return Fact{}, err
 	}
-	return Fact{fact}, nil
+
+	// Get the attestation for the fact.
+	attestations, err := s.atRepo.Query(ctx, fact.ID, 0, 1000)
+	if err != nil {
+		return Fact{}, err
+	}
+
+	return Fact{
+		Fact:         fact,
+		Attestations: attestations,
+	}, nil
 }
 
 // Create creates a new fact.
@@ -85,10 +99,6 @@ func (s service) Create(ctx context.Context, connection string, req CreateFactRe
 	}
 	id := entity.GenerateID()
 	now := time.Now()
-
-	println("......")
-	println(req.Fact)
-	println("......")
 
 	f := entity.Fact{
 		ID:           id,
@@ -151,14 +161,23 @@ func (s service) Count(ctx context.Context) (int, error) {
 }
 
 // Query returns the facts with the specified offset and limit.
-func (s service) Query(ctx context.Context, connection string, offset, limit int) ([]Fact, error) {
-	items, err := s.repo.Query(ctx, connection, offset, limit)
+func (s service) Query(ctx context.Context, query QueryParams, offset, limit int) ([]Fact, error) {
+	items, err := s.repo.Query(ctx, query, offset, limit)
 	if err != nil {
 		return nil, err
 	}
 	result := []Fact{}
 	for _, item := range items {
-		result = append(result, Fact{item})
+		// Get the attestation for the fact.
+		attestations, err := s.atRepo.Query(ctx, item.ID, 0, 1000)
+		if err != nil {
+			continue
+		}
+
+		result = append(result, Fact{
+			Fact:         item,
+			Attestations: attestations,
+		})
 	}
 	return result, nil
 }
@@ -203,6 +222,11 @@ func (s service) sendRequest(f entity.Fact) {
 
 	// Create the relative attestations.
 	for _, v := range resp.Facts[0].AttestedValues() {
-		println(" - " + v)
+		_ = s.atRepo.Create(context.Background(), entity.Attestation{
+			ID:     uuid.New().String(),
+			Body:   "TODO", // TODO: store body.
+			FactID: f.ID,
+			Value:  v,
+		})
 	}
 }
