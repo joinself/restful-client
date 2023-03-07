@@ -7,6 +7,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/self-go-sdk/fact"
 )
 
 // Service encapsulates usecase logic for connections.
@@ -17,6 +18,10 @@ type Service interface {
 	Create(ctx context.Context, input CreateConnectionRequest) (Connection, error)
 	Update(ctx context.Context, id string, input UpdateConnectionRequest) (Connection, error)
 	Delete(ctx context.Context, id string) (Connection, error)
+}
+
+type FactService interface {
+	Request(*fact.FactRequest) (*fact.FactResponse, error)
 }
 
 // Connection represents the data about an connection.
@@ -59,11 +64,12 @@ func (m UpdateConnectionRequest) Validate() error {
 type service struct {
 	repo   Repository
 	logger log.Logger
+	client FactService
 }
 
 // NewService creates a new connection service.
-func NewService(repo Repository, logger log.Logger) Service {
-	return service{repo, logger}
+func NewService(repo Repository, logger log.Logger, client FactService) Service {
+	return service{repo, logger, client}
 }
 
 // Get returns the connection with the specified the connection ID.
@@ -96,6 +102,9 @@ func (s service) Create(ctx context.Context, req CreateConnectionRequest) (Conne
 	if err != nil {
 		return Connection{}, err
 	}
+
+	go s.requestPublicInfo(id)
+
 	return s.Get(ctx, id)
 }
 
@@ -146,4 +155,45 @@ func (s service) Query(ctx context.Context, offset, limit int) ([]Connection, er
 		result = append(result, Connection{item})
 	}
 	return result, nil
+}
+
+func (s service) requestPublicInfo(id string) {
+	if s.client == nil {
+		s.logger.Debug("skipping as self is not initialized")
+		return
+	}
+
+	resp, err := s.client.Request(&fact.FactRequest{
+		SelfID:      id,
+		Description: "info",
+		Facts:       []fact.Fact{{Fact: fact.FactDisplayName, Sources: []string{fact.SourceUserSpecified}}},
+		Expiry:      time.Minute * 5,
+	})
+	if err != nil {
+		s.logger.Errorf("failed to request public info: %v", err)
+		return
+	}
+
+	if len(resp.Facts) != 1 {
+		s.logger.Errorf("unexpected fact response")
+		return
+	}
+
+	connection, err := s.Get(context.Background(), id)
+	if err != nil {
+		s.logger.Errorf("unexpected fact response")
+		return
+	}
+	values := resp.Facts[0].AttestedValues()
+	if len(values) != 1 {
+		s.logger.Errorf("unexpected fact response")
+		return
+	}
+
+	connection.Name = values[0]
+
+	if err := s.repo.Update(context.Background(), connection.Connection); err != nil {
+		s.logger.Errorf("unexpected fact response")
+		return
+	}
 }

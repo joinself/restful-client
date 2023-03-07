@@ -104,7 +104,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	attestationRepo := attestation.NewRepository(db, logger)
 
 	connection.RegisterHandlers(rg.Group(""),
-		connection.NewService(connectionRepo, logger),
+		connection.NewService(connectionRepo, logger, client.FactService()),
 		authHandler, logger,
 	)
 
