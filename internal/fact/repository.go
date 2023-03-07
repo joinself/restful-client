@@ -17,7 +17,7 @@ type Repository interface {
 	// Count returns the number of facts.
 	Count(ctx context.Context) (int, error)
 	// Query returns the list of facts with the given offset and limit.
-	Query(ctx context.Context, connection string, offset, limit int) ([]entity.Fact, error)
+	Query(ctx context.Context, query QueryParams, offset, limit int) ([]entity.Fact, error)
 	// Create saves a new fact in the storage.
 	Create(ctx context.Context, fact entity.Fact) error
 	// Update updates the fact with given ID in the storage.
@@ -37,6 +37,12 @@ type repository struct {
 // NewRepository creates a new fact repository
 func NewRepository(db *dbcontext.DB, logger log.Logger) Repository {
 	return repository{db, logger}
+}
+
+type QueryParams struct {
+	Connection string
+	Source     string
+	Fact       string
 }
 
 // Get reads the fact with the specified ID from the database.
@@ -74,13 +80,22 @@ func (r repository) Count(ctx context.Context) (int, error) {
 }
 
 // Query retrieves the fact records with the specified offset and limit from the database.
-func (r repository) Query(ctx context.Context, connection string, offset, limit int) ([]entity.Fact, error) {
+func (r repository) Query(ctx context.Context, query QueryParams, offset, limit int) ([]entity.Fact, error) {
 	var facts []entity.Fact
-	err := r.db.With(ctx).
+
+	sql := r.db.With(ctx).
 		Select().
 		OrderBy("id").
-		Where(&dbx.HashExp{"connection_id": connection}).
-		Offset(int64(offset)).
+		Where(&dbx.HashExp{"connection_id": query.Connection})
+
+	if query.Source != "" {
+		sql = sql.AndWhere(&dbx.HashExp{"source": query.Source})
+	}
+	if query.Fact != "" {
+		sql = sql.AndWhere(&dbx.HashExp{"fact": query.Fact})
+	}
+
+	err := sql.Offset(int64(offset)).
 		Limit(int64(limit)).
 		All(&facts)
 	return facts, err

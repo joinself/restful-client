@@ -45,7 +45,10 @@ func (r resource) query(c *routing.Context) error {
 		return err
 	}
 	pages := pagination.NewFromRequest(c.Request, count)
-	facts, err := r.service.Query(ctx, c.Param("connection_id"), pages.Offset(), pages.Limit())
+	query := QueryParams{
+		Connection: c.Param("connection_id"),
+	}
+	facts, err := r.service.Query(ctx, query, pages.Offset(), pages.Limit())
 	if err != nil {
 		return err
 	}

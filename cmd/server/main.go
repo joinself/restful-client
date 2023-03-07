@@ -14,6 +14,7 @@ import (
 	routing "github.com/go-ozzo/ozzo-routing/v2"
 	"github.com/go-ozzo/ozzo-routing/v2/content"
 	"github.com/go-ozzo/ozzo-routing/v2/cors"
+	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/internal/config"
 	"github.com/joinself/restful-client/internal/connection"
@@ -100,6 +101,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	connectionRepo := connection.NewRepository(db, logger)
 	messageRepo := message.NewRepository(db, logger)
 	factRepo := fact.NewRepository(db, logger)
+	attestationRepo := attestation.NewRepository(db, logger)
 
 	connection.RegisterHandlers(rg.Group(""),
 		connection.NewService(connectionRepo, logger),
@@ -112,7 +114,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	)
 
 	fact.RegisterHandlers(rg.Group(""),
-		fact.NewService(factRepo, logger, client.FactService()),
+		fact.NewService(factRepo, attestationRepo, logger, client.FactService()),
 		authHandler, logger,
 	)
 
