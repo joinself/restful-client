@@ -52,6 +52,8 @@ github.com/joinself/self-go-sdk v0.0.0-20221220151359-9eaf4356c3d2 h1:CxzWh/Tzfk
 github.com/joinself/self-go-sdk v0.0.0-20221220151359-9eaf4356c3d2/go.mod h1:zF+XoTcfY2TvKch3rLZxypDPMiVcgRtlW7GKkTKXtXQ=
 github.com/joinself/self-go-sdk v0.0.0-20230302153353-29d80294d4a0 h1:mahwwxd7dCo1OWj4l+hMKGrbDpOLqwgijoR3wUokeRg=
 github.com/joinself/self-go-sdk v0.0.0-20230302153353-29d80294d4a0/go.mod h1:zRherizq6qZ9oWMwglDI1xuTdVl/t0QSmrNHlYDRQHI=
+github.com/joinself/self-go-sdk v0.0.0-20230307131324-ba7821fec5f9 h1:G//sDeNe4VJ2OMI5fQVWRJpXgybgaM5LrB3vSSsmJXo=
+github.com/joinself/self-go-sdk v0.0.0-20230307131324-ba7821fec5f9/go.mod h1:zRherizq6qZ9oWMwglDI1xuTdVl/t0QSmrNHlYDRQHI=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
