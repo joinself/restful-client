@@ -40,14 +40,18 @@ func (r resource) get(c *routing.Context) error {
 
 func (r resource) query(c *routing.Context) error {
 	ctx := c.Request.Context()
-	count, err := r.service.Count(ctx)
+
+	query := QueryParams{
+		Connection: c.Param("connection_id"),
+		Source:     c.Query("source", ""),
+		Fact:       c.Query("fact", ""),
+	}
+
+	count, err := r.service.Count(ctx, query)
 	if err != nil {
 		return err
 	}
 	pages := pagination.NewFromRequest(c.Request, count)
-	query := QueryParams{
-		Connection: c.Param("connection_id"),
-	}
 	facts, err := r.service.Query(ctx, query, pages.Offset(), pages.Limit())
 	if err != nil {
 		return err

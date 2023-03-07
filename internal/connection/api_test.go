@@ -17,7 +17,7 @@ func TestAPI(t *testing.T) {
 	repo := &mockRepository{items: []entity.Connection{
 		{"123", "connection123", time.Now(), time.Now()},
 	}}
-	RegisterHandlers(router.Group(""), NewService(repo, logger), auth.MockAuthHandler, logger)
+	RegisterHandlers(router.Group(""), NewService(repo, logger, nil), auth.MockAuthHandler, logger)
 	header := auth.MockAuthHeader()
 
 	tests := []test.APITestCase{

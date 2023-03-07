@@ -16,7 +16,7 @@ import (
 type Service interface {
 	Get(ctx context.Context, id string) (Fact, error)
 	Query(ctx context.Context, params QueryParams, offset, limit int) ([]Fact, error)
-	Count(ctx context.Context) (int, error)
+	Count(ctx context.Context, query QueryParams) (int, error)
 	Create(ctx context.Context, connection string, input CreateFactRequest) (Fact, error)
 	Update(ctx context.Context, id string, input UpdateFactRequest) (Fact, error)
 	Delete(ctx context.Context, id string) (Fact, error)
@@ -156,8 +156,8 @@ func (s service) Delete(ctx context.Context, id string) (Fact, error) {
 }
 
 // Count returns the number of facts.
-func (s service) Count(ctx context.Context) (int, error) {
-	return s.repo.Count(ctx)
+func (s service) Count(ctx context.Context, query QueryParams) (int, error) {
+	return s.repo.Count(ctx, query)
 }
 
 // Query returns the facts with the specified offset and limit.

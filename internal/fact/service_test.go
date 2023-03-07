@@ -56,7 +56,7 @@ func Test_service_CRUD(t *testing.T) {
 	ctx := context.Background()
 
 	// initial count
-	count, _ := s.Count(ctx)
+	count, _ := s.Count(ctx, QueryParams{Connection: "connection"})
 	assert.Equal(t, 0, count)
 
 	// successful creation
@@ -67,19 +67,19 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, "test", fact.Fact.Fact)
 	assert.NotEmpty(t, fact.CreatedAt)
 	assert.NotEmpty(t, fact.UpdatedAt)
-	count, _ = s.Count(ctx)
+	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
 	assert.Equal(t, 1, count)
 
 	// validation error in creation
 	_, err = s.Create(ctx, "connection", CreateFactRequest{Fact: ""})
 	assert.NotNil(t, err)
-	count, _ = s.Count(ctx)
+	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
 	assert.Equal(t, 1, count)
 
 	// unexpected error in creation
 	_, err = s.Create(ctx, "connection", CreateFactRequest{Fact: "error"})
 	assert.Equal(t, errCRUD, err)
-	count, _ = s.Count(ctx)
+	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
 	assert.Equal(t, 1, count)
 
 	_, _ = s.Create(ctx, "connection", CreateFactRequest{Fact: "test2"})
@@ -94,13 +94,13 @@ func Test_service_CRUD(t *testing.T) {
 	// validation error in update
 	_, err = s.Update(ctx, id, UpdateFactRequest{Body: ""})
 	assert.NotNil(t, err)
-	count, _ = s.Count(ctx)
+	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
 	assert.Equal(t, 2, count)
 
 	// unexpected error in update
 	_, err = s.Update(ctx, id, UpdateFactRequest{Body: "error"})
 	assert.Equal(t, errCRUD, err)
-	count, _ = s.Count(ctx)
+	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
 	assert.Equal(t, 2, count)
 
 	// get
@@ -121,7 +121,7 @@ func Test_service_CRUD(t *testing.T) {
 	fact, err = s.Delete(ctx, id)
 	assert.Nil(t, err)
 	assert.Equal(t, id, fact.ID)
-	count, _ = s.Count(ctx)
+	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
 	assert.Equal(t, 1, count)
 }
 
@@ -138,7 +138,7 @@ func (m mockRepository) Get(ctx context.Context, id string) (entity.Fact, error)
 	return entity.Fact{}, sql.ErrNoRows
 }
 
-func (m mockRepository) Count(ctx context.Context) (int, error) {
+func (m mockRepository) Count(ctx context.Context, query QueryParams) (int, error) {
 	return len(m.items), nil
 }
 
