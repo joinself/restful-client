@@ -1,15 +1,20 @@
-FROM golang:alpine AS build
-RUN apk update && \
-    apk add curl \
+FROM golang:1.19.1-bullseye AS build
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl libsodium-dev && \
+    curl https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb -o /tmp/libself-olm_0.1.17_amd64.deb && \
+    curl https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb -o /tmp/libself-omemo_0.1.3_amd64.deb && \
+    apt-get install -y --no-install-recommends /tmp/libself-olm_0.1.17_amd64.deb /tmp/libself-omemo_0.1.3_amd64.deb && \
+    rm -rf /var/lib/apt/lists/* /tmp/*
+    
+RUN apt-get install -y curl \
             git \
             bash \
             make \
             ca-certificates && \
-    rm -rf /var/cache/apk/*
 
 # install migrate which will be used by entrypoint.sh to perform DB migration
-ARG MIGRATE_VERSION=4.7.1
-ADD https://github.com/golang-migrate/migrate/releases/download/v${MIGRATE_VERSION}/migrate.linux-amd64.tar.gz /tmp
+ADD https://github.com/golang-migrate/migrate/releases/download/v4.7.1/migrate.linux-amd64.tar.gz /tmp
 RUN tar -xzf /tmp/migrate.linux-amd64.tar.gz -C /usr/local/bin && mv /usr/local/bin/migrate.linux-amd64 /usr/local/bin/migrate
 
 WORKDIR /app
