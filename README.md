@@ -1,4 +1,4 @@
-# Go RESTful Joinself Client API (Boilerplate)
+# Go RESTful Joinself Client
 
 This joinself client is designed to act as a proxy between your app and The Self Network. It exposes a RESTful API to interact with the basic features Self has to offer.
 
