@@ -1,16 +1,13 @@
-# Go RESTful API Starter Kit (Boilerplate)
+# Go RESTful Joinself Client API (Boilerplate)
 
-[![GoDoc](https://godoc.org/github.com/joinself/restful-client?status.png)](http://godoc.org/github.com/joinself/restful-client)
-[![Build Status](https://github.com/joinself/restful-client/workflows/build/badge.svg)](https://github.com/joinself/restful-client/actions?query=workflow%3Abuild)
-[![Code Coverage](https://codecov.io/gh/qiangxue/go-rest-api/branch/master/graph/badge.svg)](https://codecov.io/gh/qiangxue/go-rest-api)
-[![Go Report](https://goreportcard.com/badge/github.com/joinself/restful-client)](https://goreportcard.com/report/github.com/joinself/restful-client)
+This joinself client is designed to act as a proxy between your app and The Self Network. It exposes a RESTful API to interact with the basic features Self has to offer.
 
-This starter kit is designed to get you up and running with a project structure optimized for developing
+This project is designed to get you up and running with a project structure optimized for developing
 RESTful API services in Go. It promotes the best practices that follow the [SOLID principles](https://en.wikipedia.org/wiki/SOLID)
 and [clean architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html). 
 It encourages writing clean and idiomatic Go code. 
 
-The kit provides the following features right out of the box:
+The API provides the following features right out of the box:
 
 * RESTful endpoints in the widely accepted format
 * Standard CRUD operations of a database table
@@ -32,22 +29,23 @@ since their usages are mostly localized and abstracted.
 * Data validation: [ozzo-validation](https://github.com/go-ozzo/ozzo-validation)
 * Logging: [zap](https://github.com/uber-go/zap)
 * JWT: [jwt-go](https://github.com/dgrijalva/jwt-go)
+* Self: [jwt-go](https://github.com/joinself/self-go-sdk)
 
 ## Getting Started
 
 If this is your first time encountering Go, please follow [the instructions](https://golang.org/doc/install) to
-install Go on your computer. The kit requires **Go 1.13 or above**.
+install Go on your computer. The kit requires **Go 1.17 or above**.
 
 [Docker](https://www.docker.com/get-started) is also needed if you want to try the kit without setting up your
 own database server. The kit requires **Docker 17.05 or higher** for the multi-stage build support.
 
-After installing Go and Docker, run the following commands to start experiencing this starter kit:
+After installing Go and Docker, run the following commands to start experiencing this restflu client:
 
 ```shell
-# download the starter kit
+# download the restful self client
 git clone https://github.com/joinself/restful-client.git
 
-cd go-rest-api
+cd restful-client
 
 # start a PostgreSQL database server in a Docker container
 make db-start
@@ -65,35 +63,34 @@ make run-live
 
 At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. It provides the following endpoints:
 
-* `GET /healthcheck`: a healthcheck service provided for health checking purpose (needed when implementing a server cluster)
-* `POST /v1/login`: authenticates a user and generates a JWT
-* `GET /v1/connections`: returns a paginated list of the connections
-* `GET /v1/connections/:id`: returns the detailed information of an connection
-* `POST /v1/connections`: creates a new connection
-* `PUT /v1/connections/:id`: updates an existing connection
-* `DELETE /v1/connections/:id`: deletes an connection
+- [x] `GET /healthcheck`: a healthcheck service provided for health checking purpose (needed when implementing a server cluster)
+- [x] `POST /v1/login`: authenticates a user and generates a JWT
 
+- [x] `GET /v1/connections`: returns a paginated list of the existing connections
+- [x] `GET /v1/connections/:id`: returns the detailed information of an connection
+- [x] `POST /v1/connections`: creates a new connection
+- [ ] `PUT /v1/connections/:id`: updates an existing connection
+- [ ] `DELETE /v1/connections/:id`: deletes an connection
 
-- [x] GET  /connections
-- [x] GET  /connections/:id
+- [x] `POST /connections/:id/messages`: sends a message to the specified connection
+- [x] `GET /connections/:id/messages`: retrieves the full conversation with a specific connection
+- [ ] `GET /connections/:id/messages/:id`
+- [ ] `PUT /connections/:id/messages/:id` updates an existing message
+- [ ] `DELETE /connections/:id/messages/:id` deletes an existing message from the conversation
 
-- [x] GET  /connections/:id/messages
-- [x] POST /connections/:id/messages
-- [x] GET  /connections/:id/messages/:id
-- [x] PUT  /connections/:id/messages/:id
-- [ ] GET  /connections/:id/messages/:id/responses
+- [ ] `GET  /groups`
+- [ ] `GET  /groups/:id`
+- [ ] `GET  /groups/:id/messages`
+- [ ] `GET  /groups/:id/messages/:id`
+- [ ] `PUT  /groups/:id/messages/:id`
+- [ ] `GET  /groups/:id/messages/:id/responses`
 - 
-- [ ] GET  /groups
-- [ ] GET  /groups/:id
-- [ ] GET  /groups/:id/messages
-- [ ] GET  /groups/:id/messages/:id
-- [ ] PUT  /groups/:id/messages/:id
-- [ ] GET  /groups/:id/messages/:id/responses
-- 
-- [x] GET  /connections/:id/facts
-- [x] GET  /connections/:id/facts/:id
-- [x] POST /connections/:id/facts/:id
-	
+- [x] `GET  /connections/:id/facts`: gets a list of the requested facts for a specific connection
+- [x] `POST /connections/:id/facts/:id`: sends a fact request to a specific connection.
+- [x] `GET  /connections/:id/facts/:id`: displays the details and attestations for a specific fact
+- [ ] `PUT /connections/:id/facts/:id`
+- [ ] `DELETE /connections/:id/facts/:id`
+
 
 Try the URL `http://localhost:8080/healthcheck` in a browser, and you should see something like `"OK v1.0.0"` displayed.
 
@@ -110,13 +107,9 @@ curl -X GET -H "Authorization: Bearer ...JWT token here..." http://localhost:808
 # should return a list of connection records in the JSON format
 ```
 
-To use the starter kit as a starting point of a real project whose package name is `github.com/abc/xyz`, do a global 
-replacement of the string `github.com/joinself/restful-client` in all of project files with the string `github.com/abc/xyz`.
-
-
 ## Project Layout
 
-The starter kit uses the following project layout:
+The Joinself restful client uses the following project layout:
  
 ```
 .
@@ -124,7 +117,10 @@ The starter kit uses the following project layout:
 │   └── server           the API server application
 ├── config               configuration files for different environments
 ├── internal             private application and library code
-│   ├── connection            connection-related features
+│   ├── connection       connection-related features
+│   ├── message          message-related features
+│   ├── fact             fact-related features
+│   ├── self             self runners to listen for self network events
 │   ├── auth             authentication feature
 │   ├── config           configuration library
 │   ├── entity           entity definitions and domain logic
@@ -153,7 +149,7 @@ as described in the [clean architecture](https://blog.cleancoder.com/uncle-bob/2
 
 ## Common Development Tasks
 
-This section describes some common development tasks using this starter kit.
+This section describes some common development tasks using this restful client.
 
 ### Implementing a New Feature
 
@@ -192,7 +188,7 @@ This is especially useful if an API handler needs to put method calls of multipl
 
 ### Updating Database Schema
 
-The starter kit uses [database migration](https://en.wikipedia.org/wiki/Schema_migration) to manage the changes of the 
+The self restful client uses [database migration](https://en.wikipedia.org/wiki/Schema_migration) to manage the changes of the 
 database schema over the whole project development phase. The following commands are commonly used with regard to database
 schema changes:
 
@@ -244,6 +240,4 @@ command,
 
 ```shell
 ./server -config=./config/prod.yml
-```
-
 ```

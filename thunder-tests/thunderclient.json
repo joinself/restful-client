@@ -1,0 +1,344 @@
+[
+  {
+    "_id": "5515b603-0b8e-40a2-a7d4-8c8a2438acca",
+    "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
+    "containerId": "",
+    "name": "auth",
+    "url": "http://localhost:8080/v1/login",
+    "method": "POST",
+    "sortNum": 20000,
+    "created": "2023-03-07T16:18:13.029Z",
+    "modified": "2023-03-08T09:10:31.359Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\"username\": \"demo\", \"password\": \"pass\"}",
+      "form": []
+    },
+    "tests": [
+      {
+        "type": "set-env-var",
+        "custom": "json.token",
+        "action": "setto",
+        "value": "{{self.auth_token}}"
+      },
+      {
+        "type": "res-code",
+        "custom": "",
+        "action": "equal",
+        "value": "200"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.token",
+        "action": "notequal",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "_id": "be902101-7d9c-4357-a546-fb3b8e0e08c7",
+    "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
+    "containerId": "",
+    "name": "new_connection",
+    "url": "http://localhost:8080/v1/connections",
+    "method": "POST",
+    "sortNum": 30000,
+    "created": "2023-03-07T16:18:13.030Z",
+    "modified": "2023-03-08T09:09:20.142Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"selfid\": \"{{self.connection}}\"\n}",
+      "form": []
+    },
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{self.auth_token}}"
+    },
+    "tests": [
+      {
+        "type": "res-code",
+        "custom": "",
+        "action": "equal",
+        "value": "201"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.id",
+        "action": "equal",
+        "value": "{{self.connection}}"
+      }
+    ]
+  },
+  {
+    "_id": "a505c9db-2e11-4ba7-b637-00e72e9989f0",
+    "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
+    "containerId": "",
+    "name": "get_connection",
+    "url": "http://localhost:8080/v1/connections/{{self.connection}}",
+    "method": "GET",
+    "sortNum": 40000,
+    "created": "2023-03-07T16:18:13.031Z",
+    "modified": "2023-03-08T09:12:17.703Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{self.auth_token}}"
+    },
+    "tests": [
+      {
+        "type": "res-code",
+        "custom": "",
+        "action": "equal",
+        "value": "200"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.name",
+        "action": "equal",
+        "value": "{{self.connection_name}}"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.id",
+        "action": "equal",
+        "value": "{{self.connection}}"
+      }
+    ]
+  },
+  {
+    "_id": "4ce9383c-c908-4d3c-98cc-5ab635c34cb9",
+    "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
+    "containerId": "",
+    "name": "send_message",
+    "url": "http://localhost:8080/v1/connections/{{self.connection}}/messages",
+    "method": "POST",
+    "sortNum": 50000,
+    "created": "2023-03-07T16:18:13.033Z",
+    "modified": "2023-03-07T16:18:13.033Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\"body\": \"meeeew\"}",
+      "form": []
+    },
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{self.auth_token}}"
+    },
+    "tests": []
+  },
+  {
+    "_id": "bea5bcff-1151-46ee-89db-014b502dadcb",
+    "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
+    "containerId": "",
+    "name": "list_messages",
+    "url": "http://localhost:8080/v1/connections/{{self.connection}}/messages",
+    "method": "GET",
+    "sortNum": 60000,
+    "created": "2023-03-07T16:18:13.034Z",
+    "modified": "2023-03-07T16:18:13.034Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{self.auth_token}}"
+    },
+    "tests": []
+  },
+  {
+    "_id": "86484c36-50f2-48a6-901c-4316fdbe796b",
+    "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
+    "containerId": "",
+    "name": "send_fact_request",
+    "url": "http://localhost:8080/v1/connections/{{self.connection}}/facts",
+    "method": "POST",
+    "sortNum": 70000,
+    "created": "2023-03-07T16:18:13.035Z",
+    "modified": "2023-03-07T16:18:13.035Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"source\": \"user_specified\",\n  \"fact\": \"email_address\"\n}",
+      "form": []
+    },
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{self.auth_token}}"
+    },
+    "tests": []
+  },
+  {
+    "_id": "d85745e0-76f4-45d4-bda0-819095e48435",
+    "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
+    "containerId": "",
+    "name": "list_facts",
+    "url": "http://localhost:8080/v1/connections/{{self.connection}}/facts",
+    "method": "GET",
+    "sortNum": 80000,
+    "created": "2023-03-07T16:18:13.036Z",
+    "modified": "2023-03-07T16:18:13.036Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{self.auth_token}}"
+    },
+    "tests": [
+      {
+        "type": "set-env-var",
+        "custom": "json.items[0].id",
+        "action": "setto",
+        "value": "{{self.fact}}"
+      }
+    ]
+  },
+  {
+    "_id": "2c862cdc-0935-4575-96d2-a3dc7f6ae8cf",
+    "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
+    "containerId": "",
+    "name": "get_fact",
+    "url": "http://localhost:8080/v1/connections/{{self.connection}}/facts/{{self.fact}}",
+    "method": "GET",
+    "sortNum": 90000,
+    "created": "2023-03-07T16:18:13.037Z",
+    "modified": "2023-03-07T16:18:13.037Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{self.auth_token}}"
+    },
+    "tests": []
+  },
+  {
+    "_id": "1b9a1255-36c5-460d-9b9f-3e2286eb79e5",
+    "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
+    "containerId": "",
+    "name": "search_facts",
+    "url": "http://localhost:8080/v1/connections/{{self.connection}}/facts?fact=email_address",
+    "method": "GET",
+    "sortNum": 100000,
+    "created": "2023-03-07T16:18:13.038Z",
+    "modified": "2023-03-07T16:18:13.038Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [
+      {
+        "name": "fact",
+        "value": "email_address",
+        "isPath": false
+      }
+    ],
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{self.auth_token}}"
+    },
+    "tests": [
+      {
+        "type": "set-env-var",
+        "custom": "json.items[0].id",
+        "action": "setto",
+        "value": "{{self.fact}}"
+      }
+    ]
+  },
+  {
+    "_id": "6207466c-8c6d-4a2d-92dc-3e35cca259a0",
+    "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
+    "containerId": "",
+    "name": "list_connections",
+    "url": "http://localhost:8080/v1/connections",
+    "method": "GET",
+    "sortNum": 45000,
+    "created": "2023-03-08T08:43:38.653Z",
+    "modified": "2023-03-08T09:30:58.182Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{self.auth_token}}"
+    },
+    "tests": [
+      {
+        "type": "res-code",
+        "custom": "",
+        "action": "equal",
+        "value": "200"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.items",
+        "action": "count",
+        "value": "7"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.items[0].id",
+        "action": "equal",
+        "value": "{{self.connection}}"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.total_count",
+        "action": "equal",
+        "value": "7"
+      }
+    ]
+  }
+]
