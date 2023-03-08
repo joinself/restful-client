@@ -30,6 +30,8 @@ type Config struct {
 	SelfStorageKey      string `yaml:"self_storage_key" env:"SELF_STORAGE_KEY"`
 	SelfStorageDir      string `yaml:"self_storage_dir" env:"SELF_STORAGE_DIR"`
 	SelfEnv             string `yaml:"self_env" env:"SELF_ENV"`
+	User                string `yaml:"user" env:"USER"`
+	Password            string `yaml:"password" env:"PASSWORD"`
 }
 
 // Validate validates the application configuration.
