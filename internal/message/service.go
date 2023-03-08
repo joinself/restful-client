@@ -100,10 +100,7 @@ func (s service) Create(ctx context.Context, connection string, req CreateMessag
 
 	// Send the message to the connection.
 	if s.client != nil {
-		_, err = s.client.ChatService().Message([]string{connection}, req.Body)
-		if err != nil {
-			return Message{}, err
-		}
+		go s.sendMessage(connection, req.Body)
 	}
 
 	return s.Get(ctx, msg.ID)
@@ -156,4 +153,11 @@ func (s service) Query(ctx context.Context, connection string, messagesSince int
 		result = append(result, Message{item})
 	}
 	return result, nil
+}
+
+func (s service) sendMessage(connection string, body string) {
+	_, err := s.client.ChatService().Message([]string{connection}, body)
+	if err != nil {
+		s.logger.Errorf("failed to send message: %v", err)
+	}
 }

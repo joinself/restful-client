@@ -85,6 +85,7 @@ func (r repository) Query(ctx context.Context, connection string, messagesSince 
 		Where(exp).
 		Offset(int64(offset)).
 		Limit(int64(limit)).
+		OrderBy("created_at DESC").
 		All(&messages)
 	return messages, err
 }

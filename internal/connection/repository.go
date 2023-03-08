@@ -76,6 +76,7 @@ func (r repository) Query(ctx context.Context, offset, limit int) ([]entity.Conn
 		Select().
 		OrderBy("id").
 		Offset(int64(offset)).
+		OrderBy("created_at DESC").
 		Limit(int64(limit)).
 		All(&connections)
 	return connections, err

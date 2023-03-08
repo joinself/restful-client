@@ -1,0 +1,28 @@
+[
+  {
+    "_id": "013a0f7e-9801-44af-9e24-06401feff222",
+    "name": "self.auth_token",
+    "default": true,
+    "sortNum": 10000,
+    "created": "2023-03-08T09:04:36.138Z",
+    "modified": "2023-03-08T09:04:36.138Z",
+    "data": [
+      {
+        "name": "self.auth_token",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzg1MjY4MTIsImlkIjoiMTAwIiwibmFtZSI6ImRlbW8ifQ.VlOsMkN2TNr0SnBCKp3p9VItMVQudrg0S7ToKH7_ew8"
+      },
+      {
+        "name": "self.connection",
+        "value": "34390027438"
+      },
+      {
+        "name": "self.fact",
+        "value": "0a601e68-68da-44ff-a5d4-f42add3424ac"
+      },
+      {
+        "name": "self.connection_name",
+        "value": "Adriq"
+      }
+    ]
+  }
+]
