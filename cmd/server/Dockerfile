@@ -1,4 +1,4 @@
-FROM golang:1.19.1-bullseye AS build
+FROM --platform=linux/amd64 golang:1.19.1-bullseye AS build
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl libsodium-dev && \
@@ -11,7 +11,7 @@ RUN apt-get install -y curl \
             git \
             bash \
             make \
-            ca-certificates && \
+            ca-certificates
 
 # install migrate which will be used by entrypoint.sh to perform DB migration
 ADD https://github.com/golang-migrate/migrate/releases/download/v4.7.1/migrate.linux-amd64.tar.gz /tmp
@@ -27,7 +27,6 @@ RUN go mod verify
 # copy source files and build the binary
 COPY . .
 RUN make build
-
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates bash
