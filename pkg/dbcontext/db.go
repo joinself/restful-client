@@ -6,7 +6,6 @@ import (
 	"context"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
-	routing "github.com/go-ozzo/ozzo-routing/v2"
 )
 
 // DB represents a DB connection that can be used to run SQL queries.
@@ -51,9 +50,10 @@ func (db *DB) Transactional(ctx context.Context, f func(ctx context.Context) err
 	})
 }
 
+/*
 // TransactionHandler returns a middleware that starts a transaction.
 // The transaction started is kept in the context and can be accessed via With().
-func (db *DB) TransactionHandler() routing.Handler {
+func (db *DB) TransactionHandler() echo.MiddlewareFunc {
 	return func(c *routing.Context) error {
 		return db.db.TransactionalContext(c.Request.Context(), nil, func(tx *dbx.Tx) error {
 			ctx := context.WithValue(c.Request.Context(), txKey, tx)
@@ -62,3 +62,4 @@ func (db *DB) TransactionHandler() routing.Handler {
 		})
 	}
 }
+*/

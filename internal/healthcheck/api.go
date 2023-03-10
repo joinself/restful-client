@@ -1,15 +1,17 @@
 package healthcheck
 
-import routing "github.com/go-ozzo/ozzo-routing/v2"
+import (
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+)
 
 // RegisterHandlers registers the handlers that perform healthchecks.
-func RegisterHandlers(r *routing.Router, version string) {
-	r.To("GET,HEAD", "/healthcheck", healthcheck(version))
+func RegisterHandlers(r *echo.Echo, version string) {
+	r.GET("/healthcheck", healthcheck)
 }
 
 // healthcheck responds to a healthcheck request.
-func healthcheck(version string) routing.Handler {
-	return func(c *routing.Context) error {
-		return c.Write("OK " + version)
-	}
+func healthcheck(c echo.Context) error {
+	return c.JSON(http.StatusOK, "OK")
 }

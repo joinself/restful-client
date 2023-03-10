@@ -4,29 +4,26 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"fmt"
 	lg "log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
-	routing "github.com/go-ozzo/ozzo-routing/v2"
-	"github.com/go-ozzo/ozzo-routing/v2/content"
-	"github.com/go-ozzo/ozzo-routing/v2/cors"
 	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/internal/config"
 	"github.com/joinself/restful-client/internal/connection"
-	"github.com/joinself/restful-client/internal/errors"
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/healthcheck"
 	"github.com/joinself/restful-client/internal/message"
 	"github.com/joinself/restful-client/internal/self"
-	"github.com/joinself/restful-client/pkg/accesslog"
 	"github.com/joinself/restful-client/pkg/dbcontext"
 	"github.com/joinself/restful-client/pkg/log"
 	selfsdk "github.com/joinself/self-go-sdk"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/lib/pq"
 )
 
@@ -62,19 +59,7 @@ func main() {
 	}()
 
 	// build HTTP server
-	address := fmt.Sprintf(":%v", cfg.ServerPort)
-	hs := &http.Server{
-		Addr:    address,
-		Handler: buildHandler(logger, dbcontext.New(db), cfg),
-	}
-
-	// start the HTTP server with graceful shutdown
-	go routing.GracefulShutdown(hs, 10*time.Second, logger.Infof)
-	logger.Infof("server %v is running at %v", Version, address)
-	if err := hs.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		logger.Error(err)
-		os.Exit(-1)
-	}
+	buildHandler(logger, dbcontext.New(db), cfg)
 }
 
 // buildHandler sets up the HTTP routing and builds an HTTP handler.
@@ -84,18 +69,21 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		lg.Fatalf("failed to setup self client: %v", err.Error())
 	}
 
-	router := routing.New()
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "method=${method}, uri=${uri}, status=${status}\n",
+	}))
 
-	router.Use(
-		accesslog.Handler(logger),
-		errors.Handler(logger),
-		content.TypeNegotiator(content.JSON),
-		cors.Handler(cors.AllowAll),
-	)
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	}))
 
-	healthcheck.RegisterHandlers(router, Version)
-
-	rg := router.Group("/v1")
+	healthcheck.RegisterHandlers(e, Version)
+	rg := e.Group("/v1")
+	// rg := router.Group("/v1")
 
 	authHandler := auth.Handler(cfg.JWTSigningKey)
 	connectionRepo := connection.NewRepository(db, logger)
@@ -128,7 +116,10 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		logger,
 	)
 
-	return router
+	// Start server
+	e.Logger.Fatal(e.Start(":" + strconv.Itoa(cfg.ServerPort)))
+
+	return e
 }
 
 func setupSelfClient(cfg *config.Config) (*selfsdk.Client, error) {

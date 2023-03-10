@@ -141,6 +141,7 @@ func (s service) Count(ctx context.Context) (int, error) {
 func (s service) Query(ctx context.Context, offset, limit int) ([]Connection, error) {
 	items, err := s.repo.Query(ctx, offset, limit)
 	if err != nil {
+		println("error")
 		return nil, err
 	}
 	result := []Connection{}
