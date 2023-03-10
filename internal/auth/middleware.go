@@ -4,27 +4,28 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
-	routing "github.com/go-ozzo/ozzo-routing/v2"
-	"github.com/go-ozzo/ozzo-routing/v2/auth"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/joinself/restful-client/internal/entity"
-	"github.com/joinself/restful-client/internal/errors"
+	echojwt "github.com/labstack/echo-jwt/v4"
+	"github.com/labstack/echo/v4"
 )
 
-// Handler returns a JWT-based authentication middleware.
-func Handler(verificationKey string) routing.Handler {
-	return auth.JWT(verificationKey, auth.JWTOptions{TokenHandler: handleToken})
+type jwtCustomClaims struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	jwt.RegisteredClaims
 }
 
-// handleToken stores the user identity in the request context so that it can be accessed elsewhere.
-func handleToken(c *routing.Context, token *jwt.Token) error {
-	ctx := WithUser(
-		c.Request.Context(),
-		token.Claims.(jwt.MapClaims)["id"].(string),
-		token.Claims.(jwt.MapClaims)["name"].(string),
-	)
-	c.Request = c.Request.WithContext(ctx)
-	return nil
+// Handler returns a JWT-based authentication middleware.
+func Handler(verificationKey string) echo.MiddlewareFunc {
+	config := echojwt.Config{
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return new(jwtCustomClaims)
+		},
+		SigningKey: []byte(verificationKey),
+	}
+
+	return echojwt.WithConfig(config)
 }
 
 type contextKey int
@@ -35,7 +36,10 @@ const (
 
 // WithUser returns a context that contains the user identity from the given JWT.
 func WithUser(ctx context.Context, id, name string) context.Context {
-	return context.WithValue(ctx, userKey, entity.User{ID: id, Name: name})
+	return context.WithValue(ctx, userKey, entity.User{
+		ID:   id,
+		Name: name,
+	})
 }
 
 // CurrentUser returns the user identity from the given context.
@@ -51,13 +55,15 @@ func CurrentUser(ctx context.Context) Identity {
 // If the request contains an Authorization header whose value is "TEST", then
 // it considers the user is authenticated as "Tester" whose ID is "100".
 // It fails the authentication otherwise.
-func MockAuthHandler(c *routing.Context) error {
-	if c.Request.Header.Get("Authorization") != "TEST" {
-		return errors.Unauthorized("")
+func MockAuthHandler() echo.MiddlewareFunc {
+	config := echojwt.Config{
+		Skipper: func(c echo.Context) bool {
+			return (c.Request().Header.Get("Authorization") == "TEST")
+		},
+		SigningKey: []byte("test"),
 	}
-	ctx := WithUser(c.Request.Context(), "100", "Tester")
-	c.Request = c.Request.WithContext(ctx)
-	return nil
+
+	return echojwt.WithConfig(config)
 }
 
 // MockAuthHeader returns an HTTP header that can pass the authentication check by MockAuthHandler.

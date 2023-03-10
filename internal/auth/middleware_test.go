@@ -2,11 +2,8 @@ package auth
 
 import (
 	"context"
-	"net/http"
 	"testing"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/joinself/restful-client/internal/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,33 +20,4 @@ func TestCurrentUser(t *testing.T) {
 
 func TestHandler(t *testing.T) {
 	assert.NotNil(t, Handler("test"))
-}
-
-func Test_handleToken(t *testing.T) {
-	req, _ := http.NewRequest("GET", "http://example.com", nil)
-	ctx, _ := test.MockRoutingContext(req)
-	assert.Nil(t, CurrentUser(ctx.Request.Context()))
-
-	err := handleToken(ctx, &jwt.Token{
-		Claims: jwt.MapClaims{
-			"id":   "100",
-			"name": "test",
-		},
-	})
-	assert.Nil(t, err)
-	identity := CurrentUser(ctx.Request.Context())
-	if assert.NotNil(t, identity) {
-		assert.Equal(t, "100", identity.GetID())
-		assert.Equal(t, "test", identity.GetName())
-	}
-}
-
-func TestMocks(t *testing.T) {
-	req, _ := http.NewRequest("GET", "http://example.com", nil)
-	ctx, _ := test.MockRoutingContext(req)
-	assert.NotNil(t, MockAuthHandler(ctx))
-	req.Header = MockAuthHeader()
-	ctx, _ = test.MockRoutingContext(req)
-	assert.Nil(t, MockAuthHandler(ctx))
-	assert.NotNil(t, CurrentUser(ctx.Request.Context()))
 }

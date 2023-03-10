@@ -3,25 +3,23 @@ package fact
 import (
 	"net/http"
 
-	routing "github.com/go-ozzo/ozzo-routing/v2"
-	"github.com/joinself/restful-client/internal/errors"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
+	"github.com/labstack/echo/v4"
 )
 
 // RegisterHandlers sets up the routing of the HTTP handlers.
-func RegisterHandlers(r *routing.RouteGroup, service Service, authHandler routing.Handler, logger log.Logger) {
+func RegisterHandlers(r *echo.Group, service Service, authHandler echo.MiddlewareFunc, logger log.Logger) {
 	res := resource{service, logger}
 
 	r.Use(authHandler)
 
-	r.Get("/connections/<connection_id>/facts/<id>", res.get)
-	r.Get("/connections/<connection_id>/facts", res.query)
+	r.GET("/connections/:connection_id/facts/:id", res.get)
+	r.GET("/connections/:connection_id/facts", res.query)
 
-	// the following endpoints require a valid JWT
-	r.Post("/connections/<connection_id>/facts", res.create)
-	r.Put("/connections/<connection_id>/facts/<id>", res.update)
-	r.Delete("/connections/<connection_id>/facts/<id>", res.delete)
+	r.POST("/connections/:connection_id/facts", res.create)
+	r.PUT("/connections/:connection_id/facts/:id", res.update)
+	r.DELETE("/connections/:connection_id/facts/:id", res.delete)
 }
 
 type resource struct {
@@ -29,71 +27,71 @@ type resource struct {
 	logger  log.Logger
 }
 
-func (r resource) get(c *routing.Context) error {
-	fact, err := r.service.Get(c.Request.Context(), c.Param("id"))
+func (r resource) get(c echo.Context) error {
+	fact, err := r.service.Get(c.Request().Context(), c.Param("id"))
 	if err != nil {
-		return err
+		return c.JSON(http.StatusNotFound, err.Error())
 	}
 
-	return c.Write(fact)
+	return c.JSON(http.StatusOK, fact)
 }
 
-func (r resource) query(c *routing.Context) error {
-	ctx := c.Request.Context()
+func (r resource) query(c echo.Context) error {
+	ctx := c.Request().Context()
 
 	query := QueryParams{
 		Connection: c.Param("connection_id"),
-		Source:     c.Query("source", ""),
-		Fact:       c.Query("fact", ""),
+		Source:     c.QueryParam("source"),
+		Fact:       c.QueryParam("fact"),
 	}
 
 	count, err := r.service.Count(ctx, query)
 	if err != nil {
-		return err
+		return c.JSON(http.StatusNotFound, err.Error())
 	}
-	pages := pagination.NewFromRequest(c.Request, count)
+	pages := pagination.NewFromRequest(c.Request(), count)
 	facts, err := r.service.Query(ctx, query, pages.Offset(), pages.Limit())
 	if err != nil {
-		return err
+		return c.JSON(http.StatusNotFound, err.Error())
 	}
 	pages.Items = facts
-	return c.Write(pages)
+	return c.JSON(http.StatusOK, pages)
 }
 
-func (r resource) create(c *routing.Context) error {
+func (r resource) create(c echo.Context) error {
 	var input CreateFactRequest
-	if err := c.Read(&input); err != nil {
-		r.logger.With(c.Request.Context()).Info(err)
-		return errors.BadRequest("")
+	if err := c.Bind(&input); err != nil {
+		r.logger.With(c.Request().Context()).Info(err)
+		return c.JSON(http.StatusBadRequest, "")
 	}
-	fact, err := r.service.Create(c.Request.Context(), c.Param("connection_id"), input)
+	fact, err := r.service.Create(c.Request().Context(), c.Param("connection_id"), input)
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.WriteWithStatus(fact, http.StatusCreated)
+	return c.JSON(http.StatusCreated, fact)
 }
 
-func (r resource) update(c *routing.Context) error {
+func (r resource) update(c echo.Context) error {
 	var input UpdateFactRequest
-	if err := c.Read(&input); err != nil {
-		r.logger.With(c.Request.Context()).Info(err)
-		return errors.BadRequest("")
+	if err := c.Bind(&input); err != nil {
+		r.logger.With(c.Request().Context()).Info(err)
+		return c.JSON(http.StatusBadRequest, "")
 	}
 
-	fact, err := r.service.Update(c.Request.Context(), c.Param("id"), input)
+	fact, err := r.service.Update(c.Request().Context(), c.Param("id"), input)
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.Write(fact)
+	return c.JSON(http.StatusOK, fact)
 }
 
-func (r resource) delete(c *routing.Context) error {
-	fact, err := r.service.Delete(c.Request.Context(), c.Param("id"))
+func (r resource) delete(c echo.Context) error {
+	fact, err := r.service.Delete(c.Request().Context(), c.Param("id"))
 	if err != nil {
-		return err
+		return c.JSON(http.StatusNotFound, err.Error())
 	}
 
-	return c.Write(fact)
+	return c.JSON(http.StatusOK, fact)
 }

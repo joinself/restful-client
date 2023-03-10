@@ -23,7 +23,7 @@ The API provides the following features right out of the box:
 The kit uses the following Go packages which can be easily replaced with your own favorite ones
 since their usages are mostly localized and abstracted. 
 
-* Routing: [ozzo-routing](https://github.com/go-ozzo/ozzo-routing)
+* Routing: [echo](https://github.com/labstack/echo)
 * Database access: [ozzo-dbx](https://github.com/go-ozzo/ozzo-dbx)
 * Database migration: [golang-migrate](https://github.com/golang-migrate/migrate)
 * Data validation: [ozzo-validation](https://github.com/go-ozzo/ozzo-validation)

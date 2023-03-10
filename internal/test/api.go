@@ -2,12 +2,13 @@ package test
 
 import (
 	"bytes"
-	routing "github.com/go-ozzo/ozzo-routing/v2"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 )
 
 // APITestCase represents the data needed to describe an API test case.
@@ -21,7 +22,7 @@ type APITestCase struct {
 }
 
 // Endpoint tests an HTTP endpoint using the given APITestCase spec.
-func Endpoint(t *testing.T, router *routing.Router, tc APITestCase) {
+func Endpoint(t *testing.T, router *echo.Echo, tc APITestCase) {
 	t.Run(tc.Name, func(t *testing.T) {
 		req, _ := http.NewRequest(tc.Method, tc.URL, bytes.NewBufferString(tc.Body))
 		if tc.Header != nil {

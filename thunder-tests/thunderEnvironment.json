@@ -9,7 +9,7 @@
     "data": [
       {
         "name": "self.auth_token",
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2Nzg1MjY4MTIsImlkIjoiMTAwIiwibmFtZSI6ImRlbW8ifQ.VlOsMkN2TNr0SnBCKp3p9VItMVQudrg0S7ToKH7_ew8"
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEwMCIsIm5hbWUiOiJkZW1vIiwiZXhwIjoxNjc4NjMwMzg3fQ.RwTt8iVi4MdyvkK7cOArD2Lbyq6DmkZa1lJ_VlLMznY"
       },
       {
         "name": "self.connection",
@@ -17,7 +17,7 @@
       },
       {
         "name": "self.fact",
-        "value": "0a601e68-68da-44ff-a5d4-f42add3424ac"
+        "value": "3643a268-c749-412c-a1d9-4a6b1338a99f"
       },
       {
         "name": "self.connection_name",

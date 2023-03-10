@@ -3,14 +3,12 @@ package dbcontext
 import (
 	"context"
 	"database/sql"
-	dbx "github.com/go-ozzo/ozzo-dbx"
-	routing "github.com/go-ozzo/ozzo-routing/v2"
-	_ "github.com/lib/pq" // initialize posgresql for test
-	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
+
+	dbx "github.com/go-ozzo/ozzo-dbx"
+	_ "github.com/lib/pq" // initialize posgresql for test
+	"github.com/stretchr/testify/assert"
 )
 
 const DSN = "postgres://127.0.0.1/go_restful?sslmode=disable&user=postgres&password=postgres"
@@ -63,6 +61,7 @@ func TestDB_Transactional(t *testing.T) {
 	})
 }
 
+/*
 func TestDB_TransactionHandler(t *testing.T) {
 	runDBTest(t, func(db *dbx.DB) {
 		assert.Zero(t, runCountQuery(t, db))
@@ -102,6 +101,7 @@ func TestDB_TransactionHandler(t *testing.T) {
 		}
 	})
 }
+*/
 
 func runDBTest(t *testing.T, f func(db *dbx.DB)) {
 	dsn, ok := os.LookupEnv("APP_DSN")

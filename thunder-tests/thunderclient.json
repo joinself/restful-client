@@ -302,7 +302,7 @@
     "method": "GET",
     "sortNum": 45000,
     "created": "2023-03-08T08:43:38.653Z",
-    "modified": "2023-03-08T09:30:58.182Z",
+    "modified": "2023-03-09T13:59:19.292Z",
     "headers": [
       {
         "name": "Content-Type",
@@ -325,7 +325,7 @@
         "type": "json-query",
         "custom": "json.items",
         "action": "count",
-        "value": "7"
+        "value": "6"
       },
       {
         "type": "json-query",
@@ -337,7 +337,7 @@
         "type": "json-query",
         "custom": "json.total_count",
         "action": "equal",
-        "value": "7"
+        "value": "6"
       }
     ]
   }

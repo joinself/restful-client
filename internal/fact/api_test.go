@@ -20,7 +20,8 @@ func TestAPI(t *testing.T) {
 	atRepo := &mockAtRepository{items: []entity.Attestation{
 		{"123", "123", "body", "value", time.Now(), time.Now()},
 	}}
-	RegisterHandlers(router.Group(""), NewService(repo, atRepo, logger, nil), auth.MockAuthHandler, logger)
+	authHandler := auth.MockAuthHandler()
+	RegisterHandlers(router.Group(""), NewService(repo, atRepo, logger, nil), authHandler, logger)
 	header := auth.MockAuthHeader()
 
 	tests := []test.APITestCase{

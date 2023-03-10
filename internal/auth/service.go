@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/errors"
 	"github.com/joinself/restful-client/pkg/log"
@@ -44,6 +44,7 @@ func (s service) Login(ctx context.Context, username, password string) (string, 
 	if identity := s.authenticate(ctx, username, password); identity != nil {
 		return s.generateJWT(identity)
 	}
+
 	return "", errors.Unauthorized("")
 }
 
@@ -64,9 +65,22 @@ func (s service) authenticate(ctx context.Context, username, password string) Id
 
 // generateJWT generates a JWT that encodes an identity.
 func (s service) generateJWT(identity Identity) (string, error) {
-	return jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":   identity.GetID(),
-		"name": identity.GetName(),
-		"exp":  time.Now().Add(time.Duration(s.tokenExpiration) * time.Hour).Unix(),
-	}).SignedString([]byte(s.signingKey))
+	// Set custom claims
+	claims := &jwtCustomClaims{
+		identity.GetID(),
+		identity.GetName(),
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
+		},
+	}
+
+	// Create token with claims
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(s.signingKey))
+	/*
+		return jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"id":   identity.GetID(),
+			"name": identity.GetName(),
+			"exp":  time.Now().Add(time.Duration(s.tokenExpiration) * time.Hour).Unix(),
+		}).SignedString([]byte(s.signingKey))
+	*/
 }

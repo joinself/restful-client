@@ -22,6 +22,7 @@ func (m mockService) Login(ctx context.Context, username, password string) (stri
 func TestAPI(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
+
 	RegisterHandlers(router.Group(""), mockService{}, logger)
 
 	tests := []test.APITestCase{
