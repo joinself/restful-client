@@ -20,6 +20,7 @@ type Service interface {
 	Delete(ctx context.Context, id string) (Connection, error)
 }
 
+// FactService service to manage sending and receiving fact requests
 type FactService interface {
 	Request(*fact.FactRequest) (*fact.FactResponse, error)
 }
