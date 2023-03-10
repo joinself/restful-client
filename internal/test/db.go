@@ -59,6 +59,7 @@ func getSourcePath() string {
 	return path.Dir(filename)
 }
 
+// CreateConnection creates a connection.
 func CreateConnection(ctx context.Context, db *dbcontext.DB, id string) error {
 	var connection entity.Connection
 	err := db.With(ctx).Select().Model(id, &connection)

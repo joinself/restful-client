@@ -22,7 +22,8 @@ type Service interface {
 	Delete(ctx context.Context, id string) (Fact, error)
 }
 
-type FactService interface {
+// RequesterService service to manage sending and receiving fact requests
+type RequesterService interface {
 	Request(*fact.FactRequest) (*fact.FactResponse, error)
 }
 
@@ -65,11 +66,11 @@ type service struct {
 	repo   Repository
 	atRepo attestation.Repository
 	logger log.Logger
-	client FactService
+	client RequesterService
 }
 
 // NewService creates a new fact service.
-func NewService(repo Repository, atRepo attestation.Repository, logger log.Logger, client FactService) Service {
+func NewService(repo Repository, atRepo attestation.Repository, logger log.Logger, client RequesterService) Service {
 	return service{repo, atRepo, logger, client}
 }
 

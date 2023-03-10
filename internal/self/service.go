@@ -13,7 +13,9 @@ import (
 	"github.com/joinself/self-go-sdk/chat"
 )
 
+// Service interface for self service.
 type Service interface {
+	Run()
 }
 
 type service struct {
@@ -34,9 +36,13 @@ func NewService(client *selfsdk.Client, cRepo connection.Repository, fRepo fact.
 		logger: logger,
 	}
 	s.SetupHooks()
-	client.Start()
 
-	return s
+	return &s
+}
+
+// Run executes the background self listerners.
+func (s *service) Run() {
+	s.client.Start()
 }
 
 func (s *service) SetupHooks() {

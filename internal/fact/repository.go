@@ -39,6 +39,7 @@ func NewRepository(db *dbcontext.DB, logger log.Logger) Repository {
 	return repository{db, logger}
 }
 
+// QueryParams paramenters accepted by the Query method.
 type QueryParams struct {
 	Connection string
 	Source     string

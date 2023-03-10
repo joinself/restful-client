@@ -43,7 +43,7 @@ jobs:
           go get -u golang.org/x/lint/golint
 
       - name: Run go lint
-        run: make lint
+        run: golint ./...
 
       - name: Build
         run: make build
