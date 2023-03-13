@@ -28,7 +28,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Lint check
-        run: make link
+        run: make lint
       - name: Setup environment
         run: |
           apt-get update
