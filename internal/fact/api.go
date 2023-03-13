@@ -27,6 +27,17 @@ type resource struct {
 	logger  log.Logger
 }
 
+// GetConnection godoc
+// @Summary      Get fact details.
+// @Description  Get fact details by fact request id.
+// @Tags         facts
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        connection_id   path      int  true  "Connection id"
+// @Param        id   path      int  true  "Fact request id"
+// @Success      200  {object}  Fact
+// @Router       /connections/{connection_id}/facts/{id} [get]
 func (r resource) get(c echo.Context) error {
 	fact, err := r.service.Get(c.Request().Context(), c.Param("id"))
 	if err != nil {
@@ -36,6 +47,18 @@ func (r resource) get(c echo.Context) error {
 	return c.JSON(http.StatusOK, fact)
 }
 
+// ListFacts       godoc
+// @Summary        List facts.
+// @Description    List facts matching the specified filters.
+// @Tags           facts
+// @Accept         json
+// @Produce        json
+// @Security       BearerAuth
+// @Param          connection_id   path      int  true  "Connection id"
+// @Param          source query string  false  "source"  Format(string)
+// @Param          fact query string  false  "fact name"  Format(string)
+// @Success        200  {array}  connection.Connection
+// @Router         /connections/{connection_id}/facts [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -58,6 +81,19 @@ func (r resource) query(c echo.Context) error {
 	return c.JSON(http.StatusOK, pages)
 }
 
+// CreateConnection godoc
+// @Summary         Sends a fact request.
+// @Description  	Sends a fact request to the specified self user.
+// @Tags            facts
+// @Accept          json
+// @Produce         json
+// @Security        BearerAuth
+// @Param           page query int false "page number"
+// @Param           per_page query int false "number of elements per page"
+// @Param           connection_id  path string  true  "Connection id"
+// @Param           request body CreateFactRequest true "query params"
+// @Success         200  {object}  connection.Connection
+// @Router          /connections/{connection_id}/facts [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateFactRequest
 	if err := c.Bind(&input); err != nil {

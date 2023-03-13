@@ -110,3 +110,7 @@ migrate-reset: ## reset database and re-run all migrations
 	@$(MIGRATE) drop
 	@echo "Running all database migrations..."
 	@$(MIGRATE) up
+
+.PHONY: gen-openapi
+gen-openapi:
+	swag init -d cmd/server/,internal/healthcheck/,internal/auth,internal/connection,internal/fact,internal/message,internal/entity

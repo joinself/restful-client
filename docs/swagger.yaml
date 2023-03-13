@@ -1,0 +1,450 @@
+basePath: /v1/
+definitions:
+  auth.AuthRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  auth.AuthResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  connection.Connection:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  connection.CreateConnectionRequest:
+    properties:
+      name:
+        type: string
+      selfid:
+        type: string
+    type: object
+  entity.Attestation:
+    properties:
+      body:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+      value:
+        type: string
+    type: object
+  fact.CreateFactRequest:
+    properties:
+      body:
+        type: string
+      cid:
+        type: string
+      fact:
+        type: string
+      iat:
+        type: string
+      rid:
+        type: string
+      source:
+        type: string
+    type: object
+  fact.Fact:
+    properties:
+      attestations:
+        items:
+          $ref: '#/definitions/entity.Attestation'
+        type: array
+      body:
+        type: string
+      cid:
+        type: string
+      created_at:
+        type: string
+      fact:
+        type: string
+      id:
+        type: string
+      iss:
+        type: string
+      jti:
+        type: string
+      source:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  message.CreateMessageRequest:
+    properties:
+      body:
+        type: string
+      cid:
+        type: string
+      iat:
+        type: string
+      rid:
+        type: string
+    type: object
+  message.Message:
+    properties:
+      body:
+        type: string
+      cid:
+        type: string
+      created_at:
+        type: string
+      iat:
+        type: string
+      id:
+        type: integer
+      iss:
+        type: string
+      rid:
+        type: string
+      updated_at:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server server Bob.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Echo Swagger Example API
+  version: "1.0"
+paths:
+  /connections:
+    get:
+      consumes:
+      - application/json
+      description: List connections matching the specified filters.
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: number of elements per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/connection.Connection'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List connections.
+      tags:
+      - connections
+    post:
+      consumes:
+      - application/json
+      description: Creates a new connection and sends a request for public information.
+      parameters:
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/connection.CreateConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/connection.Connection'
+      security:
+      - BearerAuth: []
+      summary: Creates a new connection.
+      tags:
+      - connections
+  /connections/{connection_id}/facts:
+    get:
+      consumes:
+      - application/json
+      description: List facts matching the specified filters.
+      parameters:
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: integer
+      - description: source
+        format: string
+        in: query
+        name: source
+        type: string
+      - description: fact name
+        format: string
+        in: query
+        name: fact
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/connection.Connection'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List facts.
+      tags:
+      - facts
+    post:
+      consumes:
+      - application/json
+      description: Sends a fact request to the specified self user.
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: number of elements per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: string
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/fact.CreateFactRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/connection.Connection'
+      security:
+      - BearerAuth: []
+      summary: Sends a fact request.
+      tags:
+      - facts
+  /connections/{connection_id}/facts/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get fact details by fact request id.
+      parameters:
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: integer
+      - description: Fact request id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/fact.Fact'
+      security:
+      - BearerAuth: []
+      summary: Get fact details.
+      tags:
+      - facts
+  /connections/{connection_id}/messages:
+    get:
+      consumes:
+      - application/json
+      description: List conversation messages with a specific connection.
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: number of elements per page
+        in: query
+        name: per_page
+        type: integer
+      - description: Connection ID
+        in: path
+        name: connection_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/connection.Connection'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List conversation messages.
+      tags:
+      - messages
+    post:
+      consumes:
+      - application/json
+      description: Sends a message to the specified connection.
+      parameters:
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: integer
+      - description: message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/message.CreateMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/message.Message'
+      security:
+      - BearerAuth: []
+      summary: Sends a message.
+      tags:
+      - messages
+  /connections/{connection_id}/messages/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get message details
+      parameters:
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: integer
+      - description: Message id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/message.Message'
+      security:
+      - BearerAuth: []
+      summary: Gets a message.
+      tags:
+      - messages
+  /connections/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get connection details by selfID.
+      parameters:
+      - description: Self ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/connection.Connection'
+      security:
+      - BearerAuth: []
+      summary: Get connection details.
+      tags:
+      - connections
+  /healthcheck:
+    get:
+      consumes:
+      - application/json
+      description: check the service is up and running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      summary: healthcheck endpoint
+      tags:
+      - healthcheck
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Get a temporary JWT token to interact with the api.
+      parameters:
+      - description: Self ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.AuthResponse'
+      summary: Authenticate.
+      tags:
+      - login
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
