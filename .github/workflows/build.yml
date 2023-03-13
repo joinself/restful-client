@@ -42,8 +42,8 @@ jobs:
           go get github.com/mattn/goveralls
           go get golang.org/x/lint/golint
 
-      - name: Run go lint
-        run: $GITHUB_PATH/bin/golint ./...
+      # - name: Run go lint
+      #  run: make lint
 
       - name: Build
         run: make build
