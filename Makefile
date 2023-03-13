@@ -80,7 +80,10 @@ testdata: ## populate the database with test data
 
 .PHONY: lint
 lint: ## run golint on all Go package
-	@golint $(PACKAGES)
+	@if ! [ -x "$$(command -v golangci-lint)" ]; then \
+		wget -O - -q https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.21.0; \
+	fi
+	golangci-lint run -v ./...
 
 .PHONY: fmt
 fmt: ## run "go fmt" on all Go packages
