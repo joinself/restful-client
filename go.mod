@@ -13,10 +13,12 @@ require (
 	github.com/lib/pq v1.2.0
 	github.com/qiangxue/go-env v1.0.0
 	github.com/stretchr/testify v1.8.1
+	github.com/swaggo/echo-swagger v1.3.5 // indirect
+	github.com/swaggo/swag v1.8.10 // indirect
 	go.uber.org/atomic v1.5.1 // indirect
 	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/zap v1.13.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/tools v0.7.0 // indirect
-	gopkg.in/yaml.v2 v2.2.2
+	gopkg.in/yaml.v2 v2.4.0
 )

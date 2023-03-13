@@ -28,6 +28,16 @@ type resource struct {
 	logger  log.Logger
 }
 
+// GetConnection godoc
+// @Summary      Get connection details.
+// @Description  Get connection details by selfID.
+// @Tags         connections
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      int  true  "Self ID"
+// @Success      200  {object}  connection.Connection
+// @Router       /connections/{id} [get]
 func (r resource) get(c echo.Context) error {
 	connection, err := r.service.Get(c.Request().Context(), c.Param("id"))
 	if err != nil {
@@ -37,6 +47,17 @@ func (r resource) get(c echo.Context) error {
 	return c.JSON(http.StatusOK, connection)
 }
 
+// ListConnections godoc
+// @Summary        List connections.
+// @Description    List connections matching the specified filters.
+// @Tags           connections
+// @Accept         json
+// @Produce        json
+// @Security       BearerAuth
+// @Param          page query int false "page number"
+// @Param          per_page query int false "number of elements per page"
+// @Success        200  {array}  connection.Connection
+// @Router         /connections [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
 	count, err := r.service.Count(ctx)
@@ -54,6 +75,16 @@ func (r resource) query(c echo.Context) error {
 	return c.JSON(http.StatusOK, pages)
 }
 
+// CreateConnection godoc
+// @Summary         Creates a new connection.
+// @Description  	Creates a new connection and sends a request for public information.
+// @Tags            connections
+// @Accept          json
+// @Produce         json
+// @Security        BearerAuth
+// @Param           request body connection.CreateConnectionRequest true "query params"
+// @Success         200  {object}  connection.Connection
+// @Router          /connections [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateConnectionRequest
 	if err := c.Bind(&input); err != nil {
