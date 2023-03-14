@@ -43,7 +43,6 @@ jobs:
           sudo cp /tmp/migrate /usr/local/bin/
       - name: Lint check
         run: |
-          wget -O - -q https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v1.21.0
           make lint
       - name: Build
         run: make build
