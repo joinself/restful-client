@@ -82,7 +82,7 @@ func (r resource) query(c echo.Context) error {
 // @Accept          json
 // @Produce         json
 // @Security        BearerAuth
-// @Param           request body connection.CreateConnectionRequest true "query params"
+// @Param           request body CreateConnectionRequest true "query params"
 // @Success         200  {object}  connection.Connection
 // @Router          /connections [post]
 func (r resource) create(c echo.Context) error {

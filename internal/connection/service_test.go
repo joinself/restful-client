@@ -19,9 +19,9 @@ func TestCreateConnectionRequest_Validate(t *testing.T) {
 		model     CreateConnectionRequest
 		wantError bool
 	}{
-		{"success", CreateConnectionRequest{SelfID: "selfid", Name: "test"}, false},
-		{"required", CreateConnectionRequest{Name: ""}, true},
-		{"too long", CreateConnectionRequest{Name: "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"}, true},
+		{"success", CreateConnectionRequest{SelfID: "selfid"}, false},
+		{"required", CreateConnectionRequest{}, true},
+		{"too long", CreateConnectionRequest{SelfID: "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -61,28 +61,28 @@ func Test_service_CRUD(t *testing.T) {
 
 	// successful creation
 	id := "selfid"
-	connection, err := s.Create(ctx, CreateConnectionRequest{SelfID: id, Name: "test"})
+	connection, err := s.Create(ctx, CreateConnectionRequest{SelfID: id})
 	assert.Nil(t, err)
 	assert.Equal(t, id, connection.ID)
-	assert.Equal(t, "test", connection.Name)
+	assert.Equal(t, "", connection.Name)
 	assert.NotEmpty(t, connection.CreatedAt)
 	assert.NotEmpty(t, connection.UpdatedAt)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
 	// validation error in creation
-	_, err = s.Create(ctx, CreateConnectionRequest{Name: ""})
+	_, err = s.Create(ctx, CreateConnectionRequest{SelfID: ""})
 	assert.NotNil(t, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
 	// unexpected error in creation
-	_, err = s.Create(ctx, CreateConnectionRequest{SelfID: "selfid2", Name: "error"})
+	_, err = s.Create(ctx, CreateConnectionRequest{SelfID: "error"})
 	assert.Equal(t, errCRUD, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
-	_, _ = s.Create(ctx, CreateConnectionRequest{SelfID: "selfid2", Name: "test2"})
+	_, _ = s.Create(ctx, CreateConnectionRequest{SelfID: "test2"})
 
 	// update
 	connection, err = s.Update(ctx, id, UpdateConnectionRequest{Name: "test updated"})
@@ -147,7 +147,7 @@ func (m mockRepository) Query(ctx context.Context, offset, limit int) ([]entity.
 }
 
 func (m *mockRepository) Create(ctx context.Context, connection entity.Connection) error {
-	if connection.Name == "error" {
+	if connection.ID == "error" {
 		return errCRUD
 	}
 	m.items = append(m.items, connection)

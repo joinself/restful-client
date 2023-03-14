@@ -33,7 +33,6 @@ type Connection struct {
 // CreateConnectionRequest represents an connection creation request.
 type CreateConnectionRequest struct {
 	SelfID string `json:"selfid"`
-	Name   string `json:"name"`
 }
 
 // Validate validates the CreateConnectionRequest fields.
@@ -89,7 +88,6 @@ func (s service) Create(ctx context.Context, req CreateConnectionRequest) (Conne
 	now := time.Now()
 	err = s.repo.Create(ctx, entity.Connection{
 		ID:        id,
-		Name:      req.Name,
 		CreatedAt: now,
 		UpdatedAt: now,
 	})
