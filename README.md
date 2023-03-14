@@ -33,6 +33,17 @@ since their usages are mostly localized and abstracted.
 
 ## Getting Started
 
+### Docker compose
+
+This project is provided with an easy setup based on [docker-compose](https://docs.docker.com/compose/). This will allow you to run the api without dealing with environment configurations.
+
+To run the restful client based on docker compose you just need to configure `config/local.yml` file with your data and run:
+```
+$ docker-compose up
+```
+
+### Running it locally
+
 If this is your first time encountering Go, please follow [the instructions](https://golang.org/doc/install) to
 install Go on your computer. The kit requires **Go 1.17 or above**.
 
@@ -61,7 +72,11 @@ make run
 make run-live
 ```
 
-At this time, you have a RESTful API server running at `http://127.0.0.1:8080`. It provides the following endpoints:
+At this point you should be able to access the RESTful client server accessible through at `http://127.0.0.1:8080`. 
+
+## Endpoints
+
+Restful client provides a subset of features to interact with self network, for more details you have the *openapi specification* on `/docs/` folder.
 
 - [x] `GET /healthcheck`: a healthcheck service provided for health checking purpose (needed when implementing a server cluster)
 - [x] `POST /v1/login`: authenticates a user and generates a JWT
