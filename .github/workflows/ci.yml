@@ -41,11 +41,7 @@ jobs:
           curl -Lo /tmp/migrate.tar.gz https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-amd64.tar.gz
           tar zxf /tmp/migrate.tar.gz -C /tmp
           sudo cp /tmp/migrate /usr/local/bin/
-
-      - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.51
+          wget -O - -q https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sudo sh -s -- -b $(go env GOPATH)/bin v1.21.0
 
       - name: Lint check
         run: make lint
