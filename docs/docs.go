@@ -281,6 +281,12 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "description": "return elements since a message id",
+                        "name": "messages_since",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
                         "description": "page number",
                         "name": "page",
                         "in": "query"
@@ -457,18 +463,6 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
-                    "400": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     "500": {
                         "description": "ok",
                         "schema": {
@@ -553,9 +547,6 @@ const docTemplate = `{
         "connection.CreateConnectionRequest": {
             "type": "object",
             "properties": {
-                "name": {
-                    "type": "string"
-                },
                 "selfid": {
                     "type": "string"
                 }
@@ -649,15 +640,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "body": {
-                    "type": "string"
-                },
-                "cid": {
-                    "type": "string"
-                },
-                "iat": {
-                    "type": "string"
-                },
-                "rid": {
                     "type": "string"
                 }
             }
