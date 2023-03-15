@@ -19,8 +19,6 @@ func RegisterHandlers(r *echo.Group, version string) {
 //	@Accept			json
 //	@Produce		json
 //	@Success		200	{string}	string	"OK"
-//	@Failure		400	{string}	string	"ok"
-//	@Failure		404	{string}	string	"ok"
 //	@Failure		500	{string}	string	"ok"
 //	@Router			/healthcheck [get]
 func healthcheck(c echo.Context) error {
