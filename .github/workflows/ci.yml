@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:alpine
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: go_restful
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.1
+      - name: Setup environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends curl libsodium-dev
+          curl https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb -o /tmp/libself-olm_0.1.17_amd64.deb
+          curl https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb -o /tmp/libself-omemo_0.1.3_amd64.deb
+          sudo apt-get install -y --no-install-recommends /tmp/libself-olm_0.1.17_amd64.deb /tmp/libself-omemo_0.1.3_amd64.deb
+          curl -Lo /tmp/migrate.tar.gz https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-amd64.tar.gz
+          tar zxf /tmp/migrate.tar.gz -C /tmp
+          sudo cp /tmp/migrate /usr/local/bin/
+      - name: Lint check
+        run: |
+          curl -Lo /tmp/golangci-lint.tar.gz https://github.com/golangci/golangci-lint/releases/download/v1.21.0/golangci-lint-1.21.0-linux-amd64.tar.gz
+          tar zxf /tmp/golangci-lint.tar.gz -C /tmp
+          sudo cp /tmp/golangci-lint-1.21.0-linux-amd64/golangci-lint /usr/local/bin
+          make lint
+      - name: Build
+        run: make build
+      - name: Test
+        env:
+          APP_ENV: local
+          APP_DSN: "postgres://localhost/go_restful?sslmode=disable&user=${{ secrets.POSTGRES_USER }}&password=${{ secrets.POSTGRES_PASSWORD }}"
+        run: |
+          make migrate
+          make test-cover
