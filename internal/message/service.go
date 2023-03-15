@@ -28,10 +28,7 @@ type Message struct {
 
 // CreateMessageRequest represents an message creation request.
 type CreateMessageRequest struct {
-	CID  string    `json:"cid"`
-	RID  string    `json:"rid"`
-	Body string    `json:"body"`
-	IAT  time.Time `json:"iat"`
+	Body string `json:"body"`
 }
 
 // Validate validates the CreateMessageRequest fields.
@@ -79,19 +76,18 @@ func (s service) Create(ctx context.Context, connection string, req CreateMessag
 		return Message{}, err
 	}
 	now := time.Now()
-	cid := req.CID
-	if cid == "" {
-		cid = uuid.New().String()
-	}
+
+	cid := uuid.New().String()
 	msg := entity.Message{
 		ISS:          "me",
 		ConnectionID: connection,
 		CID:          cid,
-		RID:          req.RID,
-		Body:         req.Body,
-		IAT:          req.IAT,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		// RID:          req.RID,
+		Body: req.Body,
+		// IAT:          req.IAT,
+		IAT:       now,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 	err := s.repo.Create(ctx, &msg)
 	if err != nil {
