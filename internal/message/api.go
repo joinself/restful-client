@@ -24,7 +24,7 @@ func RegisterHandlers(r *echo.Group, service Service, authHandler echo.Middlewar
 
 var (
 	// LastMessage specifies the message id from what you want to get new messages.
-	LastMessage = "last_message_id"
+	LastMessage = "messages_since"
 )
 
 type resource struct {
@@ -64,6 +64,7 @@ func (r resource) get(c echo.Context) error {
 // @Accept         json
 // @Produce        json
 // @Security       BearerAuth
+// @Param          messages_since query int false "return elements since a message id"
 // @Param          page query int false "page number"
 // @Param          per_page query int false "number of elements per page"
 // @Param          connection_id path string  true  "Connection ID"

@@ -25,8 +25,6 @@ definitions:
     type: object
   connection.CreateConnectionRequest:
     properties:
-      name:
-        type: string
       selfid:
         type: string
     type: object
@@ -88,12 +86,6 @@ definitions:
   message.CreateMessageRequest:
     properties:
       body:
-        type: string
-      cid:
-        type: string
-      iat:
-        type: string
-      rid:
         type: string
     type: object
   message.Message:
@@ -285,6 +277,10 @@ paths:
       - application/json
       description: List conversation messages with a specific connection.
       parameters:
+      - description: return elements since a message id
+        in: query
+        name: messages_since
+        type: integer
       - description: page number
         in: query
         name: page
@@ -401,14 +397,6 @@ paths:
       responses:
         "200":
           description: OK
-          schema:
-            type: string
-        "400":
-          description: ok
-          schema:
-            type: string
-        "404":
-          description: ok
           schema:
             type: string
         "500":
