@@ -18,7 +18,7 @@ func TestAPI(t *testing.T) {
 		{"123", "connection123", time.Now(), time.Now()},
 	}}
 	authHandler := auth.MockAuthHandler()
-	RegisterHandlers(router.Group(""), NewService(repo, logger, nil), authHandler, logger)
+	RegisterHandlers(router.Group(""), NewService(repo, logger, nil, nil), authHandler, logger)
 	header := auth.MockAuthHeader()
 
 	tests := []test.APITestCase{

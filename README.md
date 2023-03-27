@@ -84,8 +84,8 @@ Restful client provides a subset of features to interact with self network, for 
 - [x] `GET /v1/connections`: returns a paginated list of the existing connections
 - [x] `GET /v1/connections/:id`: returns the detailed information of an connection
 - [x] `POST /v1/connections`: creates a new connection
-- [ ] `PUT /v1/connections/:id`: updates an existing connection
-- [ ] `DELETE /v1/connections/:id`: deletes an connection
+- [x] `PUT /v1/connections/:id`: updates an existing connection
+- [x] `DELETE /v1/connections/:id`: deletes an connection
 
 - [x] `POST /connections/:id/messages`: sends a message to the specified connection
 - [x] `GET /connections/:id/messages`: retrieves the full conversation with a specific connection

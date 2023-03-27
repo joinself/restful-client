@@ -77,7 +77,7 @@ func (r resource) query(c echo.Context) error {
 
 // CreateConnection godoc
 // @Summary         Creates a new connection.
-// @Description  	Creates a new connection and sends a request for public information.
+// @Description  	Creates a new connection and sends a request for public information and allows incoming comms from that connection.
 // @Tags            connections
 // @Accept          json
 // @Produce         json
@@ -100,6 +100,16 @@ func (r resource) create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, connection)
 }
 
+// CreateConnection godoc
+// @Summary         Updates a connection.
+// @Description  	Updates the properties of an existing connection..
+// @Tags            connections
+// @Accept          json
+// @Produce         json
+// @Security        BearerAuth
+// @Param           request body UpdateConnectionRequest true "query params"
+// @Success         200  {object}  connection.Connection
+// @Router          /connections/{id} [put]
 func (r resource) update(c echo.Context) error {
 	var input UpdateConnectionRequest
 	if err := c.Bind(&input); err != nil {
@@ -116,6 +126,16 @@ func (r resource) update(c echo.Context) error {
 	return c.JSON(http.StatusOK, connection)
 }
 
+// CreateConnection godoc
+// @Summary         Deletes an existing connection.
+// @Description  	Deletes an existing connection and sends a request for public information and avoids incoming comms from that connection.
+// @Tags            connections
+// @Accept          json
+// @Produce         json
+// @Security        BearerAuth
+// @Param           request body CreateConnectionRequest true "query params"
+// @Success         200  {object}  connection.Connection
+// @Router          /connections/{id} [delete]
 func (r resource) delete(c echo.Context) error {
 	connection, err := r.service.Delete(c.Request().Context(), c.Param("id"))
 	if err != nil {

@@ -25,6 +25,11 @@ type FactService interface {
 	Request(*fact.FactRequest) (*fact.FactResponse, error)
 }
 
+type ACLManager interface {
+	PermitConnection(selfID string) error
+	RevokeConnection(selfID string) error
+}
+
 // Connection represents the data about an connection.
 type Connection struct {
 	entity.Connection
@@ -58,11 +63,12 @@ type service struct {
 	repo   Repository
 	logger log.Logger
 	client FactService
+	acl    ACLManager
 }
 
 // NewService creates a new connection service.
-func NewService(repo Repository, logger log.Logger, client FactService) Service {
-	return service{repo, logger, client}
+func NewService(repo Repository, logger log.Logger, client FactService, acl ACLManager) Service {
+	return service{repo, logger, client, acl}
 }
 
 // Get returns the connection with the specified the connection ID.
@@ -95,6 +101,9 @@ func (s service) Create(ctx context.Context, req CreateConnectionRequest) (Conne
 		return Connection{}, err
 	}
 
+	if s.acl != nil {
+		go s.acl.PermitConnection(id)
+	}
 	go s.requestPublicInfo(id)
 
 	return s.Get(ctx, id)
@@ -128,6 +137,10 @@ func (s service) Delete(ctx context.Context, id string) (Connection, error) {
 	if err = s.repo.Delete(ctx, id); err != nil {
 		return Connection{}, err
 	}
+	if s.acl != nil {
+		go s.acl.RevokeConnection(id)
+	}
+
 	return connection, nil
 }
 
