@@ -22,7 +22,7 @@ func TestRepository(t *testing.T) {
 	connection := "connection"
 
 	// initial count
-	facts, err := repo.Query(ctx, QueryParams{Connection: connection}, 0, 1000)
+	facts, err := repo.Query(ctx, connection, "", "", 0, 1000)
 	assert.Nil(t, err)
 	count := len(facts)
 
@@ -40,7 +40,7 @@ func TestRepository(t *testing.T) {
 		UpdatedAt:    time.Now(),
 	})
 	assert.Nil(t, err)
-	facts, err = repo.Query(ctx, QueryParams{Connection: connection}, 0, 1000)
+	facts, err = repo.Query(ctx, connection, "", "", 0, 1000)
 	assert.Nil(t, err)
 	count2 := len(facts)
 	assert.Equal(t, 1, count2-count)
@@ -66,7 +66,7 @@ func TestRepository(t *testing.T) {
 	assert.Equal(t, "fact1 updated", fact.Body)
 
 	// query
-	facts, err = repo.Query(ctx, QueryParams{Connection: connection}, 0, count2)
+	facts, err = repo.Query(ctx, connection, "", "", 0, count2)
 	assert.Nil(t, err)
 
 	assert.Equal(t, count2, len(facts))

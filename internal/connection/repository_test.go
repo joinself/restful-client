@@ -28,6 +28,8 @@ func TestRepository(t *testing.T) {
 	// create
 	err = repo.Create(ctx, entity.Connection{
 		ID:        "test1",
+		SelfID:    "selfid1",
+		AppID:     "appid1",
 		Name:      "connection1",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -37,10 +39,10 @@ func TestRepository(t *testing.T) {
 	assert.Equal(t, 1, count2-count)
 
 	// get
-	connection, err := repo.Get(ctx, "test1")
+	connection, err := repo.Get(ctx, "appid1", "selfid1")
 	assert.Nil(t, err)
 	assert.Equal(t, "connection1", connection.Name)
-	_, err = repo.Get(ctx, "test0")
+	_, err = repo.Get(ctx, "appid1", "test0")
 	assert.Equal(t, sql.ErrNoRows, err)
 
 	// update
@@ -51,7 +53,7 @@ func TestRepository(t *testing.T) {
 		UpdatedAt: time.Now(),
 	})
 	assert.Nil(t, err)
-	connection, _ = repo.Get(ctx, "test1")
+	connection, _ = repo.Get(ctx, "appid1", "selfid1")
 	assert.Equal(t, "connection1 updated", connection.Name)
 
 	// query
@@ -62,7 +64,7 @@ func TestRepository(t *testing.T) {
 	// delete
 	err = repo.Delete(ctx, "test1")
 	assert.Nil(t, err)
-	_, err = repo.Get(ctx, "test1")
+	_, err = repo.Get(ctx, "appid1", "selfid1")
 	assert.Equal(t, sql.ErrNoRows, err)
 	err = repo.Delete(ctx, "test1")
 	assert.Equal(t, sql.ErrNoRows, err)

@@ -55,8 +55,11 @@ func (s *service) onChatMessageHook() {
 	}
 
 	s.client.ChatService().OnMessage(func(cm *chat.Message) {
+		// TODO: get the appID
+		selfid := "TODO..."
+
 		// Get connection or create one.
-		c, err := s.cRepo.Get(context.Background(), cm.ISS)
+		c, err := s.cRepo.Get(context.Background(), selfid, cm.ISS)
 		if err != nil {
 			// Create a connection if it does not exist
 			c := entity.Connection{

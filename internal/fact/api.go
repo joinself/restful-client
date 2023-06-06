@@ -3,28 +3,30 @@ package fact
 import (
 	"net/http"
 
+	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
 	"github.com/labstack/echo/v4"
 )
 
 // RegisterHandlers sets up the routing of the HTTP handlers.
-func RegisterHandlers(r *echo.Group, service Service, authHandler echo.MiddlewareFunc, logger log.Logger) {
-	res := resource{service, logger}
+func RegisterHandlers(r *echo.Group, service Service, cService connection.Service, authHandler echo.MiddlewareFunc, logger log.Logger) {
+	res := resource{service, cService, logger}
 
 	r.Use(authHandler)
 
-	r.GET("/connections/:connection_id/facts/:id", res.get)
-	r.GET("/connections/:connection_id/facts", res.query)
+	r.GET("/apps/:app_id/connections/:connection_id/facts/:id", res.get)
+	r.GET("/apps/:app_id/connections/:connection_id/facts", res.query)
 
-	r.POST("/connections/:connection_id/facts", res.create)
-	r.PUT("/connections/:connection_id/facts/:id", res.update)
-	r.DELETE("/connections/:connection_id/facts/:id", res.delete)
+	r.POST("/apps/:app_id/connections/:connection_id/facts", res.create)
+	r.PUT("/apps/:app_id/connections/:connection_id/facts/:id", res.update)
+	r.DELETE("/apps/:app_id/connections/:connection_id/facts/:id", res.delete)
 }
 
 type resource struct {
-	service Service
-	logger  log.Logger
+	service  Service
+	cService connection.Service
+	logger   log.Logger
 }
 
 // GetConnection godoc
@@ -62,18 +64,22 @@ func (r resource) get(c echo.Context) error {
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	query := QueryParams{
-		Connection: c.Param("connection_id"),
-		Source:     c.QueryParam("source"),
-		Fact:       c.QueryParam("fact"),
+	// Get the connection id
+	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	if err != nil {
+		return c.JSON(http.StatusNotFound, err.Error())
 	}
 
-	count, err := r.service.Count(ctx, query)
+	cid := conn.ID
+	sid := c.QueryParam("source")
+	fid := c.QueryParam("fact")
+
+	count, err := r.service.Count(ctx, cid, sid, fid)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
 	pages := pagination.NewFromRequest(c.Request(), count)
-	facts, err := r.service.Query(ctx, query, pages.Offset(), pages.Limit())
+	facts, err := r.service.Query(ctx, cid, sid, fid, pages.Offset(), pages.Limit())
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
@@ -100,7 +106,14 @@ func (r resource) create(c echo.Context) error {
 		r.logger.With(c.Request().Context()).Info(err)
 		return c.JSON(http.StatusBadRequest, "")
 	}
-	fact, err := r.service.Create(c.Request().Context(), c.Param("connection_id"), input)
+
+	// Get the connection id
+	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	if err != nil {
+		return c.JSON(http.StatusNotFound, err.Error())
+	}
+
+	fact, err := r.service.Create(c.Request().Context(), conn.ID, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
