@@ -4,22 +4,23 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
 	"github.com/labstack/echo/v4"
 )
 
 // RegisterHandlers sets up the routing of the HTTP handlers.
-func RegisterHandlers(r *echo.Group, service Service, authHandler echo.MiddlewareFunc, logger log.Logger) {
-	res := resource{service, logger}
+func RegisterHandlers(r *echo.Group, service Service, cService connection.Service, authHandler echo.MiddlewareFunc, logger log.Logger) {
+	res := resource{service, cService, logger}
 
 	// the following endpoints require a valid JWT
 	r.Use(authHandler)
-	r.GET("/connections/:connection_id/messages/:id", res.get)
-	r.GET("/connections/:connection_id/messages", res.query)
-	r.POST("/connections/:connection_id/messages", res.create)
-	r.PUT("/connections/:connection_id/messages/:id", res.update)
-	r.DELETE("/connections/:connection_id/messages/:id", res.delete)
+	r.GET("/apps/:app_id/connections/:connection_id/messages/:id", res.get)
+	r.GET("/apps/:app_id/connections/:connection_id/messages", res.query)
+	r.POST("/apps/:app_id/connections/:connection_id/messages", res.create)
+	r.PUT("/apps/:app_id/connections/:connection_id/messages/:id", res.update)
+	r.DELETE("/apps/:app_id/connections/:connection_id/messages/:id", res.delete)
 }
 
 var (
@@ -28,8 +29,9 @@ var (
 )
 
 type resource struct {
-	service Service
-	logger  log.Logger
+	service  Service
+	cService connection.Service
+	logger   log.Logger
 }
 
 // GetMessage    godoc
@@ -82,8 +84,15 @@ func (r resource) query(c echo.Context) error {
 		messagesSince = 0
 	}
 
+	// Get the connection id
+	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	if err != nil {
+		return c.JSON(http.StatusNotFound, err.Error())
+	}
+
+	// Get the messages
 	pages := pagination.NewFromRequest(c.Request(), count)
-	messages, err := r.service.Query(ctx, c.Param("connection_id"), messagesSince, pages.Offset(), pages.Limit())
+	messages, err := r.service.Query(ctx, connection.ID, messagesSince, pages.Offset(), pages.Limit())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -109,7 +118,15 @@ func (r resource) create(c echo.Context) error {
 		r.logger.With(c.Request().Context()).Info(err)
 		return c.JSON(http.StatusBadRequest, "")
 	}
-	message, err := r.service.Create(c.Request().Context(), c.Param("connection_id"), input)
+
+	// Get the connection id
+	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	if err != nil {
+		return c.JSON(http.StatusNotFound, "connection not found")
+	}
+
+	// Create the message
+	message, err := r.service.Create(c.Request().Context(), connection.ID, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

@@ -2,12 +2,11 @@ package fact
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 
-	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/mock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,12 +50,12 @@ func TestUpdateFactRequest_Validate(t *testing.T) {
 
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
-	s := NewService(&mockRepository{}, &mockAtRepository{}, logger, nil)
+	s := NewService(&mock.FactRepositoryMock{}, &mock.AttestationRepositoryMock{}, logger, nil)
 
 	ctx := context.Background()
 
 	// initial count
-	count, _ := s.Count(ctx, QueryParams{Connection: "connection"})
+	count, _ := s.Count(ctx, "connection", "", "")
 	assert.Equal(t, 0, count)
 
 	// successful creation
@@ -67,19 +66,19 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, "test", fact.Fact.Fact)
 	assert.NotEmpty(t, fact.CreatedAt)
 	assert.NotEmpty(t, fact.UpdatedAt)
-	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
+	count, _ = s.Count(ctx, "connection", "", "")
 	assert.Equal(t, 1, count)
 
 	// validation error in creation
 	_, err = s.Create(ctx, "connection", CreateFactRequest{Fact: ""})
 	assert.NotNil(t, err)
-	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
+	count, _ = s.Count(ctx, "connection", "", "")
 	assert.Equal(t, 1, count)
 
 	// unexpected error in creation
 	_, err = s.Create(ctx, "connection", CreateFactRequest{Fact: "error"})
 	assert.Equal(t, errCRUD, err)
-	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
+	count, _ = s.Count(ctx, "connection", "", "")
 	assert.Equal(t, 1, count)
 
 	_, _ = s.Create(ctx, "connection", CreateFactRequest{Fact: "test2"})
@@ -94,13 +93,13 @@ func Test_service_CRUD(t *testing.T) {
 	// validation error in update
 	_, err = s.Update(ctx, id, UpdateFactRequest{Body: ""})
 	assert.NotNil(t, err)
-	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
+	count, _ = s.Count(ctx, "connection", "", "")
 	assert.Equal(t, 2, count)
 
 	// unexpected error in update
 	_, err = s.Update(ctx, id, UpdateFactRequest{Body: "error"})
 	assert.Equal(t, errCRUD, err)
-	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
+	count, _ = s.Count(ctx, "connection", "", "")
 	assert.Equal(t, 2, count)
 
 	// get
@@ -112,7 +111,7 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, id, fact.ID)
 
 	// query
-	facts, _ := s.Query(ctx, QueryParams{Connection: "connection"}, 0, 0)
+	facts, _ := s.Query(ctx, "connection", "", "", 0, 0)
 	assert.Equal(t, 2, len(facts))
 
 	// delete
@@ -121,89 +120,6 @@ func Test_service_CRUD(t *testing.T) {
 	fact, err = s.Delete(ctx, id)
 	assert.Nil(t, err)
 	assert.Equal(t, id, fact.ID)
-	count, _ = s.Count(ctx, QueryParams{Connection: "connection"})
+	count, _ = s.Count(ctx, "connection", "", "")
 	assert.Equal(t, 1, count)
-}
-
-type mockRepository struct {
-	items []entity.Fact
-}
-
-func (m mockRepository) Get(ctx context.Context, id string) (entity.Fact, error) {
-	for _, item := range m.items {
-		if item.ID == id {
-			return item, nil
-		}
-	}
-	return entity.Fact{}, sql.ErrNoRows
-}
-
-func (m mockRepository) Count(ctx context.Context, query QueryParams) (int, error) {
-	return len(m.items), nil
-}
-
-func (m mockRepository) Query(ctx context.Context, params QueryParams, offset, limit int) ([]entity.Fact, error) {
-	return m.items, nil
-}
-
-func (m *mockRepository) Create(ctx context.Context, fact entity.Fact) error {
-	if fact.Fact == "error" {
-		return errCRUD
-	}
-	m.items = append(m.items, fact)
-	return nil
-}
-
-func (m *mockRepository) Update(ctx context.Context, fact entity.Fact) error {
-	if fact.Body == "error" {
-		return errCRUD
-	}
-	for i, item := range m.items {
-		if item.ID == fact.ID {
-			m.items[i] = fact
-			break
-		}
-	}
-	return nil
-}
-
-func (m *mockRepository) Delete(ctx context.Context, id string) error {
-	for i, item := range m.items {
-		if item.ID == id {
-			m.items[i] = m.items[len(m.items)-1]
-			m.items = m.items[:len(m.items)-1]
-			break
-		}
-	}
-	return nil
-}
-
-func (m *mockRepository) SetStatus(ctx context.Context, id string, status string) error {
-	return nil
-}
-
-type mockAtRepository struct {
-	items []entity.Attestation
-}
-
-func (m mockAtRepository) Get(ctx context.Context, id string) (entity.Attestation, error) {
-	for _, item := range m.items {
-		if item.ID == id {
-			return item, nil
-		}
-	}
-	return entity.Attestation{}, sql.ErrNoRows
-}
-
-func (m mockAtRepository) Count(ctx context.Context) (int, error) {
-	return len(m.items), nil
-}
-
-func (m mockAtRepository) Query(ctx context.Context, connection string, offset, limit int) ([]entity.Attestation, error) {
-	return m.items, nil
-}
-
-func (m *mockAtRepository) Create(ctx context.Context, attestation entity.Attestation) error {
-	m.items = append(m.items, attestation)
-	return nil
 }

@@ -113,18 +113,23 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	factRepo := fact.NewRepository(db, logger)
 	attestationRepo := attestation.NewRepository(db, logger)
 
+	cService := connection.NewService(connectionRepo, logger, client.FactService())
+
 	connection.RegisterHandlers(rg.Group(""),
-		connection.NewService(connectionRepo, logger, client.FactService()),
+		cService,
 		authHandler, logger,
 	)
 
 	message.RegisterHandlers(rg.Group(""),
 		message.NewService(messageRepo, logger, client),
-		authHandler, logger,
+		cService,
+		authHandler,
+		logger,
 	)
 
 	fact.RegisterHandlers(rg.Group(""),
 		fact.NewService(factRepo, attestationRepo, logger, client.FactService()),
+		cService,
 		authHandler, logger,
 	)
 
