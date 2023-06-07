@@ -15,12 +15,12 @@ func RegisterHandlers(r *echo.Group, service Service, authHandler echo.Middlewar
 	// the following endpoints require a valid JWT
 	r.Use(authHandler)
 
-	r.GET("/connections/:id", res.get)
-	r.GET("/connections", res.query)
+	r.GET("/apps/:app_id/connections/:id", res.get)
+	r.GET("/apps/:app_id/connections", res.query)
 
-	r.POST("/connections", res.create)
-	r.PUT("/connections/:id", res.update)
-	r.DELETE("/connections/:id", res.delete)
+	r.POST("/apps/:app_id/connections", res.create)
+	r.PUT("/apps/:app_id/connections/:id", res.update)
+	r.DELETE("/apps/:app_id/connections/:id", res.delete)
 }
 
 type resource struct {
@@ -39,7 +39,7 @@ type resource struct {
 // @Success      200  {object}  connection.Connection
 // @Router       /connections/{id} [get]
 func (r resource) get(c echo.Context) error {
-	connection, err := r.service.Get(c.Request().Context(), c.Param("id"))
+	connection, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
@@ -66,7 +66,7 @@ func (r resource) query(c echo.Context) error {
 	}
 
 	pages := pagination.NewFromRequest(c.Request(), count)
-	connections, err := r.service.Query(ctx, pages.Offset(), pages.Limit())
+	connections, err := r.service.Query(ctx, c.Param("app_id"), pages.Offset(), pages.Limit())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -92,7 +92,7 @@ func (r resource) create(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "")
 	}
 
-	connection, err := r.service.Create(c.Request().Context(), input)
+	connection, err := r.service.Create(c.Request().Context(), c.Param("app_id"), input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -107,7 +107,7 @@ func (r resource) update(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	connection, err := r.service.Update(c.Request().Context(), c.Param("id"), input)
+	connection, err := r.service.Update(c.Request().Context(), c.Param("app_id"), c.Param("id"), input)
 	if err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -117,7 +117,7 @@ func (r resource) update(c echo.Context) error {
 }
 
 func (r resource) delete(c echo.Context) error {
-	connection, err := r.service.Delete(c.Request().Context(), c.Param("id"))
+	connection, err := r.service.Delete(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}

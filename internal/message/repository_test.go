@@ -3,6 +3,7 @@ package message
 import (
 	"context"
 	"database/sql"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -19,7 +20,8 @@ func TestRepository(t *testing.T) {
 	repo := NewRepository(db, logger)
 
 	ctx := context.Background()
-	connection := "connection"
+	// Generate random integer
+	connection := rand.Intn(99999999)
 
 	// initial count
 	count, err := repo.Count(ctx)

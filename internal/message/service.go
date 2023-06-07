@@ -14,9 +14,9 @@ import (
 // Service encapsulates usecase logic for messages.
 type Service interface {
 	Get(ctx context.Context, id int) (Message, error)
-	Query(ctx context.Context, connection string, messagesSince int, offset, limit int) ([]Message, error)
+	Query(ctx context.Context, connection int, messagesSince int, offset, limit int) ([]Message, error)
 	Count(ctx context.Context) (int, error)
-	Create(ctx context.Context, connection string, input CreateMessageRequest) (Message, error)
+	Create(ctx context.Context, appID, connectionID string, connection int, input CreateMessageRequest) (Message, error)
 	Update(ctx context.Context, id int, input UpdateMessageRequest) (Message, error)
 	Delete(ctx context.Context, id int) (Message, error)
 }
@@ -51,14 +51,14 @@ func (m UpdateMessageRequest) Validate() error {
 }
 
 type service struct {
-	repo   Repository
-	logger log.Logger
-	client *selfsdk.Client
+	repo    Repository
+	logger  log.Logger
+	clients map[string]*selfsdk.Client
 }
 
 // NewService creates a new message service.
-func NewService(repo Repository, logger log.Logger, client *selfsdk.Client) Service {
-	return service{repo, logger, client}
+func NewService(repo Repository, logger log.Logger, clients map[string]*selfsdk.Client) Service {
+	return service{repo, logger, clients}
 }
 
 // Get returns the message with the specified the message ID.
@@ -71,7 +71,7 @@ func (s service) Get(ctx context.Context, id int) (Message, error) {
 }
 
 // Create creates a new message.
-func (s service) Create(ctx context.Context, connection string, req CreateMessageRequest) (Message, error) {
+func (s service) Create(ctx context.Context, appID, connectionID string, connection int, req CreateMessageRequest) (Message, error) {
 	if err := req.Validate(); err != nil {
 		return Message{}, err
 	}
@@ -95,9 +95,7 @@ func (s service) Create(ctx context.Context, connection string, req CreateMessag
 	}
 
 	// Send the message to the connection.
-	if s.client != nil {
-		go s.sendMessage(connection, req.Body)
-	}
+	go s.sendMessage(appID, connectionID, req.Body)
 
 	return s.Get(ctx, msg.ID)
 }
@@ -139,7 +137,7 @@ func (s service) Count(ctx context.Context) (int, error) {
 }
 
 // Query returns the messages with the specified offset and limit.
-func (s service) Query(ctx context.Context, connection string, messagesSince int, offset, limit int) ([]Message, error) {
+func (s service) Query(ctx context.Context, connection int, messagesSince int, offset, limit int) ([]Message, error) {
 	items, err := s.repo.Query(ctx, connection, messagesSince, offset, limit)
 	if err != nil {
 		return nil, err
@@ -151,8 +149,12 @@ func (s service) Query(ctx context.Context, connection string, messagesSince int
 	return result, nil
 }
 
-func (s service) sendMessage(connection string, body string) {
-	_, err := s.client.ChatService().Message([]string{connection}, body)
+func (s service) sendMessage(appID, connection string, body string) {
+	if _, ok := s.clients[appID]; !ok {
+		return
+	}
+
+	_, err := s.clients[appID].ChatService().Message([]string{connection}, body)
 	if err != nil {
 		s.logger.Errorf("failed to send message: %v", err)
 	}

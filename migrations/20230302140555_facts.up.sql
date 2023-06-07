@@ -1,7 +1,7 @@
 CREATE TABLE fact
 (
     id              VARCHAR NOT NULL UNIQUE DEFAULT gen_random_uuid(),
-    connection_id   VARCHAR,
+    connection_id   INTEGER NOT NULL,
     iss             VARCHAR(255) DEFAULT '' NOT NULL,
     cid             VARCHAR(255) DEFAULT '' NOT NULL,
     jti             VARCHAR(255) DEFAULT '' NOT NULL,

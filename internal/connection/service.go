@@ -12,12 +12,12 @@ import (
 
 // Service encapsulates usecase logic for connections.
 type Service interface {
-	Get(ctx context.Context, id string) (Connection, error)
-	Query(ctx context.Context, offset, limit int) ([]Connection, error)
+	Get(ctx context.Context, appid, selfid string) (Connection, error)
+	Query(ctx context.Context, appid string, offset, limit int) ([]Connection, error)
 	Count(ctx context.Context) (int, error)
-	Create(ctx context.Context, input CreateConnectionRequest) (Connection, error)
-	Update(ctx context.Context, id string, input UpdateConnectionRequest) (Connection, error)
-	Delete(ctx context.Context, id string) (Connection, error)
+	Create(ctx context.Context, appid string, input CreateConnectionRequest) (Connection, error)
+	Update(ctx context.Context, appid, selfid string, input UpdateConnectionRequest) (Connection, error)
+	Delete(ctx context.Context, appid, selfid string) (Connection, error)
 }
 
 // FactService service to manage sending and receiving fact requests
@@ -55,19 +55,19 @@ func (m UpdateConnectionRequest) Validate() error {
 }
 
 type service struct {
-	repo   Repository
-	logger log.Logger
-	client FactService
+	repo    Repository
+	logger  log.Logger
+	clients map[string]FactService
 }
 
 // NewService creates a new connection service.
-func NewService(repo Repository, logger log.Logger, client FactService) Service {
-	return service{repo, logger, client}
+func NewService(repo Repository, logger log.Logger, clients map[string]FactService) Service {
+	return service{repo, logger, clients}
 }
 
 // Get returns the connection with the specified the connection ID.
-func (s service) Get(ctx context.Context, id string) (Connection, error) {
-	connection, err := s.repo.Get(ctx, id)
+func (s service) Get(ctx context.Context, appid, selfid string) (Connection, error) {
+	connection, err := s.repo.Get(ctx, appid, selfid)
 	if err != nil {
 		return Connection{}, err
 	}
@@ -75,19 +75,20 @@ func (s service) Get(ctx context.Context, id string) (Connection, error) {
 }
 
 // Create creates a new connection.
-func (s service) Create(ctx context.Context, req CreateConnectionRequest) (Connection, error) {
+func (s service) Create(ctx context.Context, appid string, req CreateConnectionRequest) (Connection, error) {
 	if err := req.Validate(); err != nil {
 		return Connection{}, err
 	}
-	id := req.SelfID
-	existing, err := s.Get(ctx, id)
+	selfid := req.SelfID
+	existing, err := s.Get(ctx, appid, selfid)
 	if err == nil {
 		return existing, nil
 	}
 
 	now := time.Now()
 	err = s.repo.Create(ctx, entity.Connection{
-		ID:        id,
+		SelfID:    selfid,
+		AppID:     appid,
 		CreatedAt: now,
 		UpdatedAt: now,
 	})
@@ -95,18 +96,18 @@ func (s service) Create(ctx context.Context, req CreateConnectionRequest) (Conne
 		return Connection{}, err
 	}
 
-	go s.requestPublicInfo(id)
+	go s.requestPublicInfo(appid, selfid)
 
-	return s.Get(ctx, id)
+	return s.Get(ctx, appid, selfid)
 }
 
 // Update updates the connection with the specified ID.
-func (s service) Update(ctx context.Context, id string, req UpdateConnectionRequest) (Connection, error) {
+func (s service) Update(ctx context.Context, appid, selfid string, req UpdateConnectionRequest) (Connection, error) {
 	if err := req.Validate(); err != nil {
 		return Connection{}, err
 	}
 
-	connection, err := s.Get(ctx, id)
+	connection, err := s.Get(ctx, appid, selfid)
 	if err != nil {
 		return connection, err
 	}
@@ -120,12 +121,12 @@ func (s service) Update(ctx context.Context, id string, req UpdateConnectionRequ
 }
 
 // Delete deletes the connection with the specified ID.
-func (s service) Delete(ctx context.Context, id string) (Connection, error) {
-	connection, err := s.Get(ctx, id)
+func (s service) Delete(ctx context.Context, appid, selfid string) (Connection, error) {
+	connection, err := s.Get(ctx, appid, selfid)
 	if err != nil {
 		return Connection{}, err
 	}
-	if err = s.repo.Delete(ctx, id); err != nil {
+	if err = s.repo.Delete(ctx, connection.ID); err != nil {
 		return Connection{}, err
 	}
 	return connection, nil
@@ -137,10 +138,9 @@ func (s service) Count(ctx context.Context) (int, error) {
 }
 
 // Query returns the connections with the specified offset and limit.
-func (s service) Query(ctx context.Context, offset, limit int) ([]Connection, error) {
-	items, err := s.repo.Query(ctx, offset, limit)
+func (s service) Query(ctx context.Context, appid string, offset, limit int) ([]Connection, error) {
+	items, err := s.repo.Query(ctx, appid, offset, limit)
 	if err != nil {
-		println("error")
 		return nil, err
 	}
 	result := []Connection{}
@@ -150,14 +150,14 @@ func (s service) Query(ctx context.Context, offset, limit int) ([]Connection, er
 	return result, nil
 }
 
-func (s service) requestPublicInfo(id string) {
-	if s.client == nil {
+func (s service) requestPublicInfo(appid, selfid string) {
+	if _, ok := s.clients[appid]; !ok {
 		s.logger.Debug("skipping as self is not initialized")
 		return
 	}
 
-	resp, err := s.client.Request(&fact.FactRequest{
-		SelfID:      id,
+	resp, err := s.clients[appid].Request(&fact.FactRequest{
+		SelfID:      selfid,
 		Description: "info",
 		Facts:       []fact.Fact{{Fact: fact.FactDisplayName, Sources: []string{fact.SourceUserSpecified}}},
 		Expiry:      time.Minute * 5,
@@ -172,7 +172,7 @@ func (s service) requestPublicInfo(id string) {
 		return
 	}
 
-	connection, err := s.Get(context.Background(), id)
+	connection, err := s.Get(context.Background(), appid, selfid)
 	if err != nil {
 		s.logger.Errorf("unexpected fact response")
 		return

@@ -15,9 +15,9 @@ import (
 // Service encapsulates usecase logic for facts.
 type Service interface {
 	Get(ctx context.Context, id string) (Fact, error)
-	Query(ctx context.Context, params QueryParams, offset, limit int) ([]Fact, error)
-	Count(ctx context.Context, query QueryParams) (int, error)
-	Create(ctx context.Context, connection string, input CreateFactRequest) (Fact, error)
+	Query(ctx context.Context, conn int, source, fact string, offset, limit int) ([]Fact, error)
+	Count(ctx context.Context, conn int, source, fact string) (int, error)
+	Create(ctx context.Context, appID, selfID string, connection int, input CreateFactRequest) (Fact, error)
 	Update(ctx context.Context, id string, input UpdateFactRequest) (Fact, error)
 	Delete(ctx context.Context, id string) (Fact, error)
 }
@@ -63,15 +63,15 @@ func (m UpdateFactRequest) Validate() error {
 }
 
 type service struct {
-	repo   Repository
-	atRepo attestation.Repository
-	logger log.Logger
-	client RequesterService
+	repo    Repository
+	atRepo  attestation.Repository
+	logger  log.Logger
+	clients map[string]RequesterService
 }
 
 // NewService creates a new fact service.
-func NewService(repo Repository, atRepo attestation.Repository, logger log.Logger, client RequesterService) Service {
-	return service{repo, atRepo, logger, client}
+func NewService(repo Repository, atRepo attestation.Repository, logger log.Logger, clients map[string]RequesterService) Service {
+	return service{repo, atRepo, logger, clients}
 }
 
 // Get returns the fact with the specified the fact ID.
@@ -94,7 +94,7 @@ func (s service) Get(ctx context.Context, id string) (Fact, error) {
 }
 
 // Create creates a new fact.
-func (s service) Create(ctx context.Context, connection string, req CreateFactRequest) (Fact, error) {
+func (s service) Create(ctx context.Context, appID, selfID string, connection int, req CreateFactRequest) (Fact, error) {
 	if err := req.Validate(); err != nil {
 		return Fact{}, err
 	}
@@ -118,9 +118,7 @@ func (s service) Create(ctx context.Context, connection string, req CreateFactRe
 	}
 
 	// Send the message to the connection.
-	if s.client != nil {
-		go s.sendRequest(f)
-	}
+	go s.sendRequest(f, selfID, appID)
 
 	return s.Get(ctx, id)
 }
@@ -157,13 +155,13 @@ func (s service) Delete(ctx context.Context, id string) (Fact, error) {
 }
 
 // Count returns the number of facts.
-func (s service) Count(ctx context.Context, query QueryParams) (int, error) {
-	return s.repo.Count(ctx, query)
+func (s service) Count(ctx context.Context, conn int, source, fact string) (int, error) {
+	return s.repo.Count(ctx, conn, source, fact)
 }
 
 // Query returns the facts with the specified offset and limit.
-func (s service) Query(ctx context.Context, query QueryParams, offset, limit int) ([]Fact, error) {
-	items, err := s.repo.Query(ctx, query, offset, limit)
+func (s service) Query(ctx context.Context, conn int, source, fact string, offset, limit int) ([]Fact, error) {
+	items, err := s.repo.Query(ctx, conn, source, fact, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -184,14 +182,14 @@ func (s service) Query(ctx context.Context, query QueryParams, offset, limit int
 }
 
 // sendRequest sends a request to the specified connection through Self Network.
-func (s service) sendRequest(f entity.Fact) {
-	if s.client == nil {
+func (s service) sendRequest(f entity.Fact, appid, selfid string) {
+	if _, ok := s.clients[appid]; !ok {
 		s.logger.Debug("skipping as self is not initialized")
 		return
 	}
 
-	resp, err := s.client.Request(&fact.FactRequest{
-		SelfID:      f.ConnectionID,
+	resp, err := s.clients[appid].Request(&fact.FactRequest{
+		SelfID:      selfid,
 		Description: "info",
 		Facts:       []fact.Fact{{Fact: f.Fact, Sources: []string{f.Source}}},
 		Expiry:      time.Minute * 5,

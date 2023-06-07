@@ -1,9 +1,10 @@
 dsn: "postgres://127.0.0.1/go_restful?sslmode=disable&user=postgres&password=postgres" # Postgres dsn.
-self_app_id: "526fdeac-01b4-4785-a910-085a4f66577a" # Your app self identifier.
-self_device_secret: "sk_1:65VvUD5A3qTpPzvozHRXMS6gss0oZJE7PDICdMjs86s" # Secret key for the device created at the developer portal.
-self_storage_dir: "./storage" # The storage folder you want to use for Self sessions.
-self_storage_key: "ksdh827hofuasihdjn" # Key to be used for encrypting local storage.
-self_env: "review" # Self environment you want to point to.
+self_apps:
+  - self_app_id: "526fdeac-01b4-4785-a910-085a4f66577a" # Your app self identifier.
+    self_device_secret: "sk_1:65VvUD5A3qTpPzvozHRXMS6gss0oZJE7PDICdMjs86s" # Secret key for the device created at the developer portal.
+    self_storage_dir: "./storage" # The storage folder you want to use for Self sessions.
+    self_storage_key: "ksdh827hofuasihdjn" # Key to be used for encrypting local storage.
+    self_env: "review" # Self environment you want to point to.
 jwt_signing_key: "LxsKJywDL5O5PvgODZhBH12KE6k2yL8E" # Signing key for JWT.
 user: "demo" # User to be used for JWT authentication.
 password: "pass" # Password to be used for JWT authentication.

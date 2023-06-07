@@ -4,6 +4,7 @@ import (
 	"context"
 	"path"
 	"runtime"
+	"strconv"
 	"testing"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
@@ -41,9 +42,11 @@ func DB(t *testing.T) *dbcontext.DB {
 // ResetTables truncates all data in the specified tables.
 func ResetTables(t *testing.T, db *dbcontext.DB, tables ...string) {
 	for _, table := range tables {
-		q := `SET FOREIGN_KEY_CHECKS = 0;
-		TRUNCATE TABLE '` + table + `';
-		SET FOREIGN_KEY_CHECKS = 0;`
+		q := `
+			DELETE FROM ` + table + `;
+			SET FOREIGN_KEY_CHECKS = 0;
+			TRUNCATE TABLE '` + table + `';
+			SET FOREIGN_KEY_CHECKS = 0;`
 		err := db.DB().NewQuery(q).LastError
 		if err != nil {
 			t.Error(err)
@@ -60,7 +63,7 @@ func getSourcePath() string {
 }
 
 // CreateConnection creates a connection.
-func CreateConnection(ctx context.Context, db *dbcontext.DB, id string) error {
+func CreateConnection(ctx context.Context, db *dbcontext.DB, id int) error {
 	var connection entity.Connection
 	err := db.With(ctx).Select().Model(id, &connection)
 	if err == nil {
@@ -68,7 +71,9 @@ func CreateConnection(ctx context.Context, db *dbcontext.DB, id string) error {
 	}
 
 	return db.With(ctx).Model(&entity.Connection{
-		ID:   id,
-		Name: "connection_" + id,
+		ID:     id,
+		AppID:  "app_" + strconv.Itoa(id),
+		SelfID: "connection_" + strconv.Itoa(id),
+		Name:   "connection_" + strconv.Itoa(id),
 	}).Insert()
 }
