@@ -17,7 +17,7 @@ type Repository interface {
 	// Count returns the number of messages.
 	Count(ctx context.Context) (int, error)
 	// Query returns the list of messages with the given offset and limit.
-	Query(ctx context.Context, connection string, messagesSince int, offset, limit int) ([]entity.Message, error)
+	Query(ctx context.Context, connection int, messagesSince int, offset, limit int) ([]entity.Message, error)
 	// Create saves a new message in the storage.
 	Create(ctx context.Context, message *entity.Message) error
 	// Update updates the message with given ID in the storage.
@@ -72,7 +72,7 @@ func (r repository) Count(ctx context.Context) (int, error) {
 }
 
 // Query retrieves the message records with the specified offset and limit from the database.
-func (r repository) Query(ctx context.Context, connection string, messagesSince int, offset, limit int) ([]entity.Message, error) {
+func (r repository) Query(ctx context.Context, connection int, messagesSince int, offset, limit int) ([]entity.Message, error) {
 	var messages []entity.Message
 	exp := dbx.NewExp("connection_id={:id}", dbx.Params{"id": connection})
 	if messagesSince > 0 {

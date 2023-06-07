@@ -2,12 +2,11 @@ package message
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 
-	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/mock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,16 +50,18 @@ func TestUpdateMessageRequest_Validate(t *testing.T) {
 
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
-	s := NewService(&mockRepository{}, logger, nil)
+	s := NewService(&mock.MessageRepositoryMock{}, logger, nil)
 
 	ctx := context.Background()
+
+	connection := 1
 
 	// initial count
 	count, _ := s.Count(ctx)
 	assert.Equal(t, 0, count)
 
 	// successful creation
-	message, err := s.Create(ctx, "connection", CreateMessageRequest{Body: "test"})
+	message, err := s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "test"})
 	assert.Nil(t, err)
 	id := message.ID
 	assert.Equal(t, "test", message.Body)
@@ -70,18 +71,18 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, 1, count)
 
 	// validation error in creation
-	_, err = s.Create(ctx, "connection", CreateMessageRequest{Body: ""})
+	_, err = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: ""})
 	assert.NotNil(t, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
 	// unexpected error in creation
-	_, err = s.Create(ctx, "connection", CreateMessageRequest{Body: "error"})
+	_, err = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "error"})
 	assert.Equal(t, errCRUD, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
-	_, _ = s.Create(ctx, "connection", CreateMessageRequest{Body: "test2"})
+	_, _ = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "test2"})
 
 	// update
 	message, err = s.Update(ctx, id, UpdateMessageRequest{Body: "test updated"})
@@ -111,7 +112,7 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, id, message.ID)
 
 	// query
-	messages, _ := s.Query(ctx, "connection", 0, 0, 0)
+	messages, _ := s.Query(ctx, connection, 0, 0, 0)
 	assert.Equal(t, 2, len(messages))
 
 	// delete
@@ -122,57 +123,4 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, id, message.ID)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
-}
-
-type mockRepository struct {
-	items []entity.Message
-}
-
-func (m mockRepository) Get(ctx context.Context, id int) (entity.Message, error) {
-	for _, item := range m.items {
-		if item.ID == id {
-			return item, nil
-		}
-	}
-	return entity.Message{}, sql.ErrNoRows
-}
-
-func (m mockRepository) Count(ctx context.Context) (int, error) {
-	return len(m.items), nil
-}
-
-func (m mockRepository) Query(ctx context.Context, connection string, lasMessageID, offset, limit int) ([]entity.Message, error) {
-	return m.items, nil
-}
-
-func (m *mockRepository) Create(ctx context.Context, message *entity.Message) error {
-	if message.Body == "error" {
-		return errCRUD
-	}
-	m.items = append(m.items, *message)
-	return nil
-}
-
-func (m *mockRepository) Update(ctx context.Context, message entity.Message) error {
-	if message.Body == "error" {
-		return errCRUD
-	}
-	for i, item := range m.items {
-		if item.ID == message.ID {
-			m.items[i] = message
-			break
-		}
-	}
-	return nil
-}
-
-func (m *mockRepository) Delete(ctx context.Context, id int) error {
-	for i, item := range m.items {
-		if item.ID == id {
-			m.items[i] = m.items[len(m.items)-1]
-			m.items = m.items[:len(m.items)-1]
-			break
-		}
-	}
-	return nil
 }

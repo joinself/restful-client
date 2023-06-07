@@ -2,6 +2,7 @@ package self
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/joinself/restful-client/internal/connection"
@@ -24,6 +25,7 @@ type service struct {
 	fRepo  fact.Repository
 	mRepo  message.Repository
 	logger log.Logger
+	selfID string
 }
 
 // NewService creates a new fact service.
@@ -34,6 +36,7 @@ func NewService(client *selfsdk.Client, cRepo connection.Repository, fRepo fact.
 		fRepo:  fRepo,
 		mRepo:  mRepo,
 		logger: logger,
+		selfID: client.SelfAppID(),
 	}
 	s.SetupHooks()
 
@@ -47,6 +50,7 @@ func (s *service) Run() {
 
 func (s *service) SetupHooks() {
 	s.onChatMessageHook()
+	s.onConnectionRequestHook()
 }
 
 func (s *service) onChatMessageHook() {
@@ -56,21 +60,10 @@ func (s *service) onChatMessageHook() {
 
 	s.client.ChatService().OnMessage(func(cm *chat.Message) {
 		// Get connection or create one.
-		c, err := s.cRepo.Get(context.Background(), cm.ISS)
+		c, err := s.getOrCreateConnection(cm.ISS)
 		if err != nil {
-			// Create a connection if it does not exist
-			c := entity.Connection{
-				ID:        cm.ISS,
-				Name:      "-", // TODO: Send a request to get the user name
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-			}
-
-			err = s.cRepo.Create(context.Background(), c)
-			if err != nil {
-				s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
-				return
-			}
+			s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
+			return
 		}
 
 		// Create the input message.
@@ -82,6 +75,51 @@ func (s *service) onChatMessageHook() {
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 		})
-	})
 
+	})
+}
+
+func (s *service) onConnectionRequestHook() {
+	if s.client == nil {
+		return
+	}
+
+	s.client.ChatService().OnConnection(func(iss, status string) {
+		parts := strings.Split(iss, ":")
+		if len(parts) > 0 {
+			iss = parts[0]
+		}
+		_, err := s.getOrCreateConnection(iss)
+		if err != nil {
+			s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
+			return
+		}
+	})
+}
+
+func (s *service) getOrCreateConnection(selfID string) (entity.Connection, error) {
+	c, err := s.cRepo.Get(context.Background(), s.selfID, selfID)
+	if err == nil {
+		return c, nil
+	}
+
+	return s.createConnection(selfID, "-")
+}
+
+func (s *service) createConnection(selfID, name string) (entity.Connection, error) {
+	// Create a connection if it does not exist
+	c := entity.Connection{
+		Name:      name, // TODO: Send a request to get the user name
+		SelfID:    selfID,
+		AppID:     s.selfID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	err := s.cRepo.Create(context.Background(), c)
+	if err != nil {
+		return c, err
+	}
+
+	return s.cRepo.Get(context.Background(), s.selfID, selfID)
 }
