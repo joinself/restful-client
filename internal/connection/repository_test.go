@@ -60,7 +60,7 @@ func TestRepository(t *testing.T) {
 	assert.Equal(t, "connection1 updated", connection.Name)
 
 	// query
-	connections, err := repo.Query(ctx, 0, count2)
+	connections, err := repo.Query(ctx, appID, 0, count2)
 	assert.Nil(t, err)
 	assert.Equal(t, count2, len(connections))
 

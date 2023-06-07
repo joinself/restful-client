@@ -66,7 +66,7 @@ func (r resource) query(c echo.Context) error {
 	}
 
 	pages := pagination.NewFromRequest(c.Request(), count)
-	connections, err := r.service.Query(ctx, pages.Offset(), pages.Limit())
+	connections, err := r.service.Query(ctx, c.Param("app_id"), pages.Offset(), pages.Limit())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

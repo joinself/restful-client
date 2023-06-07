@@ -109,7 +109,7 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, id, connection.SelfID)
 
 	// query
-	connections, _ := s.Query(ctx, 0, 0)
+	connections, _ := s.Query(ctx, appid, 0, 0)
 	assert.Equal(t, 2, len(connections))
 
 	// delete

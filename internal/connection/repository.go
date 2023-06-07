@@ -17,7 +17,7 @@ type Repository interface {
 	// Count returns the number of connections.
 	Count(ctx context.Context) (int, error)
 	// Query returns the list of connections with the given offset and limit.
-	Query(ctx context.Context, offset, limit int) ([]entity.Connection, error)
+	Query(ctx context.Context, appid string, offset, limit int) ([]entity.Connection, error)
 	// Create saves a new connection in the storage.
 	Create(ctx context.Context, connection entity.Connection) error
 	// Update updates the connection with given ID in the storage.
@@ -82,10 +82,11 @@ func (r repository) Count(ctx context.Context) (int, error) {
 }
 
 // Query retrieves the connection records with the specified offset and limit from the database.
-func (r repository) Query(ctx context.Context, offset, limit int) ([]entity.Connection, error) {
+func (r repository) Query(ctx context.Context, appid string, offset, limit int) ([]entity.Connection, error) {
 	var connections []entity.Connection
 	err := r.db.With(ctx).
 		Select().
+		Where(&dbx.HashExp{"appid": appid}).
 		OrderBy("id").
 		Offset(int64(offset)).
 		OrderBy("created_at DESC").
