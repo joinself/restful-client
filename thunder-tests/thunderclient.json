@@ -340,5 +340,53 @@
         "value": "6"
       }
     ]
+  },
+  {
+    "_id": "f5b0fbbc-f893-4480-927b-47aa2a44e38a",
+    "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
+    "containerId": "",
+    "name": "list_apps",
+    "url": "http://localhost:8080/v1/apps",
+    "method": "GET",
+    "sortNum": 25000,
+    "created": "2023-06-07T07:32:50.365Z",
+    "modified": "2023-06-07T07:33:14.212Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "params": [],
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{self.auth_token}}"
+    },
+    "tests": [
+      {
+        "type": "res-code",
+        "custom": "",
+        "action": "equal",
+        "value": "200"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.items",
+        "action": "count",
+        "value": "6"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.items[0].id",
+        "action": "equal",
+        "value": "{{self.connection}}"
+      },
+      {
+        "type": "json-query",
+        "custom": "json.total_count",
+        "action": "equal",
+        "value": "6"
+      }
+    ]
   }
 ]

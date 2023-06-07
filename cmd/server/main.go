@@ -11,6 +11,7 @@ import (
 	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
+	"github.com/joinself/restful-client/internal/app"
 	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/internal/config"
@@ -125,9 +126,16 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	cService := connection.NewService(connectionRepo, logger, fcs)
 
 	// Handlers
+	app.RegisterHandlers(rg.Group(""),
+		clients,
+		authHandler,
+		logger,
+	)
+
 	connection.RegisterHandlers(rg.Group(""),
 		cService,
-		authHandler, logger,
+		authHandler,
+		logger,
 	)
 	message.RegisterHandlers(rg.Group(""),
 		message.NewService(messageRepo, logger, clients),
