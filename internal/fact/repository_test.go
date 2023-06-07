@@ -19,7 +19,7 @@ func TestRepository(t *testing.T) {
 	repo := NewRepository(db, logger)
 
 	ctx := context.Background()
-	connection := "connection"
+	connection := 1
 
 	// initial count
 	facts, err := repo.Query(ctx, connection, "", "", 0, 1000)

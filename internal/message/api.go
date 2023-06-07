@@ -126,7 +126,7 @@ func (r resource) create(c echo.Context) error {
 	}
 
 	// Create the message
-	message, err := r.service.Create(c.Request().Context(), connection.ID, input)
+	message, err := r.service.Create(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), connection.ID, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

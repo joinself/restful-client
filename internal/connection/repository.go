@@ -13,7 +13,7 @@ import (
 // Repository encapsulates the logic to access connections from the data source.
 type Repository interface {
 	// Get returns the connection with the specified connection ID.
-	Get(ctx context.Context, selfid, appid string) (entity.Connection, error)
+	Get(ctx context.Context, appID, selfID string) (entity.Connection, error)
 	// Count returns the number of connections.
 	Count(ctx context.Context) (int, error)
 	// Query returns the list of connections with the given offset and limit.
@@ -23,7 +23,7 @@ type Repository interface {
 	// Update updates the connection with given ID in the storage.
 	Update(ctx context.Context, connection entity.Connection) error
 	// Delete removes the connection with given ID from the storage.
-	Delete(ctx context.Context, id string) error
+	Delete(ctx context.Context, id int) error
 }
 
 // repository persists connections in database
@@ -38,17 +38,17 @@ func NewRepository(db *dbcontext.DB, logger log.Logger) Repository {
 }
 
 // Get reads the connection with the specified ID from the database.
-func (r repository) Get(ctx context.Context, selfid, appid string) (entity.Connection, error) {
+func (r repository) Get(ctx context.Context, appID, selfID string) (entity.Connection, error) {
 	var connections []entity.Connection
 
 	err := r.db.With(ctx).
 		Select().
 		OrderBy("id").
-		Where(&dbx.HashExp{"selfid": selfid, "appid": appid}).
+		Where(&dbx.HashExp{"selfid": selfID, "appid": appID}).
 		All(&connections)
 
 	if len(connections) == 0 {
-		return entity.Connection{}, errors.New("not found")
+		return entity.Connection{}, errors.New("sql: no rows in result set")
 	}
 
 	return connections[0], err
@@ -66,7 +66,7 @@ func (r repository) Update(ctx context.Context, connection entity.Connection) er
 }
 
 // Delete deletes an connection with the specified ID from the database.
-func (r repository) Delete(ctx context.Context, id string) error {
+func (r repository) Delete(ctx context.Context, id int) error {
 	connection, err := r.getByID(ctx, id)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (r repository) Query(ctx context.Context, offset, limit int) ([]entity.Conn
 	return connections, err
 }
 
-func (r repository) getByID(ctx context.Context, id string) (entity.Connection, error) {
+func (r repository) getByID(ctx context.Context, id int) (entity.Connection, error) {
 	var connection entity.Connection
 	err := r.db.With(ctx).Select().Model(id, &connection)
 	return connection, err

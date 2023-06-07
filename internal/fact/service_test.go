@@ -55,33 +55,33 @@ func Test_service_CRUD(t *testing.T) {
 	ctx := context.Background()
 
 	// initial count
-	count, _ := s.Count(ctx, "connection", "", "")
+	count, _ := s.Count(ctx, 1, "", "")
 	assert.Equal(t, 0, count)
 
 	// successful creation
-	fact, err := s.Create(ctx, "connection", CreateFactRequest{Fact: "test"})
+	fact, err := s.Create(ctx, "app", "connection", 1, CreateFactRequest{Fact: "test"})
 	assert.Nil(t, err)
 	assert.NotEmpty(t, fact.ID)
 	id := fact.ID
 	assert.Equal(t, "test", fact.Fact.Fact)
 	assert.NotEmpty(t, fact.CreatedAt)
 	assert.NotEmpty(t, fact.UpdatedAt)
-	count, _ = s.Count(ctx, "connection", "", "")
+	count, _ = s.Count(ctx, 1, "", "")
 	assert.Equal(t, 1, count)
 
 	// validation error in creation
-	_, err = s.Create(ctx, "connection", CreateFactRequest{Fact: ""})
+	_, err = s.Create(ctx, "app", "connection", 1, CreateFactRequest{Fact: ""})
 	assert.NotNil(t, err)
-	count, _ = s.Count(ctx, "connection", "", "")
+	count, _ = s.Count(ctx, 1, "", "")
 	assert.Equal(t, 1, count)
 
 	// unexpected error in creation
-	_, err = s.Create(ctx, "connection", CreateFactRequest{Fact: "error"})
+	_, err = s.Create(ctx, "app", "connection", 1, CreateFactRequest{Fact: "error"})
 	assert.Equal(t, errCRUD, err)
-	count, _ = s.Count(ctx, "connection", "", "")
+	count, _ = s.Count(ctx, 1, "", "")
 	assert.Equal(t, 1, count)
 
-	_, _ = s.Create(ctx, "connection", CreateFactRequest{Fact: "test2"})
+	_, _ = s.Create(ctx, "app", "connection", 1, CreateFactRequest{Fact: "test2"})
 
 	// update
 	fact, err = s.Update(ctx, id, UpdateFactRequest{Body: "test updated"})
@@ -93,13 +93,13 @@ func Test_service_CRUD(t *testing.T) {
 	// validation error in update
 	_, err = s.Update(ctx, id, UpdateFactRequest{Body: ""})
 	assert.NotNil(t, err)
-	count, _ = s.Count(ctx, "connection", "", "")
+	count, _ = s.Count(ctx, 1, "", "")
 	assert.Equal(t, 2, count)
 
 	// unexpected error in update
 	_, err = s.Update(ctx, id, UpdateFactRequest{Body: "error"})
 	assert.Equal(t, errCRUD, err)
-	count, _ = s.Count(ctx, "connection", "", "")
+	count, _ = s.Count(ctx, 1, "", "")
 	assert.Equal(t, 2, count)
 
 	// get
@@ -111,7 +111,7 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, id, fact.ID)
 
 	// query
-	facts, _ := s.Query(ctx, "connection", "", "", 0, 0)
+	facts, _ := s.Query(ctx, 1, "", "", 0, 0)
 	assert.Equal(t, 2, len(facts))
 
 	// delete
@@ -120,6 +120,6 @@ func Test_service_CRUD(t *testing.T) {
 	fact, err = s.Delete(ctx, id)
 	assert.Nil(t, err)
 	assert.Equal(t, id, fact.ID)
-	count, _ = s.Count(ctx, "connection", "", "")
+	count, _ = s.Count(ctx, 1, "", "")
 	assert.Equal(t, 1, count)
 }

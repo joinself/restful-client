@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/test"
 	"github.com/joinself/restful-client/pkg/log"
@@ -25,11 +26,15 @@ func TestRepository(t *testing.T) {
 	count, err := repo.Count(ctx)
 	assert.Nil(t, err)
 
+	id, _ := uuid.NewV4()
+	connectionID := "selfID" + id.String()
+	appID := "appID" + id.String()
+
 	// create
 	err = repo.Create(ctx, entity.Connection{
-		ID:        "test1",
-		SelfID:    "selfid1",
-		AppID:     "appid1",
+		// ID:        1,
+		SelfID:    connectionID,
+		AppID:     appID,
 		Name:      "connection1",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -39,21 +44,19 @@ func TestRepository(t *testing.T) {
 	assert.Equal(t, 1, count2-count)
 
 	// get
-	connection, err := repo.Get(ctx, "appid1", "selfid1")
+	connection, err := repo.Get(ctx, appID, connectionID)
 	assert.Nil(t, err)
 	assert.Equal(t, "connection1", connection.Name)
-	_, err = repo.Get(ctx, "appid1", "test0")
+
+	// get unexisting
+	_, err = repo.Get(ctx, appID, "test0")
 	assert.Equal(t, sql.ErrNoRows, err)
 
 	// update
-	err = repo.Update(ctx, entity.Connection{
-		ID:        "test1",
-		Name:      "connection1 updated",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	})
+	connection.Name = "connection1 updated"
+	err = repo.Update(ctx, connection)
 	assert.Nil(t, err)
-	connection, _ = repo.Get(ctx, "appid1", "selfid1")
+	connection, _ = repo.Get(ctx, appID, connectionID)
 	assert.Equal(t, "connection1 updated", connection.Name)
 
 	// query
@@ -62,10 +65,10 @@ func TestRepository(t *testing.T) {
 	assert.Equal(t, count2, len(connections))
 
 	// delete
-	err = repo.Delete(ctx, "test1")
+	err = repo.Delete(ctx, connection.ID)
 	assert.Nil(t, err)
-	_, err = repo.Get(ctx, "appid1", "selfid1")
+	_, err = repo.Get(ctx, appID, connectionID)
 	assert.Equal(t, sql.ErrNoRows, err)
-	err = repo.Delete(ctx, "test1")
+	err = repo.Delete(ctx, 1)
 	assert.Equal(t, sql.ErrNoRows, err)
 }

@@ -86,9 +86,9 @@ func main() {
 // @BasePath	/v1/
 // @schemes	http
 func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.Handler {
-	client, err := setupSelfClient(cfg)
+	clients, err := setupSelfClients(cfg)
 	if err != nil {
-		lg.Fatalf("failed to setup self client: %v", err.Error())
+		lg.Fatalf("failed setting up self clients: %v", err.Error())
 	}
 
 	e := echo.New()
@@ -108,40 +108,49 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	healthcheck.RegisterHandlers(rg, Version)
 
 	authHandler := auth.Handler(cfg.JWTSigningKey)
+
+	// Repositories
 	connectionRepo := connection.NewRepository(db, logger)
 	messageRepo := message.NewRepository(db, logger)
 	factRepo := fact.NewRepository(db, logger)
 	attestationRepo := attestation.NewRepository(db, logger)
 
-	cService := connection.NewService(connectionRepo, logger, client.FactService())
+	// Services
+	fcs := make(map[string]connection.FactService, len(clients))
+	rcs := make(map[string]fact.RequesterService, len(clients))
+	for id, c := range clients {
+		fcs[id] = c.FactService()
+		rcs[id] = c.FactService()
+	}
+	cService := connection.NewService(connectionRepo, logger, fcs)
 
+	// Handlers
 	connection.RegisterHandlers(rg.Group(""),
 		cService,
 		authHandler, logger,
 	)
-
 	message.RegisterHandlers(rg.Group(""),
-		message.NewService(messageRepo, logger, client),
+		message.NewService(messageRepo, logger, clients),
 		cService,
 		authHandler,
 		logger,
 	)
-
 	fact.RegisterHandlers(rg.Group(""),
-		fact.NewService(factRepo, attestationRepo, logger, client.FactService()),
+		fact.NewService(factRepo, attestationRepo, logger, rcs),
 		cService,
 		authHandler, logger,
 	)
-
 	auth.RegisterHandlers(rg.Group(""),
 		auth.NewService(cfg.JWTSigningKey, cfg.JWTExpiration, cfg.User, cfg.Password, logger),
 		logger,
 	)
 
-	self.RunService(
-		self.NewService(client, connectionRepo, factRepo, messageRepo, logger),
-		logger,
-	)
+	for _, client := range clients {
+		self.RunService(
+			self.NewService(client, connectionRepo, factRepo, messageRepo, logger),
+			logger,
+		)
+	}
 
 	if cfg.ServeDocs == "true" {
 		e.GET("/docs/*", echoSwagger.WrapHandler)
@@ -153,14 +162,25 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	return e
 }
 
-func setupSelfClient(cfg *config.Config) (*selfsdk.Client, error) {
-	return selfsdk.New(selfsdk.Config{
-		SelfAppID:           cfg.SelfAppID,
-		SelfAppDeviceSecret: cfg.SelfAppDeviceSecret,
-		StorageKey:          cfg.SelfStorageKey,
-		StorageDir:          cfg.SelfStorageDir,
-		Environment:         cfg.SelfEnv,
-	})
+func setupSelfClients(cfg *config.Config) (map[string]*selfsdk.Client, error) {
+	clients := make(map[string]*selfsdk.Client, len(cfg.SelfApps))
+
+	for _, c := range cfg.SelfApps {
+		client, err := selfsdk.New(selfsdk.Config{
+			SelfAppID:           c.SelfAppID,
+			SelfAppDeviceSecret: c.SelfAppDeviceSecret,
+			StorageKey:          c.SelfStorageKey,
+			StorageDir:          c.SelfStorageDir,
+			Environment:         c.SelfEnv,
+		})
+		if err != nil {
+			return nil, err
+		}
+		clients[c.SelfAppID] = client
+	}
+
+	return clients, nil
+
 }
 
 // logDBQuery returns a logging function that can be used to log SQL queries.

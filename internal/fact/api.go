@@ -113,7 +113,7 @@ func (r resource) create(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
 
-	fact, err := r.service.Create(c.Request().Context(), conn.ID, input)
+	fact, err := r.service.Create(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), conn.ID, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

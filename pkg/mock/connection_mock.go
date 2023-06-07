@@ -52,7 +52,7 @@ func (m *ConnectionRepositoryMock) Update(ctx context.Context, connection entity
 	return nil
 }
 
-func (m *ConnectionRepositoryMock) Delete(ctx context.Context, id string) error {
+func (m *ConnectionRepositoryMock) Delete(ctx context.Context, id int) error {
 	for i, item := range m.Items {
 		if item.ID == id {
 			m.Items[i] = m.Items[len(m.Items)-1]
