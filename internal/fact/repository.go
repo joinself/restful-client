@@ -15,9 +15,9 @@ type Repository interface {
 	// Get returns the fact with the specified fact ID.
 	Get(ctx context.Context, id string) (entity.Fact, error)
 	// Count returns the number of facts.
-	Count(ctx context.Context, conn, source, fact string) (int, error)
+	Count(ctx context.Context, conn int, source, fact string) (int, error)
 	// Query returns the list of facts with the given offset and limit.
-	Query(ctx context.Context, conn, source, fact string, offset, limit int) ([]entity.Fact, error)
+	Query(ctx context.Context, conn int, source, fact string, offset, limit int) ([]entity.Fact, error)
 	// Create saves a new fact in the storage.
 	Create(ctx context.Context, fact entity.Fact) error
 	// Update updates the fact with given ID in the storage.
@@ -67,7 +67,7 @@ func (r repository) Delete(ctx context.Context, id string) error {
 }
 
 // Count returns the number of the fact records in the database.
-func (r repository) Count(ctx context.Context, conn, source, fact string) (int, error) {
+func (r repository) Count(ctx context.Context, conn int, source, fact string) (int, error) {
 	var count int
 	sql := r.db.With(ctx).Select("COUNT(*)").From("fact")
 	sql.Where(&dbx.HashExp{"connection_id": conn})
@@ -83,7 +83,7 @@ func (r repository) Count(ctx context.Context, conn, source, fact string) (int, 
 }
 
 // Query retrieves the fact records with the specified offset and limit from the database.
-func (r repository) Query(ctx context.Context, conn, source, fact string, offset, limit int) ([]entity.Fact, error) {
+func (r repository) Query(ctx context.Context, conn int, source, fact string, offset, limit int) ([]entity.Fact, error) {
 	var facts []entity.Fact
 
 	sql := r.db.With(ctx).

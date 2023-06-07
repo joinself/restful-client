@@ -12,7 +12,7 @@ import (
 
 // Service encapsulates usecase logic for connections.
 type Service interface {
-	Get(ctx context.Context, selfid, appid string) (Connection, error)
+	Get(ctx context.Context, appid, selfid string) (Connection, error)
 	Query(ctx context.Context, offset, limit int) ([]Connection, error)
 	Count(ctx context.Context) (int, error)
 	Create(ctx context.Context, appid string, input CreateConnectionRequest) (Connection, error)
@@ -55,14 +55,14 @@ func (m UpdateConnectionRequest) Validate() error {
 }
 
 type service struct {
-	repo   Repository
-	logger log.Logger
-	client FactService
+	repo    Repository
+	logger  log.Logger
+	clients map[string]FactService
 }
 
 // NewService creates a new connection service.
-func NewService(repo Repository, logger log.Logger, client FactService) Service {
-	return service{repo, logger, client}
+func NewService(repo Repository, logger log.Logger, clients map[string]FactService) Service {
+	return service{repo, logger, clients}
 }
 
 // Get returns the connection with the specified the connection ID.
@@ -152,12 +152,12 @@ func (s service) Query(ctx context.Context, offset, limit int) ([]Connection, er
 }
 
 func (s service) requestPublicInfo(appid, selfid string) {
-	if s.client == nil {
+	if _, ok := s.clients[appid]; !ok {
 		s.logger.Debug("skipping as self is not initialized")
 		return
 	}
 
-	resp, err := s.client.Request(&fact.FactRequest{
+	resp, err := s.clients[appid].Request(&fact.FactRequest{
 		SelfID:      selfid,
 		Description: "info",
 		Facts:       []fact.Fact{{Fact: fact.FactDisplayName, Sources: []string{fact.SourceUserSpecified}}},

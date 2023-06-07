@@ -7,7 +7,7 @@ import (
 // Fact represents a fact record.
 type Fact struct {
 	ID           string    `json:"id"`
-	ConnectionID string    `json:"-"`
+	ConnectionID int       `json:"-"`
 	ISS          string    `json:"iss"`
 	CID          string    `json:"cid"`
 	JTI          string    `json:"jti"`

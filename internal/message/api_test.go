@@ -17,10 +17,10 @@ func TestAPI(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 	repo := &mock.MessageRepositoryMock{Items: []entity.Message{
-		{1, "connection", "", "", "", "hello!", time.Now(), time.Now(), time.Now()},
+		{1, 123, "", "", "", "hello!", time.Now(), time.Now(), time.Now()},
 	}}
 	connRepo := &mock.ConnectionRepositoryMock{Items: []entity.Connection{
-		{"123", "connection", "app1", "connection123", time.Now(), time.Now()},
+		{123, "connection", "app1", "connection123", time.Now(), time.Now()},
 	}}
 	authHandler := auth.MockAuthHandler()
 	RegisterHandlers(

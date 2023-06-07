@@ -20,11 +20,11 @@ func (m FactRepositoryMock) Get(ctx context.Context, id string) (entity.Fact, er
 	return entity.Fact{}, sql.ErrNoRows
 }
 
-func (m FactRepositoryMock) Count(ctx context.Context, conn, source, fact string) (int, error) {
+func (m FactRepositoryMock) Count(ctx context.Context, conn int, source, fact string) (int, error) {
 	return len(m.Items), nil
 }
 
-func (m FactRepositoryMock) Query(ctx context.Context, conn, source, fact string, offset, limit int) ([]entity.Fact, error) {
+func (m FactRepositoryMock) Query(ctx context.Context, conn int, source, fact string, offset, limit int) ([]entity.Fact, error) {
 	return m.Items, nil
 }
 

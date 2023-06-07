@@ -24,7 +24,7 @@ func (m MessageRepositoryMock) Count(ctx context.Context) (int, error) {
 	return len(m.Items), nil
 }
 
-func (m MessageRepositoryMock) Query(ctx context.Context, connection string, lasMessageID, offset, limit int) ([]entity.Message, error) {
+func (m MessageRepositoryMock) Query(ctx context.Context, connection, lasMessageID, offset, limit int) ([]entity.Message, error) {
 	return m.Items, nil
 }
 

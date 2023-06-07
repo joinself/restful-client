@@ -54,12 +54,14 @@ func Test_service_CRUD(t *testing.T) {
 
 	ctx := context.Background()
 
+	connection := 1
+
 	// initial count
 	count, _ := s.Count(ctx)
 	assert.Equal(t, 0, count)
 
 	// successful creation
-	message, err := s.Create(ctx, "connection", CreateMessageRequest{Body: "test"})
+	message, err := s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "test"})
 	assert.Nil(t, err)
 	id := message.ID
 	assert.Equal(t, "test", message.Body)
@@ -69,18 +71,18 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, 1, count)
 
 	// validation error in creation
-	_, err = s.Create(ctx, "connection", CreateMessageRequest{Body: ""})
+	_, err = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: ""})
 	assert.NotNil(t, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
 	// unexpected error in creation
-	_, err = s.Create(ctx, "connection", CreateMessageRequest{Body: "error"})
+	_, err = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "error"})
 	assert.Equal(t, errCRUD, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
-	_, _ = s.Create(ctx, "connection", CreateMessageRequest{Body: "test2"})
+	_, _ = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "test2"})
 
 	// update
 	message, err = s.Update(ctx, id, UpdateMessageRequest{Body: "test updated"})
@@ -110,7 +112,7 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, id, message.ID)
 
 	// query
-	messages, _ := s.Query(ctx, "connection", 0, 0, 0)
+	messages, _ := s.Query(ctx, connection, 0, 0, 0)
 	assert.Equal(t, 2, len(messages))
 
 	// delete
