@@ -42,7 +42,9 @@ func DB(t *testing.T) *dbcontext.DB {
 // ResetTables truncates all data in the specified tables.
 func ResetTables(t *testing.T, db *dbcontext.DB, tables ...string) {
 	for _, table := range tables {
-		q := `SET FOREIGN_KEY_CHECKS = 0;
+		q := `
+			DELETE FROM ` + table + `;
+			SET FOREIGN_KEY_CHECKS = 0;
 			TRUNCATE TABLE '` + table + `';
 			SET FOREIGN_KEY_CHECKS = 0;`
 		err := db.DB().NewQuery(q).LastError
