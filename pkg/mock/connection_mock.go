@@ -27,7 +27,7 @@ func (m ConnectionRepositoryMock) Count(ctx context.Context) (int, error) {
 	return len(m.Items), nil
 }
 
-func (m ConnectionRepositoryMock) Query(ctx context.Context, offset, limit int) ([]entity.Connection, error) {
+func (m ConnectionRepositoryMock) Query(ctx context.Context, appID string, offset, limit int) ([]entity.Connection, error) {
 	return m.Items, nil
 }
 

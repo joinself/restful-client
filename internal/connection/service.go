@@ -13,7 +13,7 @@ import (
 // Service encapsulates usecase logic for connections.
 type Service interface {
 	Get(ctx context.Context, appid, selfid string) (Connection, error)
-	Query(ctx context.Context, offset, limit int) ([]Connection, error)
+	Query(ctx context.Context, appid string, offset, limit int) ([]Connection, error)
 	Count(ctx context.Context) (int, error)
 	Create(ctx context.Context, appid string, input CreateConnectionRequest) (Connection, error)
 	Update(ctx context.Context, appid, selfid string, input UpdateConnectionRequest) (Connection, error)
@@ -138,10 +138,9 @@ func (s service) Count(ctx context.Context) (int, error) {
 }
 
 // Query returns the connections with the specified offset and limit.
-func (s service) Query(ctx context.Context, offset, limit int) ([]Connection, error) {
-	items, err := s.repo.Query(ctx, offset, limit)
+func (s service) Query(ctx context.Context, appid string, offset, limit int) ([]Connection, error) {
+	items, err := s.repo.Query(ctx, appid, offset, limit)
 	if err != nil {
-		println("error")
 		return nil, err
 	}
 	result := []Connection{}
