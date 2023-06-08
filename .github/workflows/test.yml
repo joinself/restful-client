@@ -1,0 +1,44 @@
+name: Test
+
+on: 
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: [self-hosted, linux-docker]
+    container:
+      image: eu.gcr.io/principal-oxide-204416/go-build:1.19.1-bullseye
+      credentials:
+        username: ${{ secrets.CONTAINER_REGISTRY_USER }}
+        password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+    steps:
+      - name: Setup job
+        uses: joinself/github-actions/setup-job@main
+        with:
+          gh-token: ${{ secrets.GH_TOKEN }}
+          git-lfs: ${{ inputs.git-lfs }}
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: /go/pkg/mod
+          key: ${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+      - name: Test
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
+          CONTAINER_REGISTRY_PASSWORD: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+        run: |
+          . ${GITHUB_WORKSPACE}/.ci/env
+          echo "testing...."
+          exit 1
+          ${CI_SCRIPTS}/container-registry-setup
+          #make lint
+          make unit-test
+          docker build -t ${CONTAINER_REGISTRY_URL}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA} --build-arg GITHUB_TOKEN=${GH_TOKEN} --build-arg gopath=${CI_WORKDIR}/.cache/go .
+          docker push ${CONTAINER_REGISTRY_URL}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}
+      - name: Failure notification
+        if: ${{ github.ref == 'refs/heads/main' && failure() }}
+        uses: ./.github/actions/failure-notification
+        with:
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
