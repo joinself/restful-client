@@ -37,8 +37,8 @@ type Fact struct {
 type CreateFactRequest struct {
 	CID    string    `json:"cid"`
 	RID    string    `json:"rid"`
-	Source string    `json:"source`
-	Fact   string    `json:"fact`
+	Source string    `json:"source"`
+	Fact   string    `json:"fact"`
 	Body   string    `json:"body"`
 	IAT    time.Time `json:"iat"`
 }

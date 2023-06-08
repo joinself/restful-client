@@ -67,7 +67,7 @@ func (s *service) onChatMessageHook() {
 		}
 
 		// Create the input message.
-		s.mRepo.Create(context.Background(), &entity.Message{
+		err = s.mRepo.Create(context.Background(), &entity.Message{
 			ConnectionID: c.ID,
 			ISS:          cm.ISS,
 			Body:         cm.Body,
@@ -75,6 +75,10 @@ func (s *service) onChatMessageHook() {
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 		})
+		if err != nil {
+			s.logger.With(context.Background(), "self").Info("error creating message " + err.Error())
+			return
+		}
 
 	})
 }
