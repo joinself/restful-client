@@ -1,57 +1,38 @@
 name: CI
 
-on:
+on: 
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
 
-defaults:
-  run:
-    shell: bash
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  license-compliance:
+    uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
+    secrets: inherit
+  secret-scan:
+    uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
+    # with:
+    #   continue-on-error: true
+    secrets: inherit
+  #build:
+  #  #uses: ./.github/workflows/build-go.yml
+  #  uses: joinself/github-workflows/.github/workflows/build-go.yml@main
+  #  with:
+  #    dockerfile-path: ./cmd/server/Dockerfile
+  #  secrets: inherit
   test:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:alpine
-        env:
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: go_restful
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.19.1
-      - name: Setup environment
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends curl
-          curl -Lo /tmp/self-omemo.deb https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo_0.5.0_amd64.deb
-          sudo apt-get install -y --no-install-recommends /tmp/self-omemo.deb
-          curl -Lo /tmp/migrate.tar.gz https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-amd64.tar.gz
-          tar zxf /tmp/migrate.tar.gz -C /tmp
-          sudo cp /tmp/migrate /usr/local/bin/
-      - name: Lint check
-        run: |
-          curl -Lo /tmp/golangci-lint.tar.gz https://github.com/golangci/golangci-lint/releases/download/v1.21.0/golangci-lint-1.21.0-linux-amd64.tar.gz
-          tar zxf /tmp/golangci-lint.tar.gz -C /tmp
-          sudo cp /tmp/golangci-lint-1.21.0-linux-amd64/golangci-lint /usr/local/bin
-          make lint
-      - name: Build
-        run: make build
-      - name: Test
-        env:
-          APP_ENV: local
-          APP_DSN: "postgres://localhost/go_restful?sslmode=disable&user=${{ secrets.POSTGRES_USER }}&password=${{ secrets.POSTGRES_PASSWORD }}"
-        run: |
-          make migrate
-          make test-cover
+    needs: [license-compliance, secret-scan]
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+  #publish:
+  #  if: ${{ false }}
+  #  #if: ${{ github.ref == 'refs/heads/main' }}
+  #  needs: test
+  #  uses: joinself/github-workflows/.github/workflows/publish-k8s.yml@main
+  #  secrets: inherit
