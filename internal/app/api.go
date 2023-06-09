@@ -30,7 +30,7 @@ type app struct {
 
 func (r resource) list(c echo.Context) error {
 	apps := []app{}
-	for id, _ := range r.clients {
+	for id := range r.clients {
 		apps = append(apps, app{ID: id})
 	}
 

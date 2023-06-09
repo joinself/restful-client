@@ -15,7 +15,7 @@ type Fact struct {
 	Source       string    `json:"source"`
 	Fact         string    `json:"fact"`
 	Body         string    `json:"body"`
-	IAT          time.Time `json:"created_at"`
+	IAT          time.Time `json:"iat"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
