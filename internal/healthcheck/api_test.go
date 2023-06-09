@@ -13,6 +13,6 @@ func TestAPI(t *testing.T) {
 	router := test.MockRouter(logger)
 	RegisterHandlers(router.Group(""), "0.9.0")
 	test.Endpoint(t, router, test.APITestCase{
-		"ok", "GET", "/healthcheck", "", nil, http.StatusOK, `"OK"`,
+		Name: "ok", Method: "GET", URL: "/healthcheck", Body: "", Header: nil, WantStatus: http.StatusOK, WantResponse: `"OK"`,
 	})
 }
