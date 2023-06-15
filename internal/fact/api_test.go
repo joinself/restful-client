@@ -26,11 +26,15 @@ func TestAPI(t *testing.T) {
 	atRepo := &mock.AttestationRepositoryMock{Items: []entity.Attestation{
 		{ID: "123", FactID: "123", Body: "body", Value: "value", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}}
+
+	factClients := map[string]connection.FactService{}
+	aclManagers := map[string]connection.ACLManager{}
+
 	authHandler := auth.MockAuthHandler()
 	RegisterHandlers(
 		router.Group(""),
 		NewService(repo, atRepo, logger, nil),
-		connection.NewService(connRepo, logger, nil),
+		connection.NewService(connRepo, logger, factClients, aclManagers),
 		authHandler,
 		logger)
 	header := auth.MockAuthHeader()

@@ -81,30 +81,31 @@ Restful client provides a subset of features to interact with self network, for 
 - [x] `GET /healthcheck`: a healthcheck service provided for health checking purpose (needed when implementing a server cluster)
 - [x] `POST /v1/login`: authenticates a user and generates a JWT
 
-- [x] `GET /v1/connections`: returns a paginated list of the existing connections
-- [x] `GET /v1/connections/:id`: returns the detailed information of an connection
-- [x] `POST /v1/connections`: creates a new connection
-- [ ] `PUT /v1/connections/:id`: updates an existing connection
-- [ ] `DELETE /v1/connections/:id`: deletes an connection
+- [x] `GET /v1/apps`: gets the list of configured apps on the current service
 
-- [x] `POST /connections/:id/messages`: sends a message to the specified connection
-- [x] `GET /connections/:id/messages`: retrieves the full conversation with a specific connection
-- [ ] `GET /connections/:id/messages/:id`
-- [ ] `PUT /connections/:id/messages/:id` updates an existing message
-- [ ] `DELETE /connections/:id/messages/:id` deletes an existing message from the conversation
+- [x] `GET /v1/apps/:app_id/connections`: returns a paginated list of the existing connections
+- [x] `GET /v1/apps/:app_id/connections/:id`: returns the detailed information of an connection
+- [x] `POST /v1/apps/:app_id/connections`: creates a new connection
+- [x] `PUT /v1/apps/:app_id/connections/:id`: updates an existing connection
+- [x] `DELETE /v1/apps/:app_id/connections/:id`: deletes an connection
 
-- [ ] `GET  /groups`
-- [ ] `GET  /groups/:id`
-- [ ] `GET  /groups/:id/messages`
-- [ ] `GET  /groups/:id/messages/:id`
-- [ ] `PUT  /groups/:id/messages/:id`
-- [ ] `GET  /groups/:id/messages/:id/responses`
+- [x] `POST /v1/apps/:app_id/connections/:id/messages`: sends a message to the specified connection
+- [x] `GET /v1/apps/:app_id/connections/:id/messages`: retrieves the full conversation with a specific connection
+- [ ] `GET /v1/apps/:app_id/connections/:id/messages/:id`
+- [ ] `PUT /v1/apps/:app_id/connections/:id/messages/:id` updates an existing message
+- [ ] `DELETE /v1/apps/:app_id/connections/:id/messages/:id` deletes an existing message from the conversation
+
+- [ ] `GET  /v1/apps/:app_id/groups`
+- [ ] `GET  /v1/apps/:app_id/groups/:id`
+- [ ] `GET  /v1/apps/:app_id/groups/:id/messages`
+- [ ] `GET  /v1/apps/:app_id/groups/:id/messages/:id`
+- [ ] `PUT  /v1/apps/:app_id/groups/:id/messages/:id`
+- [ ] `GET  /v1/apps/:app_id/groups/:id/messages/:id/responses`
 - 
-- [x] `GET  /connections/:id/facts`: gets a list of the requested facts for a specific connection
-- [x] `POST /connections/:id/facts/:id`: sends a fact request to a specific connection.
-- [x] `GET  /connections/:id/facts/:id`: displays the details and attestations for a specific fact
-- [ ] `PUT /connections/:id/facts/:id`
-- [ ] `DELETE /connections/:id/facts/:id`
+- [-] `GET  /v1/apps/:app_id/connections/:id/facts`: gets a list of the requested facts for a specific connection
+- [-] `POST /v1/apps/:app_id/connections/:id/facts`: sends a fact request to a specific connection.
+- [-] `GET  /v1/apps/:app_id/connections/:id/facts/:fact_id`: displays the details and attestations for a specific fact
+- [ ] `DELETE /v1/apps/:app_id/connections/:id/facts/:fact_id` deletes a sepcifci fact for a connection
 
 
 Try the URL `http://localhost:8080/healthcheck` in a browser, and you should see something like `"OK v1.0.0"` displayed.
