@@ -104,7 +104,7 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 	f := entity.Fact{
 		ID:           id,
 		ConnectionID: connection,
-		ISS:          "me", // TODO: use current app selfid
+		ISS:          appID,
 		Source:       req.Source,
 		Fact:         req.Fact,
 		Body:         req.Body,

@@ -22,6 +22,10 @@
       {
         "name": "self.connection_name",
         "value": "Adriq"
+      },
+      {
+        "name": "self.appid",
+        "value": "526fdeac-01b4-4785-a910-085a4f66577a"
       }
     ]
   }
