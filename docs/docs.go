@@ -24,7 +24,38 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/connections": {
+        "/apps": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List configured apps.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apps"
+                ],
+                "summary": "List apps.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/connection.Connection"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/:app_id/connections": {
             "get": {
                 "security": [
                     {
@@ -43,6 +74,13 @@ const docTemplate = `{
                 ],
                 "summary": "List connections.",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "page number",
@@ -74,7 +112,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new connection and sends a request for public information.",
+                "description": "Creates a new connection, permits ACLs and sends a request for public information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -86,6 +124,13 @@ const docTemplate = `{
                 ],
                 "summary": "Creates a new connection.",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "query params",
                         "name": "request",
@@ -106,117 +151,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/connections/{connection_id}/facts": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "List facts matching the specified filters.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "facts"
-                ],
-                "summary": "List facts.",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Connection id",
-                        "name": "connection_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "format": "string",
-                        "description": "source",
-                        "name": "source",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "format": "string",
-                        "description": "fact name",
-                        "name": "fact",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/connection.Connection"
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Sends a fact request to the specified self user.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "facts"
-                ],
-                "summary": "Sends a fact request.",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "number of elements per page",
-                        "name": "per_page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Connection id",
-                        "name": "connection_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "query params",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/fact.CreateFactRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/connection.Connection"
-                        }
-                    }
-                }
-            }
-        },
-        "/connections/{connection_id}/facts/{id}": {
+        "/apps/:app_id/connections/{connection_id}/facts/{id}": {
             "get": {
                 "security": [
                     {
@@ -235,6 +170,13 @@ const docTemplate = `{
                 ],
                 "summary": "Get fact details.",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "Connection id",
@@ -260,7 +202,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/connections/{connection_id}/messages": {
+        "/apps/:app_id/connections/{connection_id}/messages": {
             "get": {
                 "security": [
                     {
@@ -296,6 +238,13 @@ const docTemplate = `{
                         "description": "number of elements per page",
                         "name": "per_page",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
                     },
                     {
                         "type": "string",
@@ -336,6 +285,13 @@ const docTemplate = `{
                 "summary": "Sends a message.",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "type": "integer",
                         "description": "Connection id",
                         "name": "connection_id",
@@ -362,7 +318,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/connections/{connection_id}/messages/{id}": {
+        "/apps/:app_id/connections/{connection_id}/messages/{id}": {
             "get": {
                 "security": [
                     {
@@ -381,6 +337,13 @@ const docTemplate = `{
                 ],
                 "summary": "Gets a message.",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "Connection id",
@@ -406,7 +369,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/connections/{id}": {
+        "/apps/:app_id/connections/{id}": {
             "get": {
                 "security": [
                     {
@@ -426,6 +389,13 @@ const docTemplate = `{
                 "summary": "Get connection details.",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "type": "integer",
                         "description": "Self ID",
                         "name": "id",
@@ -438,6 +408,210 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/connection.Connection"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the properties of an existing connection..",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connections"
+                ],
+                "summary": "Updates a connection.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/connection.UpdateConnectionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/connection.Connection"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing connection and sends a request for public information and avoids incoming comms from that connection.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "connections"
+                ],
+                "summary": "Deletes an existing connection.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/connection.CreateConnectionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/connection.Connection"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{app_id}/connections/{connection_id}/requests": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sends a request request to the specified self user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Sends a request request.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "number of elements per page",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection id",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/connection.Connection"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{app_id}/connections/{connection_id}/requests/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get request details by request request id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Get request details.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Connection id",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Request request id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/request.Request"
                         }
                     }
                 }
@@ -530,13 +704,19 @@ const docTemplate = `{
         "connection.Connection": {
             "type": "object",
             "properties": {
+                "appid": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "selfid": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -548,6 +728,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "selfid": {
+                    "type": "string"
+                }
+            }
+        },
+        "connection.UpdateConnectionRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
                     "type": "string"
                 }
             }
@@ -568,29 +756,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "fact.CreateFactRequest": {
-            "type": "object",
-            "properties": {
-                "body": {
-                    "type": "string"
-                },
-                "cid": {
-                    "type": "string"
-                },
-                "fact": {
-                    "type": "string"
-                },
-                "iat": {
-                    "type": "string"
-                },
-                "rid": {
-                    "type": "string"
-                },
-                "source": {
                     "type": "string"
                 }
             }
@@ -616,6 +781,9 @@ const docTemplate = `{
                 "fact": {
                     "type": "string"
                 },
+                "iat": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -623,6 +791,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "jti": {
+                    "type": "string"
+                },
+                "request_id": {
                     "type": "string"
                 },
                 "source": {
@@ -669,6 +840,77 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CreateRequest": {
+            "type": "object",
+            "properties": {
+                "facts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.FactRequest"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.FactRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "sources": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "request.Request": {
+            "type": "object",
+            "properties": {
+                "auth": {
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "facts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.FactRequest"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "resources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.RequestResource"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "typ": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.RequestResource": {
+            "type": "object",
+            "properties": {
+                "uri": {
                     "type": "string"
                 }
             }

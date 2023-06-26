@@ -41,10 +41,11 @@ type resource struct {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
+// @Param        app_id   path      string  true  "App id"
 // @Param        connection_id   path      int  true  "Connection id"
 // @Param        id   path      int  true  "Message id"
 // @Success      200  {object}  Message
-// @Router       /connections/{connection_id}/messages/{id} [get]
+// @Router       /apps/:app_id/connections/{connection_id}/messages/{id} [get]
 func (r resource) get(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -69,9 +70,10 @@ func (r resource) get(c echo.Context) error {
 // @Param          messages_since query int false "return elements since a message id"
 // @Param          page query int false "page number"
 // @Param          per_page query int false "number of elements per page"
+// @Param          app_id   path      string  true  "App id"
 // @Param          connection_id path string  true  "Connection ID"
 // @Success        200  {array}  connection.Connection
-// @Router         /connections/{connection_id}/messages [get]
+// @Router         /apps/:app_id/connections/{connection_id}/messages [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
 	count, err := r.service.Count(ctx)
@@ -108,10 +110,11 @@ func (r resource) query(c echo.Context) error {
 // @Accept          json
 // @Produce         json
 // @Security        BearerAuth
+// @Param           app_id   path      string  true  "App id"
 // @Param           connection_id   path      int  true  "Connection id"
 // @Param           request body CreateMessageRequest true "message request"
 // @Success         200  {object}  Message
-// @Router          /connections/{connection_id}/messages [post]
+// @Router          /apps/:app_id/connections/{connection_id}/messages [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateMessageRequest
 	if err := c.Bind(&input); err != nil {
