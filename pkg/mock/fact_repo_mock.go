@@ -63,3 +63,7 @@ func (m *FactRepositoryMock) Delete(ctx context.Context, id string) error {
 func (m *FactRepositoryMock) SetStatus(ctx context.Context, id string, status string) error {
 	return nil
 }
+
+func (r FactRepositoryMock) FindByRequestID(ctx context.Context, connectionID int, requestID string) ([]entity.Fact, error) {
+	return []entity.Fact{}, nil
+}

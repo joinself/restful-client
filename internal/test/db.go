@@ -77,3 +77,16 @@ func CreateConnection(ctx context.Context, db *dbcontext.DB, id int) error {
 		Name:   "connection_" + strconv.Itoa(id),
 	}).Insert()
 }
+
+func CreateRequest(ctx context.Context, db *dbcontext.DB, id string, connectionID int) error {
+	var request entity.Request
+	err := db.With(ctx).Select().Model(id, &request)
+	if err == nil {
+		return nil
+	}
+
+	return db.With(ctx).Model(&entity.Request{
+		ID:           id,
+		ConnectionID: connectionID,
+	}).Insert()
+}
