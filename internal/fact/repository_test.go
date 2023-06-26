@@ -20,6 +20,7 @@ func TestRepository(t *testing.T) {
 
 	ctx := context.Background()
 	connection := 1
+	request := "request"
 
 	// initial count
 	facts, err := repo.Query(ctx, connection, "", "", 0, 1000)
@@ -30,10 +31,14 @@ func TestRepository(t *testing.T) {
 	err = test.CreateConnection(ctx, db, connection)
 	assert.Nil(t, err)
 
+	err = test.CreateRequest(ctx, db, request, connection)
+	assert.Nil(t, err)
+
 	// create
 	err = repo.Create(ctx, entity.Fact{
 		ID:           "test1",
 		ConnectionID: connection,
+		RequestID:    request,
 		Body:         "fact1",
 		IAT:          time.Now(),
 		CreatedAt:    time.Now(),
@@ -56,6 +61,7 @@ func TestRepository(t *testing.T) {
 	err = repo.Update(ctx, entity.Fact{
 		ID:           "test1",
 		ConnectionID: connection,
+		RequestID:    request,
 		Body:         "fact1 updated",
 		IAT:          time.Now(),
 		CreatedAt:    time.Now(),

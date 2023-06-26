@@ -147,7 +147,7 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 	}
 
 	// Send the message to the connection.
-	s.sendRequest(f, appID, selfID)
+	go s.sendRequest(f, appID, selfID)
 
 	return s.Get(ctx, appID, id)
 }
