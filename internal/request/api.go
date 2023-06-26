@@ -31,10 +31,11 @@ type resource struct {
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
+// @Param        app_id   path      string  true  "App id"
 // @Param        connection_id   path      int  true  "Connection id"
 // @Param        id   path      int  true  "Request request id"
 // @Success      200  {object}  Request
-// @Router       /connections/{connection_id}/requests/{id} [get]
+// @Router       /apps/{app_id}/connections/{connection_id}/requests/{id} [get]
 func (r resource) get(c echo.Context) error {
 	request, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
@@ -53,10 +54,11 @@ func (r resource) get(c echo.Context) error {
 // @Security        BearerAuth
 // @Param           page query int false "page number"
 // @Param           per_page query int false "number of elements per page"
+// @Param           app_id   path      string  true  "App id"
 // @Param           connection_id  path string  true  "Connection id"
 // @Param           request body CreateRequest true "query params"
 // @Success         200  {object}  connection.Connection
-// @Router          /connections/{connection_id}/requests [post]
+// @Router          /apps/{app_id}/connections/{connection_id}/requests [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateRequest
 	if err := c.Bind(&input); err != nil {
