@@ -19,6 +19,7 @@ import (
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/healthcheck"
 	"github.com/joinself/restful-client/internal/message"
+	"github.com/joinself/restful-client/internal/request"
 	"github.com/joinself/restful-client/internal/self"
 	"github.com/joinself/restful-client/pkg/dbcontext"
 	"github.com/joinself/restful-client/pkg/log"
@@ -114,15 +115,18 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	connectionRepo := connection.NewRepository(db, logger)
 	messageRepo := message.NewRepository(db, logger)
 	factRepo := fact.NewRepository(db, logger)
+	requestRepo := request.NewRepository(db, logger)
 	attestationRepo := attestation.NewRepository(db, logger)
 
 	// Services
 	fcs := make(map[string]connection.FactService, len(clients))
 	rcs := make(map[string]fact.RequesterService, len(clients))
+	rrcs := make(map[string]request.RequesterService, len(clients))
 	mcs := make(map[string]connection.ACLManager, len(clients))
 	for id, c := range clients {
 		fcs[id] = c.FactService()
 		rcs[id] = c.FactService()
+		rrcs[id] = c.FactService()
 		mcs[id] = *c.MessagingService()
 	}
 
@@ -148,6 +152,11 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	)
 	fact.RegisterHandlers(rg.Group(""),
 		fact.NewService(factRepo, attestationRepo, logger, rcs),
+		cService,
+		authHandler, logger,
+	)
+	request.RegisterHandlers(rg.Group(""),
+		request.NewService(requestRepo, factRepo, attestationRepo, logger, rrcs),
 		cService,
 		authHandler, logger,
 	)

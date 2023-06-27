@@ -28,6 +28,15 @@ type app struct {
 	ID string `json:"id"`
 }
 
+// ListApps godoc
+// @Summary        List apps.
+// @Description    List configured apps.
+// @Tags           apps
+// @Accept         json
+// @Produce        json
+// @Security       BearerAuth
+// @Success        200  {array}  connection.Connection
+// @Router         /apps [get]
 func (r resource) list(c echo.Context) error {
 	apps := []app{}
 	for id := range r.clients {

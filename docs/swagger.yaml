@@ -14,11 +14,15 @@ definitions:
     type: object
   connection.Connection:
     properties:
+      appid:
+        type: string
       created_at:
         type: string
       id:
-        type: string
+        type: integer
       name:
+        type: string
+      selfid:
         type: string
       updated_at:
         type: string
@@ -26,6 +30,11 @@ definitions:
   connection.CreateConnectionRequest:
     properties:
       selfid:
+        type: string
+    type: object
+  connection.UpdateConnectionRequest:
+    properties:
+      name:
         type: string
     type: object
   entity.Attestation:
@@ -39,21 +48,6 @@ definitions:
       updated_at:
         type: string
       value:
-        type: string
-    type: object
-  fact.CreateFactRequest:
-    properties:
-      body:
-        type: string
-      cid:
-        type: string
-      fact:
-        type: string
-      iat:
-        type: string
-      rid:
-        type: string
-      source:
         type: string
     type: object
   fact.Fact:
@@ -70,11 +64,15 @@ definitions:
         type: string
       fact:
         type: string
+      iat:
+        type: string
       id:
         type: string
       iss:
         type: string
       jti:
+        type: string
+      request_id:
         type: string
       source:
         type: string
@@ -107,6 +105,52 @@ definitions:
       updated_at:
         type: string
     type: object
+  request.CreateRequest:
+    properties:
+      facts:
+        items:
+          $ref: '#/definitions/request.FactRequest'
+        type: array
+      type:
+        type: string
+    type: object
+  request.FactRequest:
+    properties:
+      name:
+        type: string
+      sources:
+        items:
+          type: string
+        type: array
+    type: object
+  request.Request:
+    properties:
+      auth:
+        type: boolean
+      created_at:
+        type: string
+      facts:
+        items:
+          $ref: '#/definitions/request.FactRequest'
+        type: array
+      id:
+        type: string
+      resources:
+        items:
+          $ref: '#/definitions/request.RequestResource'
+        type: array
+      status:
+        type: string
+      typ:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  request.RequestResource:
+    properties:
+      uri:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -121,12 +165,36 @@ info:
   title: Echo Swagger Example API
   version: "1.0"
 paths:
-  /connections:
+  /apps:
+    get:
+      consumes:
+      - application/json
+      description: List configured apps.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/connection.Connection'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List apps.
+      tags:
+      - apps
+  /apps/:app_id/connections:
     get:
       consumes:
       - application/json
       description: List connections matching the specified filters.
       parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
       - description: page number
         in: query
         name: page
@@ -152,8 +220,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates a new connection and sends a request for public information.
+      description: Creates a new connection, permits ACLs and sends a request for
+        public information.
       parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
       - description: query params
         in: body
         name: request
@@ -172,83 +246,17 @@ paths:
       summary: Creates a new connection.
       tags:
       - connections
-  /connections/{connection_id}/facts:
-    get:
-      consumes:
-      - application/json
-      description: List facts matching the specified filters.
-      parameters:
-      - description: Connection id
-        in: path
-        name: connection_id
-        required: true
-        type: integer
-      - description: source
-        format: string
-        in: query
-        name: source
-        type: string
-      - description: fact name
-        format: string
-        in: query
-        name: fact
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/connection.Connection'
-            type: array
-      security:
-      - BearerAuth: []
-      summary: List facts.
-      tags:
-      - facts
-    post:
-      consumes:
-      - application/json
-      description: Sends a fact request to the specified self user.
-      parameters:
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: number of elements per page
-        in: query
-        name: per_page
-        type: integer
-      - description: Connection id
-        in: path
-        name: connection_id
-        required: true
-        type: string
-      - description: query params
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/fact.CreateFactRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/connection.Connection'
-      security:
-      - BearerAuth: []
-      summary: Sends a fact request.
-      tags:
-      - facts
-  /connections/{connection_id}/facts/{id}:
+  /apps/:app_id/connections/{connection_id}/facts/{id}:
     get:
       consumes:
       - application/json
       description: Get fact details by fact request id.
       parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
       - description: Connection id
         in: path
         name: connection_id
@@ -271,7 +279,7 @@ paths:
       summary: Get fact details.
       tags:
       - facts
-  /connections/{connection_id}/messages:
+  /apps/:app_id/connections/{connection_id}/messages:
     get:
       consumes:
       - application/json
@@ -289,6 +297,11 @@ paths:
         in: query
         name: per_page
         type: integer
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
       - description: Connection ID
         in: path
         name: connection_id
@@ -313,6 +326,11 @@ paths:
       - application/json
       description: Sends a message to the specified connection.
       parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
       - description: Connection id
         in: path
         name: connection_id
@@ -336,12 +354,17 @@ paths:
       summary: Sends a message.
       tags:
       - messages
-  /connections/{connection_id}/messages/{id}:
+  /apps/:app_id/connections/{connection_id}/messages/{id}:
     get:
       consumes:
       - application/json
       description: Get message details
       parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
       - description: Connection id
         in: path
         name: connection_id
@@ -364,12 +387,46 @@ paths:
       summary: Gets a message.
       tags:
       - messages
-  /connections/{id}:
+  /apps/:app_id/connections/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing connection and sends a request for public information
+        and avoids incoming comms from that connection.
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/connection.CreateConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/connection.Connection'
+      security:
+      - BearerAuth: []
+      summary: Deletes an existing connection.
+      tags:
+      - connections
     get:
       consumes:
       - application/json
       description: Get connection details by selfID.
       parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
       - description: Self ID
         in: path
         name: id
@@ -387,6 +444,109 @@ paths:
       summary: Get connection details.
       tags:
       - connections
+    put:
+      consumes:
+      - application/json
+      description: Updates the properties of an existing connection..
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/connection.UpdateConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/connection.Connection'
+      security:
+      - BearerAuth: []
+      summary: Updates a connection.
+      tags:
+      - connections
+  /apps/{app_id}/connections/{connection_id}/requests:
+    post:
+      consumes:
+      - application/json
+      description: Sends a request request to the specified self user.
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: number of elements per page
+        in: query
+        name: per_page
+        type: integer
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: string
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/connection.Connection'
+      security:
+      - BearerAuth: []
+      summary: Sends a request request.
+      tags:
+      - requests
+  /apps/{app_id}/connections/{connection_id}/requests/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get request details by request request id.
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: integer
+      - description: Request request id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/request.Request'
+      security:
+      - BearerAuth: []
+      summary: Get request details.
+      tags:
+      - requests
   /healthcheck:
     get:
       consumes:
