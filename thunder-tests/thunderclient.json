@@ -239,11 +239,11 @@
     "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
     "containerId": "",
     "name": "get_fact",
-    "url": "http://localhost:8080/v1/apps/{{self.appid}}/connections/{{self.connection}}/facts/{{self.fact}}",
+    "url": "http://localhost:8080/v1/apps/ead78b60-025a-48a2-9b07-2b85313ef696/connections/1/facts/36d29634-d419-4df1-ad28-d57327a4cb92",
     "method": "GET",
     "sortNum": 90000,
     "created": "2023-03-07T16:18:13.037Z",
-    "modified": "2023-06-12T08:43:10.335Z",
+    "modified": "2023-06-27T10:13:26.305Z",
     "headers": [
       {
         "name": "Content-Type",
@@ -398,7 +398,7 @@
     "method": "POST",
     "sortNum": 95000,
     "created": "2023-06-23T13:48:40.424Z",
-    "modified": "2023-06-23T14:31:19.690Z",
+    "modified": "2023-06-27T10:16:50.743Z",
     "headers": [
       {
         "name": "Content-Type",
@@ -408,25 +408,32 @@
     "params": [],
     "body": {
       "type": "json",
-      "raw": "{\n  \"type\": \"auth\",\n  \"facts\": [{\n    \"name\": \"selfie_verification\"\n  }]\n}",
+      "raw": "{\n  \"type\": \"fact\",\n  \"facts\": [{\n    \"name\": \"display_name\"\n  }]\n}",
       "form": []
     },
     "auth": {
       "type": "bearer",
       "bearer": "{{self.auth_token}}"
     },
-    "tests": []
+    "tests": [
+      {
+        "type": "json-query",
+        "custom": "json.id",
+        "action": "setto",
+        "value": "{{self.request_id}}"
+      }
+    ]
   },
   {
     "_id": "4e0b16e9-330d-4d36-97a8-808dcaba13f5",
     "colId": "a1b3b852-c123-4a75-9fe3-ef034906afdf",
     "containerId": "",
     "name": "get_request",
-    "url": "http://localhost:8080/v1/apps/{{self.appid}}/connections/{{self.connection}}/requests/bdad8d0b-8114-452d-a472-f628d296ac46",
+    "url": "http://localhost:8080/v1/apps/{{self.appid}}/connections/{{self.connection}}/requests/{{self.request_id}}",
     "method": "GET",
     "sortNum": 105000,
     "created": "2023-06-26T12:51:55.434Z",
-    "modified": "2023-06-26T13:10:15.750Z",
+    "modified": "2023-06-27T10:16:55.220Z",
     "headers": [
       {
         "name": "Content-Type",
@@ -434,11 +441,6 @@
       }
     ],
     "params": [],
-    "body": {
-      "type": "json",
-      "raw": "{\n  \"type\": \"auth\",\n  \"facts\": [{\n    \"name\": \"selfie_verification\"\n  }]\n}",
-      "form": []
-    },
     "auth": {
       "type": "bearer",
       "bearer": "{{self.auth_token}}"

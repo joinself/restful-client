@@ -9,7 +9,7 @@
     "data": [
       {
         "name": "self.auth_token",
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEwMCIsIm5hbWUiOiJkZW1vIiwiZXhwIjoxNjg3Nzg3MjgxfQ.qYOrQj2PSySKVAAQtJ_t3J3dC7UbCk9G73ewiGLiWYU"
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEwMCIsIm5hbWUiOiJkZW1vIiwiZXhwIjoxNjg4MDQ4NzkwfQ.LVePTIIJrr4ULiqgxb3IrRHGyr9pExPCyWG74q3WzVc"
       },
       {
         "name": "self.connection",
@@ -26,6 +26,10 @@
       {
         "name": "self.appid",
         "value": "ead78b60-025a-48a2-9b07-2b85313ef696"
+      },
+      {
+        "name": "self.request_id",
+        "value": ""
       }
     ]
   }
