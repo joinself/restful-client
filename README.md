@@ -101,11 +101,14 @@ Restful client provides a subset of features to interact with self network, for 
 - [ ] `GET  /v1/apps/:app_id/groups/:id/messages/:id`
 - [ ] `PUT  /v1/apps/:app_id/groups/:id/messages/:id`
 - [ ] `GET  /v1/apps/:app_id/groups/:id/messages/:id/responses`
-- 
-- [-] `GET  /v1/apps/:app_id/connections/:id/facts`: gets a list of the requested facts for a specific connection
-- [-] `POST /v1/apps/:app_id/connections/:id/facts`: sends a fact request to a specific connection.
-- [-] `GET  /v1/apps/:app_id/connections/:id/facts/:fact_id`: displays the details and attestations for a specific fact
-- [ ] `DELETE /v1/apps/:app_id/connections/:id/facts/:fact_id` deletes a sepcifci fact for a connection
+
+- [ ] `POST /v1/apps/:app_id/connections/:cid/requests`
+- [ ] `GET /v1/apps/:app_id/connections/:cid/requests/:id`
+
+- [-] `GET  /v1/apps/:app_id/connections/:id/facts?source=<source>&name=<name>`: sends a fact request with the given details
+- [-] `POST /v1/apps/:app_id/connections/:id/facts`: issues a fact to a specific connection.
+- [-] `GET  /v1/apps/:app_id/connections/:id/facts/:fact_id`: gets the status / body of a fact retrieved from the user.
+- [ ] `DELETE /v1/apps/:app_id/connections/:id/facts/:fact_id` deletes a specific fact for a connection
 
 
 Try the URL `http://localhost:8080/healthcheck` in a browser, and you should see something like `"OK v1.0.0"` displayed.

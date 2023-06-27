@@ -26,6 +26,8 @@ type Repository interface {
 	Delete(ctx context.Context, id string) error
 	// SetStatus updates the fact identified by the given id with the given status.
 	SetStatus(ctx context.Context, id string, status string) error
+	// FindByRequestID returns the fact with the specified request ID.
+	FindByRequestID(ctx context.Context, connectionID int, requestID string) ([]entity.Fact, error)
 }
 
 // repository persists facts in database
@@ -112,4 +114,18 @@ func (r repository) SetStatus(ctx context.Context, id string, status string) err
 	fact.Status = status
 	fact.UpdatedAt = time.Now()
 	return r.Update(ctx, fact)
+}
+
+var facts []entity.Fact
+
+func (r repository) FindByRequestID(ctx context.Context, connectionID int, requestID string) ([]entity.Fact, error) {
+
+	sql := r.db.With(ctx).
+		Select().
+		OrderBy("id").
+		Where(&dbx.HashExp{"connection_id": connectionID}).
+		AndWhere(&dbx.HashExp{"request_id": requestID})
+
+	err := sql.All(&facts)
+	return facts, err
 }
