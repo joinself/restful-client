@@ -56,6 +56,7 @@ type CreateRequest struct {
 func (m CreateRequest) Validate() error {
 	return validation.ValidateStruct(&m,
 		validation.Field(&m.Type, validation.Required, validation.Length(0, 128)),
+		validation.Field(&m.Type, validation.In("auth", "fact")),
 	)
 }
 
@@ -153,17 +154,52 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 }
 
 // sendRequest sends a request to the specified connection through Self Network.
-func (s service) sendRequest(req entity.Request, appid, selfid string) {
+func (s service) sendRequest(req entity.Request, appid, selfID string) {
+	// Check if the self is initialized.
 	if _, ok := s.clients[appid]; !ok {
 		s.logger.Debug("skipping as self is not initialized")
 		return
 	}
 
+	// Build a valid Self Fact Request from the given entity.
+	r, err := s.buildSelfFactRequest(selfID, req)
+	if err != nil {
+		s.logger.Debug("error building Self Fact Request")
+		return
+	}
+
+	// Send the request.
+	resp, err := s.clients[appid].Request(r)
+	if err != nil {
+		s.markRequestAs(req.ID, entity.STATUS_ERRORED)
+		return
+	}
+
+	if resp.Status == "rejected" {
+		s.markRequestAs(req.ID, entity.STATUS_REJECTED)
+		return
+	}
+
+	if len(resp.Facts) != 1 && req.Type == "facts" {
+		s.markRequestAs(req.ID, entity.STATUS_REJECTED)
+		return
+	}
+
+	// Save the received facts.
+	if req.Type == "facts" || req.Type == "auth" {
+		s.createFacts(selfID, req, resp.Facts)
+	}
+
+	s.markRequestAs(req.ID, "responded")
+}
+
+// buildSelfFactRequest builds a fact request from a given entity.Request
+func (s service) buildSelfFactRequest(selfID string, req entity.Request) (*selffact.FactRequest, error) {
 	var incomingFacts []entity.RequestFacts
 	err := json.Unmarshal(req.Facts, &incomingFacts)
 	if err != nil {
 		s.logger.Errorf("failed processing response: %v", err)
-		return
+		return nil, err
 	}
 
 	facts := make([]selffact.Fact, len(incomingFacts))
@@ -175,7 +211,7 @@ func (s service) sendRequest(req entity.Request, appid, selfid string) {
 	}
 
 	r := &selffact.FactRequest{
-		SelfID:      selfid,
+		SelfID:      selfID,
 		Description: "info",
 		Facts:       facts,
 		Expiry:      time.Minute * 5,
@@ -184,43 +220,34 @@ func (s service) sendRequest(req entity.Request, appid, selfid string) {
 	if req.Auth {
 		r.Auth = true
 	}
-	resp, err := s.clients[appid].Request(r)
 
+	return r, nil
+}
+
+func (s service) markRequestAs(id, status string) {
+	err := s.repo.SetStatus(context.Background(), id, status)
 	if err != nil {
-		err = s.repo.SetStatus(context.Background(), req.ID, "rejected")
-		if err != nil {
-			s.logger.Errorf("failed to update status: %v", err)
-		}
-
-		s.logger.Errorf("failed to send request: %v", err)
-		return
+		s.logger.Errorf("failed to update status: %v", err)
 	}
+}
 
-	if len(resp.Facts) != 1 {
-		err = s.repo.SetStatus(context.Background(), req.ID, "errored")
-		if err != nil {
-			s.logger.Errorf("failed to update status: %v", err)
-		}
-		s.logger.Errorf("unexpected fact response")
-		return
-	}
+func (s service) createFacts(selfID string, req entity.Request, facts []selffact.Fact) {
+	for _, receivedFact := range facts {
+		// Create the received fact.
+		id := entity.GenerateID()
+		now := time.Now()
 
-	// fact response on one table or another
-	for _, receivedFact := range resp.Facts {
 		source := ""
 		if len(receivedFact.Sources) > 0 {
 			source = receivedFact.Sources[0]
 		}
 
-		// Create the received fact.
-		id := entity.GenerateID()
-		now := time.Now()
 		f := entity.Fact{
 			ID:           id,
 			ConnectionID: req.ConnectionID,
 			RequestID:    req.ID,
-			ISS:          selfid,
-			Status:       "accepted",
+			ISS:          selfID,
+			Status:       entity.STATUS_ACCEPTED,
 			Fact:         receivedFact.Fact,
 			Source:       source,
 			CreatedAt:    now,
@@ -228,27 +255,29 @@ func (s service) sendRequest(req entity.Request, appid, selfid string) {
 		}
 		err := s.fRepo.Create(context.Background(), f)
 		if err != nil {
+			s.logger.Errorf("failed creating fact: %v", err)
 			continue
 		}
 
-		// Create the relative attestations.
-		for _, v := range resp.Facts[0].AttestedValues() {
-			err = s.atRepo.Create(context.Background(), entity.Attestation{
-				ID:     uuid.New().String(),
-				Body:   "TODO", // TODO: store body.
-				FactID: id,
-				Value:  v,
-			})
-			if err != nil {
-				continue
-			}
+		s.createAttestations(id, receivedFact)
+	}
+}
+
+func (s service) createAttestations(id string, fact selffact.Fact) {
+	// Create the relative attestations.
+	now := time.Now()
+	for _, v := range fact.AttestedValues() {
+		err := s.atRepo.Create(context.Background(), entity.Attestation{
+			ID:        uuid.New().String(),
+			Body:      "TODO", // TODO: store body.
+			FactID:    id,
+			Value:     v,
+			CreatedAt: now,
+			UpdatedAt: now,
+		})
+		if err != nil {
+			s.logger.Errorf("failed creating attestation: %v", err)
+			continue
 		}
 	}
-
-	err = s.repo.SetStatus(context.Background(), req.ID, "responded")
-	if err != nil {
-		s.logger.Errorf("failed to update status: %v", err)
-		return
-	}
-
 }
