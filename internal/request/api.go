@@ -69,7 +69,7 @@ func (r resource) create(c echo.Context) error {
 	// Get the connection id
 	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+		return c.JSON(http.StatusNotFound, "connection not found, create a new connection first")
 	}
 
 	request, err := r.service.Create(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), conn.ID, input)
