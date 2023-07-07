@@ -122,15 +122,13 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	fcs := make(map[string]connection.FactService, len(clients))
 	rcs := make(map[string]fact.RequesterService, len(clients))
 	rrcs := make(map[string]request.RequesterService, len(clients))
-	mcs := make(map[string]connection.ACLManager, len(clients))
 	for id, c := range clients {
 		fcs[id] = c.FactService()
 		rcs[id] = c.FactService()
 		rrcs[id] = c.FactService()
-		mcs[id] = *c.MessagingService()
 	}
 
-	cService := connection.NewService(connectionRepo, logger, fcs, mcs)
+	cService := connection.NewService(connectionRepo, logger, fcs)
 
 	// Handlers
 	app.RegisterHandlers(rg.Group(""),
