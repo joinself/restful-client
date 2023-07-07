@@ -25,10 +25,9 @@ func TestAPI(t *testing.T) {
 	}}
 
 	factClients := map[string]FactService{}
-	aclManagers := map[string]ACLManager{}
 
 	authHandler := auth.MockAuthHandler()
-	RegisterHandlers(router.Group(""), NewService(repo, logger, factClients, aclManagers), authHandler, logger)
+	RegisterHandlers(router.Group(""), NewService(repo, logger, factClients), authHandler, logger)
 	header := auth.MockAuthHeader()
 
 	tests := []test.APITestCase{
