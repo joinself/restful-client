@@ -31,7 +31,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "List configured apps.",
+                "description": "List restful client configured apps.",
                 "consumes": [
                     "application/json"
                 ],
@@ -46,10 +46,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/connection.Connection"
-                            }
+                            "$ref": "#/definitions/app.response"
                         }
                     }
                 }
@@ -98,10 +95,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/connection.Connection"
-                            }
+                            "$ref": "#/definitions/connection.response"
                         }
                     }
                 }
@@ -258,10 +252,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/connection.Connection"
-                            }
+                            "$ref": "#/definitions/message.response"
                         }
                     }
                 }
@@ -397,7 +388,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Self ID",
+                        "description": "current connection id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -434,6 +425,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "App id",
                         "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "current connection id",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     },
@@ -478,6 +476,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "App id",
                         "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "current connection id",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     },
@@ -682,6 +687,37 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "app.app": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "app.response": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app.app"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "page_count": {
+                    "type": "integer"
+                },
+                "per_page": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "auth.AuthRequest": {
             "type": "object",
             "properties": {
@@ -737,6 +773,29 @@ const docTemplate = `{
             "properties": {
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "connection.response": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/connection.Connection"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "page_count": {
+                    "type": "integer"
+                },
+                "per_page": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
                 }
             }
         },
@@ -841,6 +900,29 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "message.response": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/message.Message"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "page_count": {
+                    "type": "integer"
+                },
+                "per_page": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
                 }
             }
         },

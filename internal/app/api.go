@@ -28,14 +28,22 @@ type app struct {
 	ID string `json:"id"`
 }
 
+type response struct {
+	Page       int   `json:"page"`
+	PerPage    int   `json:"per_page"`
+	PageCount  int   `json:"page_count"`
+	TotalCount int   `json:"total_count"`
+	Items      []app `json:"items"`
+}
+
 // ListApps godoc
 // @Summary        List apps.
-// @Description    List configured apps.
+// @Description    List restful client configured apps.
 // @Tags           apps
 // @Accept         json
 // @Produce        json
 // @Security       BearerAuth
-// @Success        200  {array}  connection.Connection
+// @Success        200  {object} response
 // @Router         /apps [get]
 func (r resource) list(c echo.Context) error {
 	apps := []app{}
