@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"flag"
+	"fmt"
 	lg "log"
 	"net/http"
 	"os"
@@ -174,8 +175,17 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		e.GET("/docs/*", echoSwagger.WrapHandler)
 	}
 
+	for id, c := range clients {
+		logger.Infof("starting client %s", id)
+		err = c.Start()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
+
 	// Start server
-	e.Logger.Fatal(e.Start(":" + strconv.Itoa(cfg.ServerPort)))
+	fmt.Println(e.Start(":" + strconv.Itoa(cfg.ServerPort)))
 
 	return e
 }
@@ -192,6 +202,7 @@ func setupSelfClients(cfg *config.Config) (map[string]*selfsdk.Client, error) {
 			Environment:         c.SelfEnv,
 		})
 		if err != nil {
+			fmt.Println(err)
 			return nil, err
 		}
 		clients[c.SelfAppID] = client
