@@ -21,6 +21,7 @@ type Request struct {
 	Facts        []byte    `json:"facts"`
 	Auth         bool      `json:"auth,omitempty"`
 	Status       string    `json:"status"`
+	Callback     string    `json:"callback"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }

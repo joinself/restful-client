@@ -164,7 +164,8 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		logger,
 	)
 
-	for _, client := range clients {
+	for id, client := range clients {
+		logger.Infof("starting client %s", id)
 		self.RunService(
 			self.NewService(client, connectionRepo, factRepo, messageRepo, logger),
 			logger,
@@ -173,15 +174,6 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 
 	if cfg.ServeDocs == "true" {
 		e.GET("/docs/*", echoSwagger.WrapHandler)
-	}
-
-	for id, c := range clients {
-		logger.Infof("starting client %s", id)
-		err = c.Start()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
 	}
 
 	// Start server
