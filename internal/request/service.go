@@ -1,8 +1,10 @@
 package request
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -48,8 +50,9 @@ type FactRequest struct {
 
 // CreateRequest represents an request creation request.
 type CreateRequest struct {
-	Type  string        `json:"type"`
-	Facts []FactRequest `json:"facts"`
+	Type     string        `json:"type"`
+	Facts    []FactRequest `json:"facts"`
+	Callback string        `json:"callback"`
 }
 
 // Validate validates the CreateFactRequest fields.
@@ -134,6 +137,7 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 		Type:         req.Type,
 		Facts:        factsBody,
 		Status:       "requested",
+		Callback:     req.Callback,
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
@@ -148,13 +152,13 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 	}
 
 	// Send the message to the connection.
-	go s.sendRequest(f, appID, selfID)
+	go s.sendRequest(ctx, f, appID, selfID)
 
 	return s.Get(ctx, appID, id)
 }
 
 // sendRequest sends a request to the specified connection through Self Network.
-func (s service) sendRequest(req entity.Request, appid, selfID string) {
+func (s service) sendRequest(ctx context.Context, req entity.Request, appid, selfID string) {
 	// Check if the self is initialized.
 	if _, ok := s.clients[appid]; !ok {
 		s.logger.Debug("skipping as self is not initialized")
@@ -172,25 +176,47 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 	resp, err := s.clients[appid].Request(r)
 	if err != nil {
 		s.markRequestAs(req.ID, entity.STATUS_ERRORED)
-		return
-	}
-
-	if resp.Status == "rejected" {
+	} else if resp.Status == "rejected" {
 		s.markRequestAs(req.ID, entity.STATUS_REJECTED)
-		return
-	}
-
-	if len(resp.Facts) != 1 && req.Type == "facts" {
+	} else if len(resp.Facts) != 1 && req.Type == "facts" {
 		s.markRequestAs(req.ID, entity.STATUS_REJECTED)
+	} else {
+		// Save the received facts.
+		if req.Type == "facts" || req.Type == "auth" {
+			s.createFacts(selfID, req, resp.Facts)
+		}
+		s.markRequestAs(req.ID, "responded")
+	}
+
+	// TODO: send the current status to the callback function if exists
+	go s.sendCallback(ctx, req.ID)
+}
+
+func (s service) sendCallback(ctx context.Context, id string) {
+	req, err := s.repo.Get(ctx, id)
+	if err != nil {
+		s.logger.Info("error getting request: %v", err)
 		return
 	}
 
-	// Save the received facts.
-	if req.Type == "facts" || req.Type == "auth" {
-		s.createFacts(selfID, req, resp.Facts)
+	if req.Callback == "" {
+		return
 	}
 
-	s.markRequestAs(req.ID, "responded")
+	//Encode the data
+	postBody, err := json.Marshal(req)
+	if err != nil {
+		s.logger.Info("error marshalling request: %v", err)
+		return
+	}
+	responseBody := bytes.NewBuffer(postBody)
+
+	//Leverage Go's HTTP Post function to make request
+	_, err = http.Post(req.Callback, "application/json", responseBody)
+	if err != nil {
+		s.logger.Info("error when calling callback %v", err)
+		return
+	}
 }
 
 // buildSelfFactRequest builds a fact request from a given entity.Request
