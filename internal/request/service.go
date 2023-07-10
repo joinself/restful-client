@@ -1,8 +1,10 @@
 package request
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -48,8 +50,9 @@ type FactRequest struct {
 
 // CreateRequest represents an request creation request.
 type CreateRequest struct {
-	Type  string        `json:"type"`
-	Facts []FactRequest `json:"facts"`
+	Type     string        `json:"type"`
+	Facts    []FactRequest `json:"facts"`
+	Callback string        `json:"callback"`
 }
 
 // Validate validates the CreateFactRequest fields.
@@ -134,6 +137,7 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 		Type:         req.Type,
 		Facts:        factsBody,
 		Status:       "requested",
+		Callback:     req.Callback,
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
@@ -172,25 +176,47 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 	resp, err := s.clients[appid].Request(r)
 	if err != nil {
 		s.markRequestAs(req.ID, entity.STATUS_ERRORED)
-		return
-	}
-
-	if resp.Status == "rejected" {
+	} else if resp.Status == "rejected" {
 		s.markRequestAs(req.ID, entity.STATUS_REJECTED)
-		return
-	}
-
-	if len(resp.Facts) != 1 && req.Type == "facts" {
+	} else if len(resp.Facts) != 1 && req.Type == "facts" {
 		s.markRequestAs(req.ID, entity.STATUS_REJECTED)
+	} else {
+		// Save the received facts.
+		if req.Type == "facts" || req.Type == "auth" {
+			s.createFacts(selfID, req, resp.Facts)
+		}
+		s.markRequestAs(req.ID, "responded")
+	}
+
+	// TODO: send the current status to the callback function if exists
+	go s.sendCallback(appid, req)
+}
+
+func (s service) sendCallback(appID string, req entity.Request) {
+	if req.Callback == "" {
 		return
 	}
 
-	// Save the received facts.
-	if req.Type == "facts" || req.Type == "auth" {
-		s.createFacts(selfID, req, resp.Facts)
+	resp, err := s.Get(context.Background(), appID, req.ID)
+	if err != nil {
+		s.logger.Info("error getting request: %v", err)
+		return
 	}
 
-	s.markRequestAs(req.ID, "responded")
+	//Encode the data
+	postBody, err := json.Marshal(resp)
+	if err != nil {
+		s.logger.Info("error marshalling request: %v", err)
+		return
+	}
+	responseBody := bytes.NewBuffer(postBody)
+
+	//Leverage Go's HTTP Post function to make request
+	_, err = http.Post(req.Callback, "application/json", responseBody)
+	if err != nil {
+		s.logger.Info("error when calling callback webhook %v", err)
+		return
+	}
 }
 
 // buildSelfFactRequest builds a fact request from a given entity.Request
