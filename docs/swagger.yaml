@@ -1,5 +1,25 @@
 basePath: /v1/
 definitions:
+  app.app:
+    properties:
+      id:
+        type: string
+    type: object
+  app.response:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/app.app'
+        type: array
+      page:
+        type: integer
+      page_count:
+        type: integer
+      per_page:
+        type: integer
+      total_count:
+        type: integer
+    type: object
   auth.AuthRequest:
     properties:
       password:
@@ -36,6 +56,21 @@ definitions:
     properties:
       name:
         type: string
+    type: object
+  connection.response:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/connection.Connection'
+        type: array
+      page:
+        type: integer
+      page_count:
+        type: integer
+      per_page:
+        type: integer
+      total_count:
+        type: integer
     type: object
   entity.Attestation:
     properties:
@@ -105,6 +140,21 @@ definitions:
       updated_at:
         type: string
     type: object
+  message.response:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/message.Message'
+        type: array
+      page:
+        type: integer
+      page_count:
+        type: integer
+      per_page:
+        type: integer
+      total_count:
+        type: integer
+    type: object
   request.CreateRequest:
     properties:
       facts:
@@ -169,16 +219,14 @@ paths:
     get:
       consumes:
       - application/json
-      description: List configured apps.
+      description: List restful client configured apps.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/connection.Connection'
-            type: array
+            $ref: '#/definitions/app.response'
       security:
       - BearerAuth: []
       summary: List apps.
@@ -209,9 +257,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/connection.Connection'
-            type: array
+            $ref: '#/definitions/connection.response'
       security:
       - BearerAuth: []
       summary: List connections.
@@ -313,9 +359,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/connection.Connection'
-            type: array
+            $ref: '#/definitions/message.response'
       security:
       - BearerAuth: []
       summary: List conversation messages.
@@ -399,6 +443,11 @@ paths:
         name: app_id
         required: true
         type: string
+      - description: current connection id
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: query params
         in: body
         name: request
@@ -427,7 +476,7 @@ paths:
         name: app_id
         required: true
         type: string
-      - description: Self ID
+      - description: current connection id
         in: path
         name: id
         required: true
@@ -454,6 +503,11 @@ paths:
         name: app_id
         required: true
         type: string
+      - description: current connection id
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: query params
         in: body
         name: request
