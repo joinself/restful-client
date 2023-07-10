@@ -164,10 +164,11 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		logger,
 	)
 
+	callbackURLs := setupCallbackUrls(cfg)
 	for id, client := range clients {
 		logger.Infof("starting client %s", id)
 		self.RunService(
-			self.NewService(client, connectionRepo, factRepo, messageRepo, logger),
+			self.NewService(client, connectionRepo, factRepo, messageRepo, callbackURLs[id], logger),
 			logger,
 		)
 	}
@@ -201,7 +202,16 @@ func setupSelfClients(cfg *config.Config) (map[string]*selfsdk.Client, error) {
 	}
 
 	return clients, nil
+}
 
+func setupCallbackUrls(cfg *config.Config) map[string]string {
+	urls := make(map[string]string, len(cfg.SelfApps))
+
+	for _, c := range cfg.SelfApps {
+		urls[c.SelfAppID] = c.CallbackURL
+	}
+
+	return urls
 }
 
 // logDBQuery returns a logging function that can be used to log SQL queries.
