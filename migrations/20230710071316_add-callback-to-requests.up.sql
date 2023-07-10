@@ -1,0 +1,2 @@
+ALTER TABLE request
+ADD COLUMN callback VARCHAR(255);
