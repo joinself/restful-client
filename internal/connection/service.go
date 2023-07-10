@@ -60,15 +60,14 @@ func (m UpdateConnectionRequest) Validate() error {
 }
 
 type service struct {
-	repo        Repository
-	logger      log.Logger
-	clients     map[string]FactService
-	aclManagers map[string]ACLManager
+	repo    Repository
+	logger  log.Logger
+	clients map[string]FactService
 }
 
 // NewService creates a new connection service.
-func NewService(repo Repository, logger log.Logger, clients map[string]FactService, aclManagers map[string]ACLManager) Service {
-	return service{repo, logger, clients, aclManagers}
+func NewService(repo Repository, logger log.Logger, clients map[string]FactService) Service {
+	return service{repo, logger, clients}
 }
 
 // Get returns the connection with the specified the connection ID.
@@ -90,8 +89,6 @@ func (s service) Create(ctx context.Context, appid string, req CreateConnectionR
 	if err == nil {
 		return existing, nil
 	}
-
-	go s.permitConnection(appid, selfid)
 
 	now := time.Now()
 	err = s.repo.Create(ctx, entity.Connection{
@@ -134,8 +131,6 @@ func (s service) Delete(ctx context.Context, appid, selfid string) (Connection, 
 	if err != nil {
 		return Connection{}, err
 	}
-
-	go s.revokeConnection(appid, selfid)
 
 	if err = s.repo.Delete(ctx, connection.ID); err != nil {
 		return Connection{}, err
@@ -198,30 +193,6 @@ func (s service) requestPublicInfo(appid, selfid string) {
 
 	if err := s.repo.Update(context.Background(), connection.Connection); err != nil {
 		s.logger.Errorf("unexpected fact response")
-		return
-	}
-}
-
-func (s service) permitConnection(appid, selfid string) {
-	if _, ok := s.aclManagers[appid]; !ok {
-		s.logger.Error("skipping as self is not initialized for " + appid)
-		return
-	}
-	err := s.aclManagers[appid].PermitConnection(selfid)
-	if err != nil {
-		s.logger.Errorf("failed to revoke connection: %v", err)
-		return
-	}
-}
-
-func (s service) revokeConnection(appid, selfid string) {
-	if _, ok := s.aclManagers[appid]; !ok {
-		s.logger.Error("skipping as self is not initialized for " + appid)
-		return
-	}
-	err := s.aclManagers[appid].RevokeConnection(selfid)
-	if err != nil {
-		s.logger.Errorf("failed to revoke connection: %v", err)
 		return
 	}
 }

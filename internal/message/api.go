@@ -60,6 +60,14 @@ func (r resource) get(c echo.Context) error {
 	return c.JSON(http.StatusOK, message)
 }
 
+type response struct {
+	Page       int       `json:"page"`
+	PerPage    int       `json:"per_page"`
+	PageCount  int       `json:"page_count"`
+	TotalCount int       `json:"total_count"`
+	Items      []Message `json:"items"`
+}
+
 // ListMessages    godoc
 // @Summary        List conversation messages.
 // @Description    List conversation messages with a specific connection.
@@ -72,7 +80,7 @@ func (r resource) get(c echo.Context) error {
 // @Param          per_page query int false "number of elements per page"
 // @Param          app_id   path      string  true  "App id"
 // @Param          connection_id path string  true  "Connection ID"
-// @Success        200  {array}  connection.Connection
+// @Success        200  {object}  response
 // @Router         /apps/:app_id/connections/{connection_id}/messages [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()

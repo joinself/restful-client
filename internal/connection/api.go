@@ -36,7 +36,7 @@ type resource struct {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        app_id   path      string  true  "App id"
-// @Param        id   path      int  true  "Self ID"
+// @Param        id   path      int  true  "current connection id"
 // @Success      200  {object}  connection.Connection
 // @Router       /apps/:app_id/connections/{id} [get]
 func (r resource) get(c echo.Context) error {
@@ -46,6 +46,14 @@ func (r resource) get(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, connection)
+}
+
+type response struct {
+	Page       int          `json:"page"`
+	PerPage    int          `json:"per_page"`
+	PageCount  int          `json:"page_count"`
+	TotalCount int          `json:"total_count"`
+	Items      []Connection `json:"items"`
 }
 
 // ListConnections godoc
@@ -58,7 +66,7 @@ func (r resource) get(c echo.Context) error {
 // @Param          app_id   path      string  true  "App id"
 // @Param          page query int false "page number"
 // @Param          per_page query int false "number of elements per page"
-// @Success        200  {array}  connection.Connection
+// @Success        200  {object}  response
 // @Router         /apps/:app_id/connections [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
@@ -111,6 +119,7 @@ func (r resource) create(c echo.Context) error {
 // @Produce         json
 // @Security        BearerAuth
 // @Param           app_id   path      string  true  "App id"
+// @Param           id   path      int  true  "current connection id"
 // @Param           request body UpdateConnectionRequest true "query params"
 // @Success         200  {object}  connection.Connection
 // @Router          /apps/:app_id/connections/{id} [put]
@@ -138,6 +147,7 @@ func (r resource) update(c echo.Context) error {
 // @Produce         json
 // @Security        BearerAuth
 // @Param           app_id   path      string  true  "App id"
+// @Param           id   path      int  true  "current connection id"
 // @Param           request body CreateConnectionRequest true "query params"
 // @Success         200  {object}  connection.Connection
 // @Router          /apps/:app_id/connections/{id} [delete]

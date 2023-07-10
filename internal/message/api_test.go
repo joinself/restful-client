@@ -23,13 +23,12 @@ func TestAPI(t *testing.T) {
 		{ID: 123, SelfID: "connection", AppID: "app1", Name: "connection123", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}}
 	factClients := map[string]connection.FactService{}
-	aclManagers := map[string]connection.ACLManager{}
 
 	authHandler := auth.MockAuthHandler()
 	RegisterHandlers(
 		router.Group(""),
 		NewService(repo, logger, nil),
-		connection.NewService(connRepo, logger, factClients, aclManagers),
+		connection.NewService(connRepo, logger, factClients),
 		authHandler,
 		logger)
 	header := auth.MockAuthHeader()
