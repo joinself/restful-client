@@ -2,7 +2,6 @@ package self
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -46,10 +45,10 @@ func NewService(client *selfsdk.Client, cRepo connection.Repository, fRepo fact.
 
 // Run executes the background self listerners.
 func (s *service) Run() {
-	fmt.Println("starting client")
+	s.logger.With(context.Background(), "self").Info("starting self client")
 	err := s.client.Start()
 	if err != nil {
-		fmt.Println(err.Error())
+		s.logger.With(context.Background(), "self").Error(err.Error())
 	}
 }
 

@@ -152,13 +152,13 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 	}
 
 	// Send the message to the connection.
-	go s.sendRequest(ctx, f, appID, selfID)
+	go s.sendRequest(f, appID, selfID)
 
 	return s.Get(ctx, appID, id)
 }
 
 // sendRequest sends a request to the specified connection through Self Network.
-func (s service) sendRequest(ctx context.Context, req entity.Request, appid, selfID string) {
+func (s service) sendRequest(req entity.Request, appid, selfID string) {
 	// Check if the self is initialized.
 	if _, ok := s.clients[appid]; !ok {
 		s.logger.Debug("skipping as self is not initialized")
@@ -189,22 +189,22 @@ func (s service) sendRequest(ctx context.Context, req entity.Request, appid, sel
 	}
 
 	// TODO: send the current status to the callback function if exists
-	go s.sendCallback(ctx, req.ID)
+	go s.sendCallback(appid, req)
 }
 
-func (s service) sendCallback(ctx context.Context, id string) {
-	req, err := s.repo.Get(ctx, id)
+func (s service) sendCallback(appID string, req entity.Request) {
+	if req.Callback == "" {
+		return
+	}
+
+	resp, err := s.Get(context.Background(), appID, req.ID)
 	if err != nil {
 		s.logger.Info("error getting request: %v", err)
 		return
 	}
 
-	if req.Callback == "" {
-		return
-	}
-
 	//Encode the data
-	postBody, err := json.Marshal(req)
+	postBody, err := json.Marshal(resp)
 	if err != nil {
 		s.logger.Info("error marshalling request: %v", err)
 		return
@@ -214,7 +214,7 @@ func (s service) sendCallback(ctx context.Context, id string) {
 	//Leverage Go's HTTP Post function to make request
 	_, err = http.Post(req.Callback, "application/json", responseBody)
 	if err != nil {
-		s.logger.Info("error when calling callback %v", err)
+		s.logger.Info("error when calling callback webhook %v", err)
 		return
 	}
 }
