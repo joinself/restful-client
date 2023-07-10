@@ -929,6 +929,9 @@ const docTemplate = `{
         "request.CreateRequest": {
             "type": "object",
             "properties": {
+                "callback": {
+                    "type": "string"
+                },
                 "facts": {
                     "type": "array",
                     "items": {

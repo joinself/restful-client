@@ -157,6 +157,8 @@ definitions:
     type: object
   request.CreateRequest:
     properties:
+      callback:
+        type: string
       facts:
         items:
           $ref: '#/definitions/request.FactRequest'
