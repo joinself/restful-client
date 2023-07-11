@@ -1,10 +1,8 @@
 package request
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"net/http"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -13,6 +11,7 @@ import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/webhook"
 	selffact "github.com/joinself/self-go-sdk/fact"
 )
 
@@ -203,19 +202,9 @@ func (s service) sendCallback(appID string, req entity.Request) {
 		return
 	}
 
-	//Encode the data
-	postBody, err := json.Marshal(resp)
+	err = webhook.Post(req.Callback, resp)
 	if err != nil {
-		s.logger.Info("error marshalling request: %v", err)
-		return
-	}
-	responseBody := bytes.NewBuffer(postBody)
-
-	//Leverage Go's HTTP Post function to make request
-	_, err = http.Post(req.Callback, "application/json", responseBody)
-	if err != nil {
-		s.logger.Info("error when calling callback webhook %v", err)
-		return
+		s.logger.Info(err)
 	}
 }
 
