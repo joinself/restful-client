@@ -724,6 +724,9 @@ const docTemplate = `{
                 "password": {
                     "type": "string"
                 },
+                "refresh_token": {
+                    "type": "string"
+                },
                 "username": {
                     "type": "string"
                 }
@@ -732,6 +735,9 @@ const docTemplate = `{
         "auth.AuthResponse": {
             "type": "object",
             "properties": {
+                "refresh_token": {
+                    "type": "string"
+                },
                 "token": {
                     "type": "string"
                 }
