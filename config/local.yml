@@ -10,3 +10,5 @@ jwt_signing_key: "LxsKJywDL5O5PvgODZhBH12KE6k2yL8E" # Signing key for JWT.
 user: "demo" # User to be used for JWT authentication.
 password: "pass" # Password to be used for JWT authentication.
 serve_docs: "true" # Serves the docs from the local server on localhost:8080/docs
+jwt_expiration: 72 # hours after what your users access token expires.
+refresh_token_expiration: 0 # hours after what your users refresh token expires (0 will avoid using refresh token).

@@ -8,12 +8,14 @@ import (
 )
 
 type AuthRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type AuthResponse struct {
-	Token string `json:"token"`
+	AccessToken  string `json:"token"`
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
 // RegisterHandlers registers handlers for different HTTP requests.
@@ -39,11 +41,23 @@ func login(service Service, logger log.Logger) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, "")
 		}
 
-		token, err := service.Login(c.Request().Context(), req.Username, req.Password)
-		if err != nil {
-			return c.JSON(http.StatusUnauthorized, err.Error())
+		// If refresh token is present validate and return a valid auth token
+		var err error
+		var resp AuthResponse
+		ctx := c.Request().Context()
+
+		if req.RefreshToken != "" { // Is a refresh based auth workflow.
+			resp, err = service.Refresh(ctx, req.RefreshToken)
+			if err != nil {
+				return c.JSON(http.StatusUnauthorized, err)
+			}
+		} else { // Is a basic auth workflow.
+			resp, err = service.Login(ctx, req.Username, req.Password)
+			if err != nil {
+				return c.JSON(http.StatusUnauthorized, err)
+			}
 		}
 
-		return c.JSON(http.StatusOK, AuthResponse{token})
+		return c.JSON(http.StatusOK, resp)
 	}
 }
