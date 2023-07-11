@@ -5,6 +5,7 @@ self_apps:
     self_storage_dir: "./storage" # The storage folder you want to use for Self sessions.
     self_storage_key: "ksdh827hofuasihdjn" # Key to be used for encrypting local storage.
     self_env: "review" # Self environment you want to point to.
+    message_notification_url: "https://my-local-server/" # The URL to send incoming messages notifications to.
 jwt_signing_key: "LxsKJywDL5O5PvgODZhBH12KE6k2yL8E" # Signing key for JWT.
 user: "demo" # User to be used for JWT authentication.
 password: "pass" # Password to be used for JWT authentication.

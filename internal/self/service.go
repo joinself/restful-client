@@ -10,6 +10,7 @@ import (
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/message"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/webhook"
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/chat"
 )
@@ -20,23 +21,25 @@ type Service interface {
 }
 
 type service struct {
-	client *selfsdk.Client
-	cRepo  connection.Repository
-	fRepo  fact.Repository
-	mRepo  message.Repository
-	logger log.Logger
-	selfID string
+	client      *selfsdk.Client
+	cRepo       connection.Repository
+	fRepo       fact.Repository
+	mRepo       message.Repository
+	logger      log.Logger
+	selfID      string
+	callbackURL string
 }
 
 // NewService creates a new fact service.
-func NewService(client *selfsdk.Client, cRepo connection.Repository, fRepo fact.Repository, mRepo message.Repository, logger log.Logger) Service {
+func NewService(client *selfsdk.Client, cRepo connection.Repository, fRepo fact.Repository, mRepo message.Repository, callbackURL string, logger log.Logger) Service {
 	s := service{
-		client: client,
-		cRepo:  cRepo,
-		fRepo:  fRepo,
-		mRepo:  mRepo,
-		logger: logger,
-		selfID: client.SelfAppID(),
+		client:      client,
+		cRepo:       cRepo,
+		fRepo:       fRepo,
+		mRepo:       mRepo,
+		logger:      logger,
+		selfID:      client.SelfAppID(),
+		callbackURL: callbackURL,
 	}
 	s.SetupHooks()
 
@@ -71,20 +74,39 @@ func (s *service) onChatMessageHook() {
 		}
 
 		// Create the input message.
-		err = s.mRepo.Create(context.Background(), &entity.Message{
+		msg := entity.Message{
 			ConnectionID: c.ID,
 			ISS:          cm.ISS,
 			Body:         cm.Body,
 			IAT:          time.Now(),
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
-		})
+		}
+		err = s.mRepo.Create(context.Background(), &msg)
 		if err != nil {
 			s.logger.With(context.Background(), "self").Info("error creating message " + err.Error())
 			return
 		}
 
+		s.callBackClient(msg)
 	})
+}
+
+func (s *service) callBackClient(msg entity.Message) {
+	if s.callbackURL == "" {
+		return
+	}
+
+	m, err := s.mRepo.Get(context.Background(), msg.ID)
+	if err != nil {
+		s.logger.With(context.Background(), "self").Info("error retrieving message " + err.Error())
+		return
+	}
+
+	err = webhook.Post(s.callbackURL, m)
+	if err != nil {
+		s.logger.With(context.Background(), "self").Info(err.Error())
+	}
 }
 
 func (s *service) onConnectionRequestHook() {
