@@ -24,15 +24,7 @@ type APITestCase struct {
 // Endpoint tests an HTTP endpoint using the given APITestCase spec.
 func Endpoint(t *testing.T, router *echo.Echo, tc APITestCase) {
 	t.Run(tc.Name, func(t *testing.T) {
-		req, _ := http.NewRequest(tc.Method, tc.URL, bytes.NewBufferString(tc.Body))
-		if tc.Header != nil {
-			req.Header = tc.Header
-		}
-		res := httptest.NewRecorder()
-		if req.Header.Get("Content-Type") == "" {
-			req.Header.Set("Content-Type", "application/json")
-		}
-		router.ServeHTTP(res, req)
+		res := sendRequest(router, tc.Method, tc.URL, tc.Body, tc.Header)
 		assert.Equal(t, tc.WantStatus, res.Code, "status mismatch")
 		if tc.WantResponse != "" {
 			pattern := strings.Trim(tc.WantResponse, "*")
@@ -43,4 +35,18 @@ func Endpoint(t *testing.T, router *echo.Echo, tc APITestCase) {
 			}
 		}
 	})
+}
+
+func SendRequest(router *echo.Echo, method, url, body string, header http.Header) *httptest.ResponseRecorder {
+	req, _ := http.NewRequest(method, url, bytes.NewBufferString(body))
+	if header != nil {
+		req.Header = header
+	}
+	res := httptest.NewRecorder()
+	if req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	router.ServeHTTP(res, req)
+
+	return res
 }
