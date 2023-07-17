@@ -2,34 +2,7 @@
 
 This joinself client is designed to act as a proxy between your app and The Self Network. It exposes a RESTful API to interact with the basic features Self has to offer.
 
-This project is designed to get you up and running with a project structure optimized for developing
-RESTful API services in Go. It promotes the best practices that follow the [SOLID principles](https://en.wikipedia.org/wiki/SOLID)
-and [clean architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html). 
-It encourages writing clean and idiomatic Go code. 
-
-The API provides the following features right out of the box:
-
-* RESTful endpoints in the widely accepted format
-* Standard CRUD operations of a database table
-* JWT-based authentication
-* Environment dependent application configuration management
-* Structured logging with contextual information
-* Error handling with proper error response generation
-* Database migration
-* Data validation
-* Full test coverage
-* Live reloading during development
- 
-The kit uses the following Go packages which can be easily replaced with your own favorite ones
-since their usages are mostly localized and abstracted. 
-
-* Routing: [echo](https://github.com/labstack/echo)
-* Database access: [ozzo-dbx](https://github.com/go-ozzo/ozzo-dbx)
-* Database migration: [golang-migrate](https://github.com/golang-migrate/migrate)
-* Data validation: [ozzo-validation](https://github.com/go-ozzo/ozzo-validation)
-* Logging: [zap](https://github.com/uber-go/zap)
-* JWT: [jwt-go](https://github.com/dgrijalva/jwt-go)
-* Self: [jwt-go](https://github.com/joinself/self-go-sdk)
+> :warning: **Please note this software is currently under active development and is subject to backwards incompatible changes at any time.**
 
 ## Getting Started
 
@@ -102,12 +75,11 @@ Restful client provides a subset of features to interact with self network, for 
 - [ ] `PUT  /v1/apps/:app_id/groups/:id/messages/:id`
 - [ ] `GET  /v1/apps/:app_id/groups/:id/messages/:id/responses`
 
-- [ ] `POST /v1/apps/:app_id/connections/:cid/requests`
-- [ ] `GET /v1/apps/:app_id/connections/:cid/requests/:id`
+- [x] `POST /v1/apps/:app_id/connections/:cid/requests` : sends a request to the given connection.
+- [x] `GET /v1/apps/:app_id/connections/:cid/requests/:id` : retrieves the information about a specific connection, used to retrieve the request status.
 
-- [-] `GET  /v1/apps/:app_id/connections/:id/facts?source=<source>&name=<name>`: sends a fact request with the given details
-- [-] `POST /v1/apps/:app_id/connections/:id/facts`: issues a fact to a specific connection.
-- [-] `GET  /v1/apps/:app_id/connections/:id/facts/:fact_id`: gets the status / body of a fact retrieved from the user.
+- [ ] `POST /v1/apps/:app_id/connections/:id/facts`: issues a fact to a specific connection.
+- [x] `GET  /v1/apps/:app_id/connections/:id/facts/:fact_id`: gets the details of an already requested fact.
 - [ ] `DELETE /v1/apps/:app_id/connections/:id/facts/:fact_id` deletes a specific fact for a connection
 
 
