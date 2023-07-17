@@ -19,6 +19,7 @@ type Request struct {
 	Type         string    `json:"typ"`
 	ConnectionID int       `json:"-"`
 	Facts        []byte    `json:"facts"`
+	Description  string    `json:"description"`
 	Auth         bool      `json:"auth,omitempty"`
 	Status       string    `json:"status"`
 	Callback     string    `json:"callback"`

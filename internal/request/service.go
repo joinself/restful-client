@@ -49,9 +49,10 @@ type FactRequest struct {
 
 // CreateRequest represents an request creation request.
 type CreateRequest struct {
-	Type     string        `json:"type"`
-	Facts    []FactRequest `json:"facts"`
-	Callback string        `json:"callback"`
+	Type        string        `json:"type"`
+	Facts       []FactRequest `json:"facts"`
+	Description string        `json:"description"`
+	Callback    string        `json:"callback"`
 }
 
 // Validate validates the CreateFactRequest fields.
@@ -137,6 +138,7 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 		Facts:        factsBody,
 		Status:       "requested",
 		Callback:     req.Callback,
+		Description:  req.Description,
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
@@ -227,7 +229,7 @@ func (s service) buildSelfFactRequest(selfID string, req entity.Request) (*selff
 
 	r := &selffact.FactRequest{
 		SelfID:      selfID,
-		Description: "info",
+		Description: req.Description,
 		Facts:       facts,
 		Expiry:      time.Minute * 5,
 	}
