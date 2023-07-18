@@ -52,8 +52,6 @@ func (r resource) get(c echo.Context) error {
 // @Accept          json
 // @Produce         json
 // @Security        BearerAuth
-// @Param           page query int false "page number"
-// @Param           per_page query int false "number of elements per page"
 // @Param           app_id   path      string  true  "App id"
 // @Param           connection_id  path string  true  "Connection id"
 // @Param           request body CreateRequest true "query params"
