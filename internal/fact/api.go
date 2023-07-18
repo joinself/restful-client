@@ -15,12 +15,12 @@ func RegisterHandlers(r *echo.Group, service Service, cService connection.Servic
 
 	r.Use(authHandler)
 
-	r.GET("/apps/:app_id/connections/:connection_id/facts/:id", res.get)
 	r.GET("/apps/:app_id/connections/:connection_id/facts", res.query)
-
 	r.POST("/apps/:app_id/connections/:connection_id/facts", res.create)
-	r.PUT("/apps/:app_id/connections/:connection_id/facts/:id", res.update)
+	r.GET("/apps/:app_id/connections/:connection_id/facts/:id", res.get)
 	r.DELETE("/apps/:app_id/connections/:connection_id/facts/:id", res.delete)
+
+	// r.PUT("/apps/:app_id/connections/:connection_id/facts/:id", res.update)
 }
 
 type resource struct {
@@ -76,6 +76,34 @@ func (r resource) query(c echo.Context) error {
 	return c.JSON(http.StatusOK, pages)
 }
 
+// WARNING: Do not use for code purposes, this is only used to generate
+// the documentation for the openapi, which seems to be broken for nested
+// structs.
+type CreateFactRequestDoc struct {
+	Facts []struct {
+		Key    string `json:"key"`
+		Value  string `json:"value"`
+		Source string `json:"source"`
+		Group  *struct {
+			Name string `json:"name"`
+			Icon string `json:"icon"`
+		} `json:"group,omitempty"`
+		Type string `json:"type,omitempty"`
+	} `json:"facts"`
+}
+
+// CreateConnection godoc
+// @Summary         Issues a fact.
+// @Description  	Issues a fact to one of your connections.
+// @Tags            facts
+// @Accept          json
+// @Produce         json
+// @Security        BearerAuth
+// @Param           app_id   path      string  true  "App id"
+// @Param           connection_id  path string  true  "Connection id"
+// @Param           request body CreateFactRequestDoc true "query params"
+// @Success         200
+// @Router          /apps/{app_id}/connections/{connection_id}/facts [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateFactRequest
 	if err := c.Bind(&input); err != nil {
@@ -83,18 +111,19 @@ func (r resource) create(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "")
 	}
 
+	ctx := c.Request().Context()
 	// Get the connection id
-	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	conn, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
 
-	fact, err := r.service.Create(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), conn.ID, input)
+	err = r.service.Create(ctx, c.Param("app_id"), c.Param("connection_id"), conn.ID, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, fact)
+	return c.JSON(http.StatusCreated, ``)
 }
 
 func (r resource) update(c echo.Context) error {

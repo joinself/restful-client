@@ -503,6 +503,56 @@
                 }
             }
         },
+        "/apps/{app_id}/connections/{connection_id}/facts": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Issues a fact to one of your connections.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "facts"
+                ],
+                "summary": "Issues a fact.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection id",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/fact.CreateFactRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/apps/{app_id}/connections/{connection_id}/requests": {
             "post": {
                 "security": [
@@ -522,18 +572,6 @@
                 ],
                 "summary": "Sends a request request.",
                 "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "page number",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "number of elements per page",
-                        "name": "per_page",
-                        "in": "query"
-                    },
                     {
                         "type": "string",
                         "description": "App id",
@@ -816,6 +854,42 @@
                 }
             }
         },
+        "fact.CreateFactRequestDoc": {
+            "type": "object",
+            "properties": {
+                "facts": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "group": {
+                                "type": "object",
+                                "properties": {
+                                    "icon": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "key": {
+                                "type": "string"
+                            },
+                            "source": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string"
+                            },
+                            "value": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "fact.Fact": {
             "type": "object",
             "properties": {
@@ -927,6 +1001,9 @@
             "type": "object",
             "properties": {
                 "callback": {
+                    "type": "string"
+                },
+                "description": {
                     "type": "string"
                 },
                 "facts": {

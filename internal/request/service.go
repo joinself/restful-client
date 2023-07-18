@@ -55,7 +55,7 @@ type CreateRequest struct {
 	Callback    string        `json:"callback"`
 }
 
-// Validate validates the CreateFactRequest fields.
+// Validate validates the CreateRequest fields.
 func (m CreateRequest) Validate() error {
 	return validation.ValidateStruct(&m,
 		validation.Field(&m.Type, validation.Required, validation.Length(0, 128)),

@@ -121,7 +121,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 
 	// Services
 	fcs := make(map[string]connection.FactService, len(clients))
-	rcs := make(map[string]fact.RequesterService, len(clients))
+	rcs := make(map[string]fact.IssuerService, len(clients))
 	rrcs := make(map[string]request.RequesterService, len(clients))
 	for id, c := range clients {
 		fcs[id] = c.FactService()
