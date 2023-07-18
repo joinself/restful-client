@@ -76,6 +76,34 @@ func (r resource) query(c echo.Context) error {
 	return c.JSON(http.StatusOK, pages)
 }
 
+// WARNING: Do not use for code purposes, this is only used to generate
+// the documentation for the openapi, which seems to be broken for nested
+// structs.
+type CreateFactRequestDoc struct {
+	Facts []struct {
+		Key    string `json:"key"`
+		Value  string `json:"value"`
+		Source string `json:"source"`
+		Group  *struct {
+			Name string `json:"name"`
+			Icon string `json:"icon"`
+		} `json:"group,omitempty"`
+		Type string `json:"type,omitempty"`
+	} `json:"facts"`
+}
+
+// CreateConnection godoc
+// @Summary         Issues a fact.
+// @Description  	Issues a fact to one of your connections.
+// @Tags            facts
+// @Accept          json
+// @Produce         json
+// @Security        BearerAuth
+// @Param           app_id   path      string  true  "App id"
+// @Param           connection_id  path string  true  "Connection id"
+// @Param           request body CreateFactRequestDoc true "query params"
+// @Success         200
+// @Router          /apps/{app_id}/connections/{connection_id}/facts [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateFactRequest
 	if err := c.Bind(&input); err != nil {
