@@ -5,7 +5,6 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/google/uuid"
 	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
@@ -17,14 +16,14 @@ type Service interface {
 	Get(ctx context.Context, id string) (Fact, error)
 	Query(ctx context.Context, conn int, source, fact string, offset, limit int) ([]Fact, error)
 	Count(ctx context.Context, conn int, source, fact string) (int, error)
-	Create(ctx context.Context, appID, selfID string, connection int, input CreateFactRequest) (Fact, error)
+	Create(ctx context.Context, appID, selfID string, connection int, input CreateFactRequest) error
 	Update(ctx context.Context, id string, input UpdateFactRequest) (Fact, error)
 	Delete(ctx context.Context, id string) (Fact, error)
 }
 
 // RequesterService service to manage sending and receiving fact requests
-type RequesterService interface {
-	Request(*fact.FactRequest) (*fact.FactResponse, error)
+type IssuerService interface {
+	Issue(selfID string, facts []fact.FactToIssue, viewers []string) error
 }
 
 // Fact represents the data about an fact.
@@ -33,21 +32,32 @@ type Fact struct {
 	Attestations []entity.Attestation `json:"attestations"`
 }
 
+type FactToIssue struct {
+	Key    string          `json:"key"`
+	Value  string          `json:"value"`
+	Source string          `json:"source"`
+	Group  *fact.FactGroup `json:"group,omitempty"`
+	Type   string          `json:"type,omitempty"`
+}
+
 // CreateFactRequest represents an fact creation request.
 type CreateFactRequest struct {
-	CID    string    `json:"cid"`
-	RID    string    `json:"rid"`
-	Source string    `json:"source"`
-	Fact   string    `json:"fact"`
-	Body   string    `json:"body"`
-	IAT    time.Time `json:"iat"`
+	Facts []FactToIssue `json:"facts"`
 }
 
 // Validate validates the CreateFactRequest fields.
 func (m CreateFactRequest) Validate() error {
-	return validation.ValidateStruct(&m,
-		validation.Field(&m.Fact, validation.Required, validation.Length(0, 128)),
-	)
+	for _, f := range m.Facts {
+		err := validation.ValidateStruct(&f,
+			validation.Field(&f.Key, validation.Required, validation.Length(0, 128)),
+			validation.Field(&f.Value, validation.Required, validation.Length(0, 128)),
+			validation.Field(&f.Source, validation.Required, validation.Length(0, 128)),
+		)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // UpdateFactRequest represents an fact update request.
@@ -66,11 +76,11 @@ type service struct {
 	repo    Repository
 	atRepo  attestation.Repository
 	logger  log.Logger
-	clients map[string]RequesterService
+	clients map[string]IssuerService
 }
 
 // NewService creates a new fact service.
-func NewService(repo Repository, atRepo attestation.Repository, logger log.Logger, clients map[string]RequesterService) Service {
+func NewService(repo Repository, atRepo attestation.Repository, logger log.Logger, clients map[string]IssuerService) Service {
 	return service{repo, atRepo, logger, clients}
 }
 
@@ -94,33 +104,15 @@ func (s service) Get(ctx context.Context, id string) (Fact, error) {
 }
 
 // Create creates a new fact.
-func (s service) Create(ctx context.Context, appID, selfID string, connection int, req CreateFactRequest) (Fact, error) {
+func (s service) Create(ctx context.Context, appID, selfID string, connection int, req CreateFactRequest) error {
 	if err := req.Validate(); err != nil {
-		return Fact{}, err
-	}
-	id := entity.GenerateID()
-	now := time.Now()
-
-	f := entity.Fact{
-		ID:           id,
-		ConnectionID: connection,
-		ISS:          appID,
-		Source:       req.Source,
-		Fact:         req.Fact,
-		Body:         req.Body,
-		IAT:          req.IAT,
-		CreatedAt:    now,
-		UpdatedAt:    now,
-	}
-	err := s.repo.Create(ctx, f)
-	if err != nil {
-		return Fact{}, err
+		return err
 	}
 
-	// Send the message to the connection.
-	go s.sendRequest(f, selfID, appID)
+	// Issue the fact and send it to the user
+	s.issueFact(req, appID, selfID)
 
-	return s.Get(ctx, id)
+	return nil
 }
 
 // Update updates the fact with the specified ID.
@@ -181,51 +173,30 @@ func (s service) Query(ctx context.Context, conn int, source, fact string, offse
 	return result, nil
 }
 
-// sendRequest sends a request to the specified connection through Self Network.
-func (s service) sendRequest(f entity.Fact, appid, selfid string) {
+// issueFact issues a new fact and sends it to the hwe
+func (s service) issueFact(f CreateFactRequest, appid, selfid string) {
 	if _, ok := s.clients[appid]; !ok {
 		s.logger.Debug("skipping as self is not initialized")
 		return
 	}
 
-	resp, err := s.clients[appid].Request(&fact.FactRequest{
-		SelfID:      selfid,
-		Description: "info",
-		Facts:       []fact.Fact{{Fact: f.Fact, Sources: []string{f.Source}}},
-		Expiry:      time.Minute * 5,
-	})
-	if err != nil {
-		err = s.repo.SetStatus(context.Background(), f.ID, "errored")
-		if err != nil {
-			s.logger.Errorf("failed to update status: %v", err)
+	fi := []fact.FactToIssue{}
+	for _, fa := range f.Facts {
+		nf := fact.FactToIssue{
+			Key:    fa.Key,
+			Value:  fa.Value,
+			Source: fa.Source,
 		}
 
-		s.logger.Errorf("failed to send request: %v", err)
-		return
-	}
-
-	if len(resp.Facts) != 1 {
-		err = s.repo.SetStatus(context.Background(), f.ID, "errored")
-		if err != nil {
-			s.logger.Errorf("failed to update status: %v", err)
+		if fa.Group != nil {
+			nf.Group = &fact.FactGroup{
+				Name: fa.Group.Name,
+				Icon: fa.Group.Icon,
+			}
 		}
-		s.logger.Errorf("unexpected fact response")
-		return
+
+		fi = append(fi, nf)
 	}
 
-	err = s.repo.SetStatus(context.Background(), f.ID, "received")
-	if err != nil {
-		s.logger.Errorf("failed to update status: %v", err)
-		return
-	}
-
-	// Create the relative attestations.
-	for _, v := range resp.Facts[0].AttestedValues() {
-		_ = s.atRepo.Create(context.Background(), entity.Attestation{
-			ID:     uuid.New().String(),
-			Body:   "TODO", // TODO: store body.
-			FactID: f.ID,
-			Value:  v,
-		})
-	}
+	s.clients[appid].Issue(selfid, fi, []string{})
 }

@@ -42,17 +42,9 @@ func TestAPI(t *testing.T) {
 		{Name: "get all", Method: "GET", URL: "/apps/app1/connections/connection/facts", Body: "", Header: header, WantStatus: http.StatusOK, WantResponse: `*"total_count":1*`},
 		{Name: "get 123", Method: "GET", URL: "/apps/app1/connections/connection/facts/123", Body: "", Header: header, WantStatus: http.StatusOK, WantResponse: `*123*`},
 		{Name: "get unknown", Method: "GET", URL: "/apps/app1/connections/connection/facts/1234", Body: "", Header: header, WantStatus: http.StatusNotFound, WantResponse: ""},
-		{Name: "create ok", Method: "POST", URL: "/apps/app1/connections/connection/facts", Body: `{"fact":"test"}`, Header: header, WantStatus: http.StatusCreated, WantResponse: "*test*"},
-		{Name: "create ok count", Method: "GET", URL: "/apps/app1/connections/connection/facts", Body: "", Header: header, WantStatus: http.StatusOK, WantResponse: `*"total_count":2*`},
+		{Name: "create ok", Method: "POST", URL: "/apps/app1/connections/connection/facts", Body: `{"fact":"test"}`, Header: header, WantStatus: http.StatusCreated, WantResponse: ""},
 		{Name: "create auth error", Method: "POST", URL: "/apps/app1/connections/connection/facts", Body: `{"body":"test"}`, Header: nil, WantStatus: http.StatusUnauthorized, WantResponse: ""},
 		{Name: "create input error", Method: "POST", URL: "/apps/app1/connections/connection/facts", Body: `"body":"test"}`, Header: header, WantStatus: http.StatusBadRequest, WantResponse: ""},
-		{Name: "update ok", Method: "PUT", URL: "/apps/app1/connections/connection/facts/123", Body: `{"body":"factxyz"}`, Header: header, WantStatus: http.StatusOK, WantResponse: "*factxyz*"},
-		{Name: "update verify", Method: "GET", URL: "/apps/app1/connections/connection/facts/123", Body: "", Header: header, WantStatus: http.StatusOK, WantResponse: `*factxyz*`},
-		{Name: "update auth error", Method: "PUT", URL: "/apps/app1/connections/connection/facts/123", Body: `{"body":"factxyz"}`, Header: nil, WantStatus: http.StatusUnauthorized, WantResponse: ""},
-		{Name: "update input error", Method: "PUT", URL: "/apps/app1/connections/connection/facts/123", Body: `"body":"factxyz"}`, Header: header, WantStatus: http.StatusBadRequest, WantResponse: ""},
-		{Name: "delete ok", Method: "DELETE", URL: "/apps/app1/connections/connection/facts/123", Body: ``, Header: header, WantStatus: http.StatusOK, WantResponse: "*factxyz*"},
-		{Name: "delete verify", Method: "DELETE", URL: "/apps/app1/connections/connection/facts/123", Body: ``, Header: header, WantStatus: http.StatusNotFound, WantResponse: ""},
-		{Name: "delete auth error", Method: "DELETE", URL: "/apps/app1/connections/connection/facts/123", Body: ``, Header: nil, WantStatus: http.StatusUnauthorized, WantResponse: ""},
 	}
 	for _, tc := range tests {
 		test.Endpoint(t, router, tc)

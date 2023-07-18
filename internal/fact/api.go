@@ -15,12 +15,12 @@ func RegisterHandlers(r *echo.Group, service Service, cService connection.Servic
 
 	r.Use(authHandler)
 
-	r.GET("/apps/:app_id/connections/:connection_id/facts/:id", res.get)
 	r.GET("/apps/:app_id/connections/:connection_id/facts", res.query)
-
 	r.POST("/apps/:app_id/connections/:connection_id/facts", res.create)
-	r.PUT("/apps/:app_id/connections/:connection_id/facts/:id", res.update)
+	r.GET("/apps/:app_id/connections/:connection_id/facts/:id", res.get)
 	r.DELETE("/apps/:app_id/connections/:connection_id/facts/:id", res.delete)
+
+	// r.PUT("/apps/:app_id/connections/:connection_id/facts/:id", res.update)
 }
 
 type resource struct {
@@ -83,18 +83,19 @@ func (r resource) create(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "")
 	}
 
+	ctx := c.Request().Context()
 	// Get the connection id
-	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	conn, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
 
-	fact, err := r.service.Create(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), conn.ID, input)
+	err = r.service.Create(ctx, c.Param("app_id"), c.Param("connection_id"), conn.ID, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, fact)
+	return c.JSON(http.StatusCreated, ``)
 }
 
 func (r resource) update(c echo.Context) error {
