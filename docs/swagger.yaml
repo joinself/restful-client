@@ -85,6 +85,29 @@ definitions:
       value:
         type: string
     type: object
+  fact.CreateFactRequestDoc:
+    properties:
+      facts:
+        items:
+          properties:
+            group:
+              properties:
+                icon:
+                  type: string
+                name:
+                  type: string
+              type: object
+            key:
+              type: string
+            source:
+              type: string
+            type:
+              type: string
+            value:
+              type: string
+          type: object
+        type: array
+    type: object
   fact.Fact:
     properties:
       attestations:
@@ -158,6 +181,8 @@ definitions:
   request.CreateRequest:
     properties:
       callback:
+        type: string
+      description:
         type: string
       facts:
         items:
@@ -528,20 +553,44 @@ paths:
       summary: Updates a connection.
       tags:
       - connections
+  /apps/{app_id}/connections/{connection_id}/facts:
+    post:
+      consumes:
+      - application/json
+      description: Issues a fact to one of your connections.
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: string
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/fact.CreateFactRequestDoc'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - BearerAuth: []
+      summary: Issues a fact.
+      tags:
+      - facts
   /apps/{app_id}/connections/{connection_id}/requests:
     post:
       consumes:
       - application/json
       description: Sends a request request to the specified self user.
       parameters:
-      - description: page number
-        in: query
-        name: page
-        type: integer
-      - description: number of elements per page
-        in: query
-        name: per_page
-        type: integer
       - description: App id
         in: path
         name: app_id
