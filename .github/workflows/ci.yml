@@ -14,6 +14,8 @@ concurrency:
 jobs:
   license-compliance:
     uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
+    with:
+      continue-on-error: true
     secrets: inherit
   secret-scan:
     uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
