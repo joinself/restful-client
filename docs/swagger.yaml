@@ -158,9 +158,16 @@ definitions:
         type: integer
       iss:
         type: string
+      jti:
+        type: string
       rid:
         type: string
       updated_at:
+        type: string
+    type: object
+  message.UpdateMessageRequest:
+    properties:
+      body:
         type: string
     type: object
   message.response:
@@ -456,6 +463,45 @@ paths:
       security:
       - BearerAuth: []
       summary: Gets a message.
+      tags:
+      - messages
+  /apps/:app_id/connections/{connection_id}/messages/{message_id}:
+    put:
+      consumes:
+      - application/json
+      description: Sends an edited message to the specified connection.
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: string
+      - description: Message id
+        in: path
+        name: message_id
+        required: true
+        type: integer
+      - description: message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/message.UpdateMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/message.Message'
+      security:
+      - BearerAuth: []
+      summary: Edits a message.
       tags:
       - messages
   /apps/:app_id/connections/{id}:
