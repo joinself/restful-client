@@ -10,6 +10,7 @@ type Message struct {
 	ConnectionID int       `json:"-"`
 	ISS          string    `json:"iss"`
 	CID          string    `json:"cid"`
+	JTI          string    `json:"jti"`
 	RID          string    `json:"rid"`
 	Body         string    `json:"body"`
 	IAT          time.Time `json:"iat"`

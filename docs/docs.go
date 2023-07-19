@@ -360,6 +360,66 @@ const docTemplate = `{
                 }
             }
         },
+        "/apps/:app_id/connections/{connection_id}/messages/{message_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sends an edited message to the specified connection.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Edits a message.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection id",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Message id",
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "message request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/message.UpdateMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/message.Message"
+                        }
+                    }
+                }
+            }
+        },
         "/apps/:app_id/connections/{id}": {
             "get": {
                 "security": [
@@ -969,10 +1029,21 @@ const docTemplate = `{
                 "iss": {
                     "type": "string"
                 },
+                "jti": {
+                    "type": "string"
+                },
                 "rid": {
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "message.UpdateMessageRequest": {
+            "type": "object",
+            "properties": {
+                "body": {
                     "type": "string"
                 }
             }
