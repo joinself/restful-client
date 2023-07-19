@@ -179,11 +179,12 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 		s.markRequestAs(req.ID, entity.STATUS_ERRORED)
 	} else if resp.Status == "rejected" {
 		s.markRequestAs(req.ID, entity.STATUS_REJECTED)
-	} else if len(resp.Facts) != 1 && req.Type == "facts" {
+	} else if len(resp.Facts) != 1 && req.Type == "fact" {
 		s.markRequestAs(req.ID, entity.STATUS_REJECTED)
 	} else {
 		// Save the received facts.
-		if req.Type == "facts" || req.Type == "auth" {
+		if req.Type == "fact" || req.Type == "auth" {
+
 			s.createFacts(selfID, req, resp.Facts)
 		}
 		s.markRequestAs(req.ID, "responded")

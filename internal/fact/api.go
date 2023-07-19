@@ -50,6 +50,29 @@ func (r resource) get(c echo.Context) error {
 	return c.JSON(http.StatusOK, fact)
 }
 
+type response struct {
+	Page       int    `json:"page"`
+	PerPage    int    `json:"per_page"`
+	PageCount  int    `json:"page_count"`
+	TotalCount int    `json:"total_count"`
+	Items      []Fact `json:"items"`
+}
+
+// ListConnections godoc
+// @Summary        List facts.
+// @Description    List facts matching the specified filters.
+// @Tags           facts
+// @Accept         json
+// @Produce        json
+// @Security       BearerAuth
+// @Param          app_id   path      string  true  "App id"
+// @Param          connection_id   path      string  true  "Connection id"
+// @Param          page query int false "page number"
+// @Param          per_page query int false "number of elements per page"
+// @Param          source query int false "source"
+// @Param          fact query int false "fact"
+// @Success        200  {object}  response
+// @Router         /apps/:app_id/connections/{connection_id}/facts [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
 
