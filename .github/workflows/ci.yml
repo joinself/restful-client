@@ -22,19 +22,16 @@ jobs:
     with:
       continue-on-error: true
     secrets: inherit
-  #build:
-  #  #uses: ./.github/workflows/build-go.yml
-  #  uses: joinself/github-workflows/.github/workflows/build-go.yml@main
-  #  with:
-  #    dockerfile-path: ./cmd/server/Dockerfile
-  #  secrets: inherit
   test:
     needs: [license-compliance, secret-scan]
     uses: ./.github/workflows/test.yml
     secrets: inherit
-  #publish:
-  #  if: ${{ false }}
-  #  #if: ${{ github.ref == 'refs/heads/main' }}
-  #  needs: test
-  #  uses: joinself/github-workflows/.github/workflows/publish-k8s.yml@main
-  #  secrets: inherit
+  build-docker:
+    needs: test
+    steps:
+    #if: ${{ github.ref == 'refs/heads/main' }}
+    #uses: joinself/github-workflows-public/.github/workflows/build-docker.yml@main
+      - uses: ./.github/workflows/foo1.yml
+        secrets: inherit
+      - uses: ./.github/workflows/foo2.yml
+        secrets: inherit
