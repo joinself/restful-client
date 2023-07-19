@@ -156,7 +156,7 @@ func (r resource) update(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	message, err := r.service.Update(c.Request().Context(), id, input)
+	message, err := r.service.Update(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), id, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
