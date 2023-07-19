@@ -1,44 +1,56 @@
-name: Test
+name: _test
 
-on: 
+on:
   workflow_call:
 
 jobs:
   test:
-    runs-on: [self-hosted, linux-docker]
+    runs-on: ubuntu-latest
     container:
-      image: eu.gcr.io/principal-oxide-204416/go-build:1.19.1-bullseye
-      credentials:
-        username: ${{ secrets.CONTAINER_REGISTRY_USER }}
-        password: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+      image: go:1.19.1-bullseye
+    services:
+      postgres:
+        image: postgres:alpine
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: go_restful
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - name: Setup job
-        uses: joinself/github-actions/setup-job@main
-        with:
-          gh-token: ${{ secrets.GH_TOKEN }}
-          git-lfs: ${{ inputs.git-lfs }}
-      - name: Setup cache
-        uses: actions/cache@v3
-        with:
-          path: /go/pkg/mod
-          key: ${{ runner.os }}-${{ hashFiles('**/go.sum') }}
+        uses: joinself/github-actions-public/setup-job@main
       - name: Test
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
-          CONTAINER_REGISTRY_PASSWORD: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+          APP_ENV: local
+          APP_DSN: "postgres://localhost/go_restful?sslmode=disable&user=${{ secrets.POSTGRES_USER }}&password=${{ secrets.POSTGRES_PASSWORD }}"
         run: |
           . ${GITHUB_WORKSPACE}/.ci/env
-          echo "testing...."
-          exit 1
-          ${CI_SCRIPTS}/container-registry-setup
-          #make lint
-          make unit-test
-          docker build -t ${CONTAINER_REGISTRY_URL}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA} --build-arg GITHUB_TOKEN=${GH_TOKEN} --build-arg gopath=${CI_WORKDIR}/.cache/go .
-          docker push ${CONTAINER_REGISTRY_URL}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends curl libsodium-dev
+          curl https://download.joinself.com/olm/libself-olm_0.1.17_amd64.deb -o /tmp/libself-olm_0.1.17_amd64.deb
+          curl https://download.joinself.com/omemo/libself-omemo_0.1.3_amd64.deb -o /tmp/libself-omemo_0.1.3_amd64.deb
+          sudo apt-get install -y --no-install-recommends /tmp/libself-olm_0.1.17_amd64.deb /tmp/libself-omemo_0.1.3_amd64.deb
+          curl -Lo /tmp/migrate.tar.gz https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-amd64.tar.gz
+          tar zxf /tmp/migrate.tar.gz -C /tmp
+          sudo cp /tmp/migrate /usr/local/bin/
+
+          # lint check
+          curl -Lo /tmp/golangci-lint.tar.gz https://github.com/golangci/golangci-lint/releases/download/v1.21.0/golangci-lint-1.21.0-linux-amd64.tar.gz
+          tar zxf /tmp/golangci-lint.tar.gz -C /tmp
+          sudo cp /tmp/golangci-lint-1.21.0-linux-amd64/golangci-lint /usr/local/bin
+          make lint
+
+          # build
+          make build
+
+          # test
+          make migrate
+          make test-cover
       - name: Failure notification
         if: ${{ github.ref == 'refs/heads/main' && failure() }}
-        uses: ./.github/actions/failure-notification
+        uses: joinself/github-actions-public/failure-notification@main
         with:
           slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
