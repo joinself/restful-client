@@ -25,3 +25,9 @@ testdata/postgres
 
 # self storage
 storage
+
+# configuration
+./config/local.yml
+
+# Thunder tets
+thunder-tests/
