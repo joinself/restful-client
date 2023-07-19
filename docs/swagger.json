@@ -4,7 +4,7 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server server Bob.",
+        "description": "This is the api for Joinself restful client.",
         "title": "Echo Swagger Example API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
