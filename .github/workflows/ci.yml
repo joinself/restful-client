@@ -32,6 +32,5 @@ jobs:
     #if: ${{ github.ref == 'refs/heads/main' }}
     #uses: joinself/github-workflows-public/.github/workflows/build-docker.yml@main
       - uses: ./.github/workflows/foo1.yml
-        secrets: inherit
       - uses: ./.github/workflows/foo2.yml
-        secrets: inherit
+    secrets: inherit
