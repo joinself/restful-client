@@ -139,6 +139,21 @@ definitions:
       updated_at:
         type: string
     type: object
+  fact.response:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/fact.Fact'
+        type: array
+      page:
+        type: integer
+      page_count:
+        type: integer
+      per_page:
+        type: integer
+      total_count:
+        type: integer
+    type: object
   message.CreateMessageRequest:
     properties:
       body:
@@ -326,6 +341,50 @@ paths:
       summary: Creates a new connection.
       tags:
       - connections
+  /apps/:app_id/connections/{connection_id}/facts:
+    get:
+      consumes:
+      - application/json
+      description: List facts matching the specified filters.
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: string
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: number of elements per page
+        in: query
+        name: per_page
+        type: integer
+      - description: source
+        in: query
+        name: source
+        type: integer
+      - description: fact
+        in: query
+        name: fact
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/fact.response'
+      security:
+      - BearerAuth: []
+      summary: List facts.
+      tags:
+      - facts
   /apps/:app_id/connections/{connection_id}/facts/{id}:
     get:
       consumes:
