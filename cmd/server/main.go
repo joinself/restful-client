@@ -71,7 +71,7 @@ func main() {
 // buildHandler sets up the HTTP routing and builds an HTTP handler.
 //	@title			Echo Swagger Example API
 //	@version		1.0
-//	@description	This is a sample server server Bob.
+//	@description	This is the api for Joinself restful client.
 //	@termsOfService	http://swagger.io/terms/
 
 //	@contact.name	API Support
