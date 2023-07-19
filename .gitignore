@@ -27,7 +27,7 @@ testdata/postgres
 storage
 
 # configuration
-./config/local.yml
+config/local.yml
 
 # Thunder tets
 thunder-tests/
