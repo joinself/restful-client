@@ -9,6 +9,7 @@ import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
 	selfsdk "github.com/joinself/self-go-sdk"
+	"github.com/joinself/self-go-sdk/chat"
 )
 
 // Service encapsulates usecase logic for messages.
@@ -17,7 +18,7 @@ type Service interface {
 	Query(ctx context.Context, connection int, messagesSince int, offset, limit int) ([]Message, error)
 	Count(ctx context.Context) (int, error)
 	Create(ctx context.Context, appID, connectionID string, connection int, input CreateMessageRequest) (Message, error)
-	Update(ctx context.Context, id int, input UpdateMessageRequest) (Message, error)
+	Update(ctx context.Context, appID, connectionID string, id int, req UpdateMessageRequest) (Message, error)
 	Delete(ctx context.Context, id int) (Message, error)
 }
 
@@ -89,19 +90,24 @@ func (s service) Create(ctx context.Context, appID, connectionID string, connect
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	err := s.repo.Create(ctx, &msg)
+
+	// Send the message to the connection.
+	m, err := s.sendMessage(appID, connectionID, req.Body)
 	if err != nil {
 		return Message{}, err
 	}
+	msg.JTI = m.JTI
 
-	// Send the message to the connection.
-	go s.sendMessage(appID, connectionID, req.Body)
+	err = s.repo.Create(ctx, &msg)
+	if err != nil {
+		return Message{}, err
+	}
 
 	return s.Get(ctx, msg.ID)
 }
 
 // Update updates the message with the specified ID.
-func (s service) Update(ctx context.Context, id int, req UpdateMessageRequest) (Message, error) {
+func (s service) Update(ctx context.Context, appID, connectionID string, id int, req UpdateMessageRequest) (Message, error) {
 	if err := req.Validate(); err != nil {
 		return Message{}, err
 	}
@@ -116,6 +122,9 @@ func (s service) Update(ctx context.Context, id int, req UpdateMessageRequest) (
 	if err := s.repo.Update(ctx, message.Message); err != nil {
 		return message, err
 	}
+
+	s.updateMessage(appID, connectionID, message.JTI, req.Body)
+
 	return message, nil
 }
 
@@ -149,13 +158,23 @@ func (s service) Query(ctx context.Context, connection int, messagesSince int, o
 	return result, nil
 }
 
-func (s service) sendMessage(appID, connection string, body string) {
+func (s service) sendMessage(appID, connection string, body string) (*chat.Message, error) {
+	if _, ok := s.clients[appID]; !ok {
+		return nil, nil
+	}
+
+	return s.clients[appID].ChatService().Message([]string{connection}, body)
+}
+
+func (s service) updateMessage(appID, connection, jti, body string) {
 	if _, ok := s.clients[appID]; !ok {
 		return
 	}
 
-	_, err := s.clients[appID].ChatService().Message([]string{connection}, body)
-	if err != nil {
-		s.logger.Errorf("failed to send message: %v", err)
-	}
+	s.clients[appID].ChatService().Edit(
+		[]string{connection},
+		jti,
+		body,
+		"",
+	)
 }

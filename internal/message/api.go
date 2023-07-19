@@ -145,6 +145,19 @@ func (r resource) create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, message)
 }
 
+// SendMessage      godoc
+// @Summary         Edits a message.
+// @Description  	Sends an edited message to the specified connection.
+// @Tags            messages
+// @Accept          json
+// @Produce         json
+// @Security        BearerAuth
+// @Param           app_id   path      string  true  "App id"
+// @Param           connection_id   path      string  true  "Connection id"
+// @Param           message_id   path      int  true  "Message id"
+// @Param           request body UpdateMessageRequest true "message request"
+// @Success         200  {object}  Message
+// @Router          /apps/:app_id/connections/{connection_id}/messages/{message_id} [put]
 func (r resource) update(c echo.Context) error {
 	var input UpdateMessageRequest
 	if err := c.Bind(&input); err != nil {
@@ -156,7 +169,7 @@ func (r resource) update(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	message, err := r.service.Update(c.Request().Context(), id, input)
+	message, err := r.service.Update(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), id, input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

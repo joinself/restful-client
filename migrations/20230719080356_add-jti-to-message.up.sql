@@ -1,0 +1,2 @@
+ALTER TABLE message
+ADD COLUMN jti VARCHAR(255);
