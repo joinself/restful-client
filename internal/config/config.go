@@ -16,12 +16,12 @@ const (
 
 // Self config object
 type SelfAppConfig struct {
-	SelfAppID           string `yaml:"self_app_id" env:"SELF_APP_ID"`
-	SelfAppDeviceSecret string `yaml:"self_device_secret" env:"SELF_APP_DEVICE_SECRET"`
-	SelfStorageKey      string `yaml:"self_storage_key" env:"SELF_STORAGE_KEY"`
-	SelfStorageDir      string `yaml:"self_storage_dir" env:"SELF_STORAGE_DIR"`
-	SelfEnv             string `yaml:"self_env" env:"SELF_ENV"`
-	CallbackURL         string `yaml:"message_notification_url" env:"MESSAGE_NOTIFICATION_URL"`
+	SelfAppID           string `yaml:"self_app_id"`
+	SelfAppDeviceSecret string `yaml:"self_device_secret"`
+	SelfStorageKey      string `yaml:"self_storage_key"`
+	SelfStorageDir      string `yaml:"self_storage_dir"`
+	SelfEnv             string `yaml:"self_env"`
+	CallbackURL         string `yaml:"message_notification_url"`
 }
 
 // Config represents an application configuration.

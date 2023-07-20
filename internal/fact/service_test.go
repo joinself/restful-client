@@ -6,7 +6,6 @@ import (
 
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/mock"
-	"github.com/joinself/self-go-sdk/fact"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,25 +16,27 @@ func TestCreateFactRequest_Validate(t *testing.T) {
 		wantError bool
 	}{
 		{"success", CreateFactRequest{
-			Facts: []fact.FactToIssue{{
-				Key:   "test",
-				Value: "test",
+			Facts: []FactToIssue{{
+				Key:    "test",
+				Value:  "test",
+				Source: "test",
 			}},
 		}, false},
 		{"required", CreateFactRequest{
-			Facts: []fact.FactToIssue{{
+			Facts: []FactToIssue{{
 				Key: "test",
 			}},
 		}, true},
 		{"required-key", CreateFactRequest{
-			Facts: []fact.FactToIssue{{
+			Facts: []FactToIssue{{
 				Value: "test",
 			}},
 		}, true},
 		{"too long", CreateFactRequest{
-			Facts: []fact.FactToIssue{{
-				Key:   "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
-				Value: "test",
+			Facts: []FactToIssue{{
+				Key:    "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890",
+				Value:  "test",
+				Source: "test",
 			}},
 		}, true},
 	}
@@ -77,7 +78,7 @@ func Test_service_CRUD(t *testing.T) {
 
 	// successful creation
 	err := s.Create(ctx, "app", "connection", 1, CreateFactRequest{
-		Facts: []fact.FactToIssue{{
+		Facts: []FactToIssue{{
 			Key:   "test",
 			Value: "test",
 		}},
@@ -86,7 +87,7 @@ func Test_service_CRUD(t *testing.T) {
 
 	// validation error in creation
 	err = s.Create(ctx, "app", "connection", 1, CreateFactRequest{
-		Facts: []fact.FactToIssue{{
+		Facts: []FactToIssue{{
 			Value: "test",
 		}},
 	})
@@ -94,7 +95,7 @@ func Test_service_CRUD(t *testing.T) {
 
 	// unexpected error in creation
 	err = s.Create(ctx, "app", "connection", 1, CreateFactRequest{
-		Facts: []fact.FactToIssue{{
+		Facts: []FactToIssue{{
 			Key:   "",
 			Value: "test",
 		}},
