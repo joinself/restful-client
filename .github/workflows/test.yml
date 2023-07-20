@@ -24,6 +24,7 @@ jobs:
         env:
           APP_ENV: local
           APP_DSN: "postgres://localhost/go_restful?sslmode=disable&user=${{ secrets.POSTGRES_USER }}&password=${{ secrets.POSTGRES_PASSWORD }}"
+          CONFIG_LOCAL: ${{ secrets.CONFIG_LOCAL }}
         run: |
           . ${GITHUB_WORKSPACE}/.ci/env
           curl -Lo /tmp/go.tar.gz https://go.dev/dl/go1.19.1.linux-amd64.tar.gz
@@ -37,6 +38,7 @@ jobs:
           curl -Lo /tmp/golangci-lint.tar.gz https://github.com/golangci/golangci-lint/releases/download/v1.21.0/golangci-lint-1.21.0-linux-amd64.tar.gz
           tar zxf /tmp/golangci-lint.tar.gz -C /tmp
           sudo cp /tmp/golangci-lint-1.21.0-linux-amd64/golangci-lint /usr/local/bin
+          echo "${CONFIG_LOCAL}" | base64 -d > ${CI_WORKDIR}/config/local.yml
           make lint
           make build
           make migrate
