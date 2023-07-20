@@ -51,7 +51,7 @@ func (m CreateFactRequest) Validate() error {
 		err := validation.ValidateStruct(&f,
 			validation.Field(&f.Key, validation.Required, validation.Length(0, 128)),
 			validation.Field(&f.Value, validation.Required, validation.Length(0, 128)),
-			// validation.Field(&f.Source, validation.Required, validation.Length(0, 128)),
+			//validation.Field(&f.Source, validation.Required, validation.Length(0, 128)),
 		)
 		if err != nil {
 			return err
