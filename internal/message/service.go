@@ -96,7 +96,9 @@ func (s service) Create(ctx context.Context, appID, connectionID string, connect
 	if err != nil {
 		return Message{}, err
 	}
-	msg.JTI = m.JTI
+	if m != nil {
+		msg.JTI = m.JTI
+	}
 
 	err = s.repo.Create(ctx, &msg)
 	if err != nil {

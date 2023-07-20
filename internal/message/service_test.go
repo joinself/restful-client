@@ -85,20 +85,20 @@ func Test_service_CRUD(t *testing.T) {
 	_, _ = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "test2"})
 
 	// update
-	message, err = s.Update(ctx, id, UpdateMessageRequest{Body: "test updated"})
+	message, err = s.Update(ctx, "app", "connection", id, UpdateMessageRequest{Body: "test updated"})
 	assert.Nil(t, err)
 	assert.Equal(t, "test updated", message.Body)
-	_, err = s.Update(ctx, 1, UpdateMessageRequest{Body: "test updated"})
+	_, err = s.Update(ctx, "app", "connection", 1, UpdateMessageRequest{Body: "test updated"})
 	assert.NotNil(t, err)
 
 	// validation error in update
-	_, err = s.Update(ctx, id, UpdateMessageRequest{Body: ""})
+	_, err = s.Update(ctx, "app", "connection", id, UpdateMessageRequest{Body: ""})
 	assert.NotNil(t, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 2, count)
 
 	// unexpected error in update
-	_, err = s.Update(ctx, id, UpdateMessageRequest{Body: "error"})
+	_, err = s.Update(ctx, "app", "connection", id, UpdateMessageRequest{Body: "error"})
 	assert.Equal(t, errCRUD, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 2, count)

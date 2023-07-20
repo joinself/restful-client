@@ -2,6 +2,8 @@ package test
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"path"
 	"runtime"
 	"strconv"
@@ -23,8 +25,8 @@ func DB(t *testing.T) *dbcontext.DB {
 		return db
 	}
 	logger, _ := log.NewForTest()
-	dir := getSourcePath()
-	cfg, err := config.Load(dir+"/../../config/local.yml", logger)
+	cf := fmt.Sprintf("%s/../../config/%s.yml", getSourcePath(), getEnv("ENV", "local"))
+	cfg, err := config.Load(cf, logger)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -37,6 +39,13 @@ func DB(t *testing.T) *dbcontext.DB {
 	dbc.LogFunc = logger.Infof
 	db = dbcontext.New(dbc)
 	return db
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }
 
 // ResetTables truncates all data in the specified tables.
