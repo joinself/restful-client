@@ -232,3 +232,15 @@ command,
 ```shell
 ./server -config=./config/prod.yml
 ```
+
+## Support
+
+Looking for help? Reach out to us at [support@joinself.zendesk.com](mailto:support@joinself.zendesk.com)
+
+## Contributing
+
+Check out the [Contributing](CONTRIBUTING.md) guidelines.
+
+## License
+
+See [License](LICENSE).
