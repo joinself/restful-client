@@ -16,7 +16,7 @@ import (
 func TestRepository(t *testing.T) {
 	logger, _ := log.NewForTest()
 	db := test.DB(t)
-	test.ResetTables(t, db, "fact", "message")
+	test.ResetTables(t, db, "request", "fact", "message")
 	test.ResetTables(t, db, "connection")
 	repo := NewRepository(db, logger)
 
