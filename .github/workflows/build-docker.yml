@@ -43,27 +43,27 @@ jobs:
             esac
           fi
 
-          #if [[ ${GITHUB_REF} == "refs/heads/main" ]]; then
-          git tag -a ${version} -m "${version}"
-          git push origin ${version}
+          if [[ ${GITHUB_REF} == "refs/heads/main" ]]; then
+            git tag -a ${version} -m "${version}"
+            git push origin ${version}
 
-          docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f cmd/server/Dockerfile .
-          echo "${GH_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker push ${CONTAINER_REGISTRY_URL}:${version}
+            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f cmd/server/Dockerfile .
+            echo "${GH_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker push ${CONTAINER_REGISTRY_URL}:${version}
 
-          subject=$(git log -n 1 --format=%s)
-          body=$(git log -n 1 --format=%b | grep -E '^\*|^-' | sed 's/^*/-/g') || true
-          if [[ -z ${body} ]]; then
-            release_notes="- ${subject}"
+            subject=$(git log -n 1 --format=%s)
+            body=$(git log -n 1 --format=%b | grep -E '^\*|^-' | sed 's/^*/-/g') || true
+            if [[ -z ${body} ]]; then
+              release_notes="- ${subject}"
+            else
+              release_notes="${body}"
+            fi
+            gh release create "${version}" --notes "${release_notes}"
+
+            slack-release-notification -v ${version}
           else
-            release_notes="${body}"
+            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f cmd/server/Dockerfile .
           fi
-          gh release create "${version}" --notes "${release_notes}"
-
-          slack-release-notification -v ${version}
-          #else
-          #docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f cmd/server/Dockerfile .
-          #fi
       - name: Failure notification
         if: ${{ github.ref == 'refs/heads/main' && failure() }}
         uses: joinself/github-actions-public/failure-notification@main

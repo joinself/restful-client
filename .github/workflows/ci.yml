@@ -27,7 +27,6 @@ jobs:
     uses: ./.github/workflows/test.yml
     secrets: inherit
   build-docker:
-    #if: ${{ github.ref == 'refs/heads/main' }}
     needs: test
     uses: ./.github/workflows/build-docker.yml
     secrets: inherit
