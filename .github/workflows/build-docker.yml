@@ -1,0 +1,71 @@
+name: _build-docker
+
+on:
+  workflow_call:
+
+jobs:
+  build-docker:
+    runs-on: ubuntu-latest
+    container:
+      image: joinself/tools
+    steps:
+      - name: Setup job
+        uses: joinself/github-actions-public/setup-job@main
+      - name: Build Docker
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_CI_CI: ${{ secrets.SLACK_WEBHOOK_CI_CI }}
+          CONTAINER_REGISTRY_URL: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+        run: |
+          . ${GITHUB_WORKSPACE}/.ci/env
+          chown root:root .
+          git config --global user.name ci
+          git config --global user.email ops@joinself.com
+
+          branch=$(git branch --show-current)
+          tags=$(git tag --merged ${branch} | sort -V)
+          commit_message=$(git show -s --format=%s)
+          if [[ "${tags}" == "" ]]; then
+            version="0.1.0"
+          else
+            current_version=$(echo "${tags}" | tail -n 1)
+            case $commit_message in
+              *\[bump-major\]*)
+                version=$(semver bump major $current_version)
+                ;;
+              *\[bump-patch\]*)
+                version=$(semver bump patch $current_version)
+                ;;
+              *)
+                version=$(semver bump minor $current_version)
+                ;;
+            esac
+          fi
+
+          if [[ ${GITHUB_REF} == "refs/heads/main" ]]; then
+            git tag -a ${version} -m "${version}"
+            git push origin ${version}
+
+            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f cmd/server/Dockerfile .
+            echo "${GH_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker push ${CONTAINER_REGISTRY_URL}:${version}
+
+            subject=$(git log -n 1 --format=%s)
+            body=$(git log -n 1 --format=%b | grep -E '^\*|^-' | sed 's/^*/-/g') || true
+            if [[ -z ${body} ]]; then
+              release_notes="- ${subject}"
+            else
+              release_notes="${body}"
+            fi
+            gh release create "${version}" --notes "${release_notes}"
+
+            slack-release-notification -v ${version}
+          else
+            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f cmd/server/Dockerfile .
+          fi
+      - name: Failure notification
+        if: ${{ github.ref == 'refs/heads/main' && failure() }}
+        uses: joinself/github-actions-public/failure-notification@main
+        with:
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}
