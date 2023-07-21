@@ -33,11 +33,12 @@ type Config struct {
 	// JWT signing key. required.
 	JWTSigningKey string `yaml:"jwt_signing_key" env:"JWT_SIGNING_KEY,secret"`
 	// JWT expiration in hours. Defaults to 72 hours (3 days)
-	JWTExpiration int             `yaml:"jwt_expiration" env:"JWT_EXPIRATION"`
-	SelfApps      []SelfAppConfig `yaml:"self_apps" env:"SELF_APPS"`
-	User          string          `yaml:"user" env:"USER"`
-	Password      string          `yaml:"password" env:"PASSWORD"`
-	ServeDocs     string          `yaml:"serve_docs" env:"SERVE_DOCS"`
+	JWTExpiration          int             `yaml:"jwt_expiration" env:"JWT_EXPIRATION"`
+	RefreshTokenExpiration int             `yaml:"refresh_token_expiration" env:"REFRESH_TOKEN_EXPIRATION"`
+	SelfApps               []SelfAppConfig `yaml:"self_apps" env:"SELF_APPS"`
+	User                   string          `yaml:"user" env:"USER"`
+	Password               string          `yaml:"password" env:"PASSWORD"`
+	ServeDocs              string          `yaml:"serve_docs" env:"SERVE_DOCS"`
 }
 
 // Validate validates the application configuration.
