@@ -48,6 +48,18 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
+func ResetAll(t *testing.T, db *dbcontext.DB) {
+	ResetTables(
+		t,
+		db,
+		"room_connection",
+		"room",
+		"request",
+		"message",
+		"connection",
+	)
+}
+
 // ResetTables truncates all data in the specified tables.
 func ResetTables(t *testing.T, db *dbcontext.DB, tables ...string) {
 	for _, table := range tables {

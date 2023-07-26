@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strconv"
 
 	"github.com/joinself/restful-client/internal/entity"
 )
@@ -23,6 +24,15 @@ func (m ConnectionRepositoryMock) Get(ctx context.Context, appid, selfid string)
 	return entity.Connection{}, sql.ErrNoRows
 }
 
+func (m *ConnectionRepositoryMock) GetByID(ctx context.Context, id int) (entity.Connection, error) {
+	for _, item := range m.Items {
+		if item.ID == id {
+			return item, nil
+		}
+	}
+	return entity.Connection{}, sql.ErrNoRows
+}
+
 func (m ConnectionRepositoryMock) Count(ctx context.Context) (int, error) {
 	return len(m.Items), nil
 }
@@ -34,6 +44,10 @@ func (m ConnectionRepositoryMock) Query(ctx context.Context, appID string, offse
 func (m *ConnectionRepositoryMock) Create(ctx context.Context, connection entity.Connection) error {
 	if connection.SelfID == "error" {
 		return ErrCRUD
+	}
+	id, err := strconv.Atoi(connection.SelfID)
+	if err == nil {
+		connection.ID = id
 	}
 	m.Items = append(m.Items, connection)
 	return nil

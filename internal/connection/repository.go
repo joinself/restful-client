@@ -24,6 +24,8 @@ type Repository interface {
 	Update(ctx context.Context, connection entity.Connection) error
 	// Delete removes the connection with given ID from the storage.
 	Delete(ctx context.Context, id int) error
+	// Get a connection by id.
+	GetByID(ctx context.Context, id int) (entity.Connection, error)
 }
 
 // repository persists connections in database
@@ -67,7 +69,7 @@ func (r repository) Update(ctx context.Context, connection entity.Connection) er
 
 // Delete deletes an connection with the specified ID from the database.
 func (r repository) Delete(ctx context.Context, id int) error {
-	connection, err := r.getByID(ctx, id)
+	connection, err := r.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -95,7 +97,7 @@ func (r repository) Query(ctx context.Context, appid string, offset, limit int) 
 	return connections, err
 }
 
-func (r repository) getByID(ctx context.Context, id int) (entity.Connection, error) {
+func (r repository) GetByID(ctx context.Context, id int) (entity.Connection, error) {
 	var connection entity.Connection
 	err := r.db.With(ctx).Select().Model(id, &connection)
 	return connection, err
