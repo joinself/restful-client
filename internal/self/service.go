@@ -15,7 +15,6 @@ import (
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/chat"
 	"github.com/joinself/self-go-sdk/messaging"
-	"github.com/tidwall/gjson"
 )
 
 // Service interface for self service.
@@ -78,7 +77,7 @@ func (s *service) onMessageHook() {
 			return
 		}
 
-		switch gjson.GetBytes(m.Payload, "typ").String() {
+		switch payload["typ"].(string) {
 		case "chat.message":
 			cm := chat.NewMessage(cs, []string{payload["aud"].(string)}, payload)
 
@@ -105,7 +104,7 @@ func (s *service) onMessageHook() {
 				return
 			}
 		case "identities.connections.resp":
-			iss := m.Sender
+			iss := payload["iss"].(string)
 			parts := strings.Split(iss, ":")
 			if len(parts) > 0 {
 				iss = parts[0]
@@ -123,23 +122,6 @@ func (s *service) onMessageHook() {
 			s.logger.With(context.Background(), "self").Info(err.Error())
 		}
 	})
-}
-
-func (s *service) callBackClient(msg entity.Message) {
-	if s.callbackURL == "" {
-		return
-	}
-
-	m, err := s.mRepo.Get(context.Background(), msg.ID)
-	if err != nil {
-		s.logger.With(context.Background(), "self").Info("error retrieving message " + err.Error())
-		return
-	}
-
-	err = webhook.Post(s.callbackURL, m)
-	if err != nil {
-		s.logger.With(context.Background(), "self").Info(err.Error())
-	}
 }
 
 func (s *service) getOrCreateConnection(selfID string) (entity.Connection, error) {
