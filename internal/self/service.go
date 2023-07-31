@@ -2,6 +2,7 @@ package self
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/joinself/restful-client/pkg/webhook"
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/chat"
+	"github.com/joinself/self-go-sdk/messaging"
 )
 
 // Service interface for self service.
@@ -56,73 +58,68 @@ func (s *service) Run() {
 }
 
 func (s *service) SetupHooks() {
-	s.onChatMessageHook()
-	s.onConnectionRequestHook()
+	s.onMessageHook()
 }
 
-func (s *service) onChatMessageHook() {
+func (s *service) onMessageHook() {
 	if s.client == nil {
 		return
 	}
 
-	s.client.ChatService().OnMessage(func(cm *chat.Message) {
-		// Get connection or create one.
-		c, err := s.getOrCreateConnection(cm.ISS)
+	cs := s.client.ChatService()
+
+	s.client.MessagingService().Subscribe("*", func(m *messaging.Message) {
+		var payload map[string]interface{}
+
+		err := json.Unmarshal(m.Payload, &payload)
 		if err != nil {
-			s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
+			s.logger.With(context.Background(), "self").Infof("failed to decode message payload: %s", err.Error())
 			return
 		}
 
-		// Create the input message.
-		msg := entity.Message{
-			ConnectionID: c.ID,
-			ISS:          cm.ISS,
-			Body:         cm.Body,
-			IAT:          time.Now(),
-			CreatedAt:    time.Now(),
-			UpdatedAt:    time.Now(),
+		switch payload["typ"].(string) {
+		case "chat.message":
+			cm := chat.NewMessage(cs, []string{payload["aud"].(string)}, payload)
+
+			// Get connection or create one.
+			c, err := s.getOrCreateConnection(cm.ISS)
+			if err != nil {
+				s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
+				return
+			}
+
+			// Create the input message.
+			msg := entity.Message{
+				ConnectionID: c.ID,
+				ISS:          cm.ISS,
+				Body:         cm.Body,
+				IAT:          time.Now(),
+				CreatedAt:    time.Now(),
+				UpdatedAt:    time.Now(),
+			}
+
+			err = s.mRepo.Create(context.Background(), &msg)
+			if err != nil {
+				s.logger.With(context.Background(), "self").Info("error creating message " + err.Error())
+				return
+			}
+		case "identities.connections.resp":
+			iss := payload["iss"].(string)
+			parts := strings.Split(iss, ":")
+			if len(parts) > 0 {
+				iss = parts[0]
+			}
+
+			_, err := s.getOrCreateConnection(iss)
+			if err != nil {
+				s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
+				return
+			}
 		}
-		err = s.mRepo.Create(context.Background(), &msg)
+
+		err = webhook.Post(s.callbackURL, m.Payload)
 		if err != nil {
-			s.logger.With(context.Background(), "self").Info("error creating message " + err.Error())
-			return
-		}
-
-		s.callBackClient(msg)
-	})
-}
-
-func (s *service) callBackClient(msg entity.Message) {
-	if s.callbackURL == "" {
-		return
-	}
-
-	m, err := s.mRepo.Get(context.Background(), msg.ID)
-	if err != nil {
-		s.logger.With(context.Background(), "self").Info("error retrieving message " + err.Error())
-		return
-	}
-
-	err = webhook.Post(s.callbackURL, m)
-	if err != nil {
-		s.logger.With(context.Background(), "self").Info(err.Error())
-	}
-}
-
-func (s *service) onConnectionRequestHook() {
-	if s.client == nil {
-		return
-	}
-
-	s.client.ChatService().OnConnection(func(iss, status string) {
-		parts := strings.Split(iss, ":")
-		if len(parts) > 0 {
-			iss = parts[0]
-		}
-		_, err := s.getOrCreateConnection(iss)
-		if err != nil {
-			s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
-			return
+			s.logger.With(context.Background(), "self").Info(err.Error())
 		}
 	})
 }
