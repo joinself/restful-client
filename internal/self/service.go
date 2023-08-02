@@ -3,6 +3,7 @@ package self
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -17,9 +18,27 @@ import (
 	"github.com/joinself/self-go-sdk/messaging"
 )
 
+const (
+	// WEBHOOK_TYPE_MESSAGE webhook type used when a message is received
+	WEBHOOK_TYPE_MESSAGE = "message"
+	// WEBHOOK_TYPE_FACT_RESPONSE webhook type used when an untracked fact response is received
+	WEBHOOK_TYPE_FACT_RESPONSE = "fact_response"
+)
+
 // Service interface for self service.
 type Service interface {
 	Run()
+}
+
+// WebhookPayload represents a the payload that will be resent to the
+// configured webhook URL if provided.
+type WebhookPayload struct {
+	// Type is the type of the message.
+	Type string `json:"typ"`
+	// URI is the URI you can fetch more information about the object on the data field.
+	URI string `json"uri"`
+	// Data the object to be sent.
+	Data interface{} `json:"data"`
 }
 
 type service struct {
@@ -66,8 +85,6 @@ func (s *service) onMessageHook() {
 		return
 	}
 
-	cs := s.client.ChatService()
-
 	s.client.MessagingService().Subscribe("*", func(m *messaging.Message) {
 		var payload map[string]interface{}
 
@@ -79,52 +96,68 @@ func (s *service) onMessageHook() {
 
 		switch payload["typ"].(string) {
 		case "chat.message":
-			cm := chat.NewMessage(cs, []string{payload["aud"].(string)}, payload)
+			_ = s.processChatMessage(payload)
 
-			// Get connection or create one.
-			c, err := s.getOrCreateConnection(cm.ISS)
-			if err != nil {
-				s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
-				return
-			}
-
-			// Create the input message.
-			msg := entity.Message{
-				ConnectionID: c.ID,
-				ISS:          cm.ISS,
-				Body:         cm.Body,
-				IAT:          time.Now(),
-				CreatedAt:    time.Now(),
-				UpdatedAt:    time.Now(),
-			}
-
-			err = s.mRepo.Create(context.Background(), &msg)
-			if err != nil {
-				s.logger.With(context.Background(), "self").Info("error creating message " + err.Error())
-				return
-			}
 		case "identities.connections.resp":
-			iss := payload["iss"].(string)
-			parts := strings.Split(iss, ":")
-			if len(parts) > 0 {
-				iss = parts[0]
-			}
+			_ = s.processConnectionResp(payload)
 
-			_, err := s.getOrCreateConnection(iss)
-			if err != nil {
-				s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
-				return
-			}
-		}
-
-		err = webhook.Post(s.callbackURL, m.Payload)
-		if err != nil {
-			s.logger.With(context.Background(), "self").Info(err.Error())
 		}
 	})
 }
 
+func (s *service) processConnectionResp(payload map[string]interface{}) error {
+	iss := payload["iss"].(string)
+	parts := strings.Split(iss, ":")
+	if len(parts) > 0 {
+		iss = parts[0]
+	}
+
+	conn, err := s.getOrCreateConnection(iss)
+	if err != nil {
+		s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
+		return err
+	}
+
+	return webhook.Post(s.callbackURL, WebhookPayload{
+		Type: WEBHOOK_TYPE_FACT_RESPONSE,
+		URI:  fmt.Sprintf("/apps/%s/connections/%s", s.selfID, conn.SelfID),
+		Data: conn})
+}
+
+func (s *service) processChatMessage(payload map[string]interface{}) error {
+	cm := chat.NewMessage(s.client.ChatService(), []string{payload["aud"].(string)}, payload)
+
+	// Get connection or create one.
+	c, err := s.getOrCreateConnection(cm.ISS)
+	if err != nil {
+		s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
+		return err
+	}
+
+	// Create the input message.
+	msg := entity.Message{
+		ConnectionID: c.ID,
+		ISS:          cm.ISS,
+		Body:         cm.Body,
+		IAT:          time.Now(),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+
+	err = s.mRepo.Create(context.Background(), &msg)
+	if err != nil {
+		s.logger.With(context.Background(), "self").Info("error creating message " + err.Error())
+		return err
+	}
+
+	return webhook.Post(s.callbackURL, WebhookPayload{
+		Type: WEBHOOK_TYPE_MESSAGE,
+		URI:  fmt.Sprintf("/apps/%s/connections/%s/messages/%d", s.selfID, c.SelfID, msg.ID),
+		Data: msg})
+}
+
 func (s *service) getOrCreateConnection(selfID string) (entity.Connection, error) {
+	selfID = s.flattenSelfID(selfID)
 	c, err := s.cRepo.Get(context.Background(), s.selfID, selfID)
 	if err == nil {
 		return c, nil
@@ -149,4 +182,14 @@ func (s *service) createConnection(selfID, name string) (entity.Connection, erro
 	}
 
 	return s.cRepo.Get(context.Background(), s.selfID, selfID)
+}
+
+// TODO: Move this to a helper
+func (s *service) flattenSelfID(selfID string) string {
+	parts := strings.Split(selfID, ":")
+	if len(parts) > 0 {
+		return parts[0]
+	}
+
+	return selfID
 }
