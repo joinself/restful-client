@@ -799,7 +799,8 @@ paths:
       tags:
       - login
 schemes:
-- http
+- http,
+- https
 securityDefinitions:
   BearerAuth:
     in: header
