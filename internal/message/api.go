@@ -42,7 +42,7 @@ type resource struct {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        app_id   path      string  true  "App id"
-// @Param        connection_id   path      int  true  "Connection id"
+// @Param        connection_id   path      string  true  "Connection id"
 // @Param        id   path      int  true  "Message id"
 // @Success      200  {object}  Message
 // @Router       /apps/{app_id}/connections/{connection_id}/messages/{id} [get]
@@ -119,7 +119,7 @@ func (r resource) query(c echo.Context) error {
 // @Produce         json
 // @Security        BearerAuth
 // @Param           app_id   path      string  true  "App id"
-// @Param           connection_id   path      int  true  "Connection id"
+// @Param           connection_id   path      string  true  "Connection id"
 // @Param           request body CreateMessageRequest true "message request"
 // @Success         200  {object}  Message
 // @Router          /apps/{app_id}/connections/{connection_id}/messages [post]

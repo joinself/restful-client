@@ -37,7 +37,7 @@ type resource struct {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        app_id   path      string  true  "App id"
-// @Param        connection_id   path      int  true  "Connection id"
+// @Param        connection_id   path      string  true  "Connection id"
 // @Param        id   path      int  true  "Fact request id"
 // @Success      200  {object}  Fact
 // @Router       /apps/{app_id}/connections/{connection_id}/facts/{id} [get]

@@ -431,7 +431,7 @@ paths:
         in: path
         name: connection_id
         required: true
-        type: integer
+        type: string
       - description: Fact request id
         in: path
         name: id
@@ -503,7 +503,7 @@ paths:
         in: path
         name: connection_id
         required: true
-        type: integer
+        type: string
       - description: message request
         in: body
         name: request
@@ -537,7 +537,7 @@ paths:
         in: path
         name: connection_id
         required: true
-        type: integer
+        type: string
       - description: Message id
         in: path
         name: id
@@ -643,7 +643,7 @@ paths:
         in: path
         name: connection_id
         required: true
-        type: integer
+        type: string
       - description: Request request id
         in: path
         name: id

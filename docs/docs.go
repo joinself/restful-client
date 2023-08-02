@@ -288,7 +288,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Connection id",
                         "name": "connection_id",
                         "in": "path",
@@ -399,7 +399,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Connection id",
                         "name": "connection_id",
                         "in": "path",
@@ -452,7 +452,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Connection id",
                         "name": "connection_id",
                         "in": "path",
@@ -616,7 +616,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Connection id",
                         "name": "connection_id",
                         "in": "path",
