@@ -281,7 +281,7 @@ paths:
       summary: List apps.
       tags:
       - apps
-  /apps/:app_id/connections:
+  /apps/{app_id}/connections:
     get:
       consumes:
       - application/json
@@ -341,7 +341,7 @@ paths:
       summary: Creates a new connection.
       tags:
       - connections
-  /apps/:app_id/connections/{connection_id}/facts:
+  /apps/{app_id}/connections/{connection_id}/facts:
     get:
       consumes:
       - application/json
@@ -385,7 +385,38 @@ paths:
       summary: List facts.
       tags:
       - facts
-  /apps/:app_id/connections/{connection_id}/facts/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Issues a fact to one of your connections.
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: string
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/fact.CreateFactRequestDoc'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - BearerAuth: []
+      summary: Issues a fact.
+      tags:
+      - facts
+  /apps/{app_id}/connections/{connection_id}/facts/{id}:
     get:
       consumes:
       - application/json
@@ -418,7 +449,7 @@ paths:
       summary: Get fact details.
       tags:
       - facts
-  /apps/:app_id/connections/{connection_id}/messages:
+  /apps/{app_id}/connections/{connection_id}/messages:
     get:
       consumes:
       - application/json
@@ -491,7 +522,7 @@ paths:
       summary: Sends a message.
       tags:
       - messages
-  /apps/:app_id/connections/{connection_id}/messages/{id}:
+  /apps/{app_id}/connections/{connection_id}/messages/{id}:
     get:
       consumes:
       - application/json
@@ -524,7 +555,7 @@ paths:
       summary: Gets a message.
       tags:
       - messages
-  /apps/:app_id/connections/{connection_id}/messages/{message_id}:
+  /apps/{app_id}/connections/{connection_id}/messages/{message_id}:
     put:
       consumes:
       - application/json
@@ -563,7 +594,74 @@ paths:
       summary: Edits a message.
       tags:
       - messages
-  /apps/:app_id/connections/{id}:
+  /apps/{app_id}/connections/{connection_id}/requests:
+    post:
+      consumes:
+      - application/json
+      description: Sends a request request to the specified self user.
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: string
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/connection.Connection'
+      security:
+      - BearerAuth: []
+      summary: Sends a request request.
+      tags:
+      - requests
+  /apps/{app_id}/connections/{connection_id}/requests/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get request details by request request id.
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: integer
+      - description: Request request id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/request.Request'
+      security:
+      - BearerAuth: []
+      summary: Get request details.
+      tags:
+      - requests
+  /apps/{app_id}/connections/{id}:
     delete:
       consumes:
       - application/json
@@ -658,105 +756,6 @@ paths:
       summary: Updates a connection.
       tags:
       - connections
-  /apps/{app_id}/connections/{connection_id}/facts:
-    post:
-      consumes:
-      - application/json
-      description: Issues a fact to one of your connections.
-      parameters:
-      - description: App id
-        in: path
-        name: app_id
-        required: true
-        type: string
-      - description: Connection id
-        in: path
-        name: connection_id
-        required: true
-        type: string
-      - description: query params
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/fact.CreateFactRequestDoc'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-      security:
-      - BearerAuth: []
-      summary: Issues a fact.
-      tags:
-      - facts
-  /apps/{app_id}/connections/{connection_id}/requests:
-    post:
-      consumes:
-      - application/json
-      description: Sends a request request to the specified self user.
-      parameters:
-      - description: App id
-        in: path
-        name: app_id
-        required: true
-        type: string
-      - description: Connection id
-        in: path
-        name: connection_id
-        required: true
-        type: string
-      - description: query params
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.CreateRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/connection.Connection'
-      security:
-      - BearerAuth: []
-      summary: Sends a request request.
-      tags:
-      - requests
-  /apps/{app_id}/connections/{connection_id}/requests/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Get request details by request request id.
-      parameters:
-      - description: App id
-        in: path
-        name: app_id
-        required: true
-        type: string
-      - description: Connection id
-        in: path
-        name: connection_id
-        required: true
-        type: integer
-      - description: Request request id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/request.Request'
-      security:
-      - BearerAuth: []
-      summary: Get request details.
-      tags:
-      - requests
   /healthcheck:
     get:
       consumes:
