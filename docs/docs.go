@@ -1254,7 +1254,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
 	BasePath:         "/v1/",
-	Schemes:          []string{"http"},
+	Schemes:          []string{"http,", "https"},
 	Title:            "Echo Swagger Example API",
 	Description:      "This is the api for Joinself restful client.",
 	InfoInstanceName: "swagger",

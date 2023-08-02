@@ -87,7 +87,7 @@ func main() {
 
 // @host		localhost:8080
 // @BasePath	/v1/
-// @schemes	http
+// @schemes	http, https
 func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.Handler {
 	clients, err := setupSelfClients(cfg)
 	if err != nil {
