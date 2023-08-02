@@ -18,6 +18,7 @@ import (
 	"github.com/joinself/restful-client/internal/config"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/fact"
+	"github.com/joinself/restful-client/internal/group"
 	"github.com/joinself/restful-client/internal/healthcheck"
 	"github.com/joinself/restful-client/internal/message"
 	"github.com/joinself/restful-client/internal/request"
@@ -118,6 +119,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	factRepo := fact.NewRepository(db, logger)
 	requestRepo := request.NewRepository(db, logger)
 	attestationRepo := attestation.NewRepository(db, logger)
+	groupRepo := group.NewRepository(db, logger)
 
 	// Services
 	fcs := make(map[string]connection.FactService, len(clients))
@@ -149,6 +151,11 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		authHandler,
 		logger,
 	)
+	group.RegisterHandlers(rg.Group(""),
+		group.NewService(groupRepo, connectionRepo, logger, clients),
+		authHandler,
+		logger,
+	)
 	fact.RegisterHandlers(rg.Group(""),
 		fact.NewService(factRepo, attestationRepo, logger, rcs),
 		cService,
@@ -168,7 +175,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	for id, client := range clients {
 		logger.Infof("starting client %s", id)
 		self.RunService(
-			self.NewService(client, connectionRepo, factRepo, messageRepo, callbackURLs[id], logger),
+			self.NewService(client, connectionRepo, factRepo, messageRepo, groupRepo, callbackURLs[id], logger),
 			logger,
 		)
 	}

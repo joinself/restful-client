@@ -3,6 +3,7 @@ package mock
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"math/rand"
 	"strconv"
@@ -28,6 +29,10 @@ func (m GroupRepositoryMock) Get(ctx context.Context, appID string, id int) (ent
 		}
 	}
 	return entity.Room{}, sql.ErrNoRows
+}
+
+func (m GroupRepositoryMock) GetByGID(ctx context.Context, appID, gid string) (entity.Room, error) {
+	return entity.Room{}, errors.New("not implemented")
 }
 
 func (m GroupRepositoryMock) Count(ctx context.Context) (int, error) {

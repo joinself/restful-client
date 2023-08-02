@@ -14,6 +14,8 @@ import (
 type Repository interface {
 	// Get returns the group with the specified group ID.
 	Get(ctx context.Context, appID string, id int) (entity.Room, error)
+	// Get gets a group by GID
+	GetByGID(ctx context.Context, appID, gid string) (entity.Room, error)
 	// Count returns the number of groups.
 	Count(ctx context.Context) (int, error)
 	// Query returns the list of groups with the given offset and limit.
@@ -140,4 +142,21 @@ func (r repository) RemoveMembers(ctx context.Context, id int) error {
 		Delete("room_connection", dbx.HashExp{"room_id": id}).
 		Execute()
 	return err
+}
+
+// Get gets a group by GID
+func (r repository) GetByGID(ctx context.Context, appID, gid string) (entity.Room, error) {
+	var groups []entity.Room
+
+	err := r.db.With(ctx).
+		Select().
+		OrderBy("id").
+		Where(&dbx.HashExp{"gid": gid, "appid": appID}).
+		All(&groups)
+
+	if len(groups) == 0 {
+		return entity.Room{}, errors.New("sql: no rows in result set")
+	}
+
+	return groups[0], err
 }

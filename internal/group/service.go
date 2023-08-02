@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/gofrs/uuid"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
@@ -32,6 +33,7 @@ func (m CreateGroupRequest) Validate() error {
 
 type UpdateGroupRequest struct {
 	Name    string   `json:"name"`
+	Status  string   `json:"status"`
 	Members []string `json:"members"`
 }
 
@@ -87,6 +89,11 @@ func (s service) Create(ctx context.Context, appID string, req CreateGroupReques
 		return group, err
 	}
 
+	gid, err := uuid.NewV6()
+	if err != nil {
+		return group, errors.New("failed creating group gid")
+	}
+
 	// Get all the connections
 	var connections []entity.Connection
 	for _, m := range req.Members {
@@ -108,8 +115,10 @@ func (s service) Create(ctx context.Context, appID string, req CreateGroupReques
 
 	// Create the groups
 	room, err := s.repo.Create(ctx, entity.Room{
-		Appid: appID,
-		Name:  req.Name,
+		GID:    gid.String(),
+		Appid:  appID,
+		Name:   req.Name,
+		Status: entity.GROUP_CREATED_STATUS,
 	})
 	if err != nil {
 		return group, err
@@ -128,8 +137,7 @@ func (s service) Create(ctx context.Context, appID string, req CreateGroupReques
 		Room:    room,
 		Members: members,
 	}
-
-	// TODO: send invitations through Self
+	go s.invite(appID, group)
 
 	return group, nil
 }
@@ -139,15 +147,8 @@ func (s service) Get(ctx context.Context, appID string, id int) (Group, error) {
 	if err != nil {
 		return Group{}, err
 	}
-	members := []string{}
-	for _, m := range s.repo.MemberIDs(ctx, g.ID) {
-		conn, err := s.cRepo.GetByID(ctx, m)
-		if err != nil {
-			continue
-		}
-		members = append(members, conn.SelfID)
-	}
 
+	members := s.getMemberSelfIDs(ctx, g.ID)
 	return Group{Room: g, Members: members}, err
 }
 
@@ -162,6 +163,10 @@ func (s service) Update(ctx context.Context, appID string, id int, input UpdateG
 	}
 
 	room.Name = input.Name
+	room.Status = input.Status
+	if room.Status == entity.GROUP_INVITED_STATUS && input.Status == entity.GROUP_JOINED_STATUS {
+		go s.join(appID, room)
+	}
 
 	err = s.repo.Update(ctx, room)
 	if err != nil {
@@ -231,7 +236,7 @@ func (s service) Update(ctx context.Context, appID string, id int, input UpdateG
 // Delete deletes a group and all its members.
 func (s service) Delete(ctx context.Context, appID string, id int) error {
 	// Check if the group belongs to the given app.
-	_, err := s.repo.Get(ctx, appID, id)
+	group, err := s.repo.Get(ctx, appID, id)
 	if err != nil {
 		return errors.New("the given group does not belong to the app " + err.Error())
 	}
@@ -245,7 +250,45 @@ func (s service) Delete(ctx context.Context, appID string, id int) error {
 	// Delete the group
 	err = s.repo.Delete(ctx, id)
 
-	// TODO: Send the group deletion to Self.
+	go s.leave(appID, group)
 
 	return err
+}
+
+func (s service) getMemberSelfIDs(ctx context.Context, id int) []string {
+	members := []string{}
+	for _, m := range s.repo.MemberIDs(ctx, id) {
+		conn, err := s.cRepo.GetByID(ctx, m)
+		if err != nil {
+			continue
+		}
+		members = append(members, conn.SelfID)
+	}
+
+	return members
+}
+
+func (s service) invite(appID string, g Group) {
+	if _, ok := s.clients[appID]; !ok {
+		return
+	}
+
+	s.clients[appID].ChatService().Invite(g.GID, g.Name, g.Members)
+}
+
+func (s service) leave(appID string, g entity.Room) {
+	if _, ok := s.clients[appID]; !ok {
+		return
+	}
+
+	members := s.getMemberSelfIDs(context.Background(), g.ID)
+	s.clients[appID].ChatService().Invite(g.GID, g.Name, members)
+}
+
+func (s service) join(appID string, g entity.Room) {
+	if _, ok := s.clients[appID]; !ok {
+		return
+	}
+	members := s.getMemberSelfIDs(context.Background(), g.ID)
+	s.clients[appID].ChatService().Join(g.GID, members)
 }

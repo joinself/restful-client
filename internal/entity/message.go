@@ -11,6 +11,7 @@ type Message struct {
 	ISS          string    `json:"iss"`
 	CID          string    `json:"cid"`
 	JTI          string    `json:"jti"`
+	GID          *string   `json:"gid"`
 	RID          string    `json:"rid"`
 	Body         string    `json:"body"`
 	IAT          time.Time `json:"iat"`

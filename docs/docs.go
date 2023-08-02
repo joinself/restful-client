@@ -1111,6 +1111,9 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "gid": {
+                    "type": "string"
+                },
                 "iat": {
                     "type": "string"
                 },

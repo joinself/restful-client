@@ -5,23 +5,20 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
 	"github.com/labstack/echo/v4"
 )
 
 type resource struct {
-	service  Service
-	cService connection.Service
-	logger   log.Logger
+	service Service
+	logger  log.Logger
 }
 
-func RegisterHandlers(r *echo.Group, s Service, cs connection.Service, am echo.MiddlewareFunc, logger log.Logger) {
+func RegisterHandlers(r *echo.Group, s Service, am echo.MiddlewareFunc, logger log.Logger) {
 	res := resource{
-		service:  s,
-		cService: cs,
-		logger:   logger,
+		service: s,
+		logger:  logger,
 	}
 
 	r.Use(am)

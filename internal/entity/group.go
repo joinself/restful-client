@@ -4,6 +4,12 @@ import (
 	"time"
 )
 
+const (
+	GROUP_INVITED_STATUS = "invited"
+	GROUP_CREATED_STATUS = "created"
+	GROUP_JOINED_STATUS  = "joined"
+)
+
 // Room represents a message group.
 type Room struct {
 	ID        int       `json:"id"`

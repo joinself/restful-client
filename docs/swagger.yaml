@@ -167,6 +167,8 @@ definitions:
         type: string
       created_at:
         type: string
+      gid:
+        type: string
       iat:
         type: string
       id:

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/joinself/restful-client/internal/auth"
-	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/test"
 	"github.com/joinself/restful-client/pkg/log"
@@ -48,8 +47,7 @@ func TestAPI(t *testing.T) {
 
 	authHandler := auth.MockAuthHandler()
 	s := NewService(repo, cRepo, logger, nil)
-	cs := connection.NewService(cRepo, logger, map[string]connection.FactService{})
-	RegisterHandlers(router.Group(""), s, cs, authHandler, logger)
+	RegisterHandlers(router.Group(""), s, authHandler, logger)
 	header := auth.MockAuthHeader()
 
 	tests := []test.APITestCase{
