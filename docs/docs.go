@@ -52,7 +52,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/apps/:app_id/connections": {
+        "/apps/{app_id}/connections": {
             "get": {
                 "security": [
                     {
@@ -145,7 +145,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/apps/:app_id/connections/{connection_id}/facts": {
+        "/apps/{app_id}/connections/{connection_id}/facts": {
             "get": {
                 "security": [
                     {
@@ -211,9 +211,57 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Issues a fact to one of your connections.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "facts"
+                ],
+                "summary": "Issues a fact.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection id",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/fact.CreateFactRequestDoc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
             }
         },
-        "/apps/:app_id/connections/{connection_id}/facts/{id}": {
+        "/apps/{app_id}/connections/{connection_id}/facts/{id}": {
             "get": {
                 "security": [
                     {
@@ -264,7 +312,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/apps/:app_id/connections/{connection_id}/messages": {
+        "/apps/{app_id}/connections/{connection_id}/messages": {
             "get": {
                 "security": [
                     {
@@ -377,7 +425,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/apps/:app_id/connections/{connection_id}/messages/{id}": {
+        "/apps/{app_id}/connections/{connection_id}/messages/{id}": {
             "get": {
                 "security": [
                     {
@@ -428,7 +476,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/apps/:app_id/connections/{connection_id}/messages/{message_id}": {
+        "/apps/{app_id}/connections/{connection_id}/messages/{message_id}": {
             "put": {
                 "security": [
                     {
@@ -488,7 +536,111 @@ const docTemplate = `{
                 }
             }
         },
-        "/apps/:app_id/connections/{id}": {
+        "/apps/{app_id}/connections/{connection_id}/requests": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sends a request request to the specified self user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Sends a request request.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection id",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/connection.Connection"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{app_id}/connections/{connection_id}/requests/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get request details by request request id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Get request details.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Connection id",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Request request id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/request.Request"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{app_id}/connections/{id}": {
             "get": {
                 "security": [
                     {
@@ -629,160 +781,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/connection.Connection"
-                        }
-                    }
-                }
-            }
-        },
-        "/apps/{app_id}/connections/{connection_id}/facts": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Issues a fact to one of your connections.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "facts"
-                ],
-                "summary": "Issues a fact.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "App id",
-                        "name": "app_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Connection id",
-                        "name": "connection_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "query params",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/fact.CreateFactRequestDoc"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/apps/{app_id}/connections/{connection_id}/requests": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Sends a request request to the specified self user.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "requests"
-                ],
-                "summary": "Sends a request request.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "App id",
-                        "name": "app_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Connection id",
-                        "name": "connection_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "query params",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.CreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/connection.Connection"
-                        }
-                    }
-                }
-            }
-        },
-        "/apps/{app_id}/connections/{connection_id}/requests/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get request details by request request id.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "requests"
-                ],
-                "summary": "Get request details.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "App id",
-                        "name": "app_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Connection id",
-                        "name": "connection_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Request request id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/request.Request"
                         }
                     }
                 }

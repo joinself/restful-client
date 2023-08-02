@@ -38,7 +38,7 @@ type resource struct {
 // @Param        app_id   path      string  true  "App id"
 // @Param        id   path      int  true  "current connection id"
 // @Success      200  {object}  connection.Connection
-// @Router       /apps/:app_id/connections/{id} [get]
+// @Router       /apps/{app_id}/connections/{id} [get]
 func (r resource) get(c echo.Context) error {
 	connection, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
@@ -67,7 +67,7 @@ type response struct {
 // @Param          page query int false "page number"
 // @Param          per_page query int false "number of elements per page"
 // @Success        200  {object}  response
-// @Router         /apps/:app_id/connections [get]
+// @Router         /apps/{app_id}/connections [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
 	count, err := r.service.Count(ctx)
@@ -95,7 +95,7 @@ func (r resource) query(c echo.Context) error {
 // @Param           app_id   path      string  true  "App id"
 // @Param           request body CreateConnectionRequest true "query params"
 // @Success         200  {object}  connection.Connection
-// @Router          /apps/:app_id/connections [post]
+// @Router          /apps/{app_id}/connections [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateConnectionRequest
 	if err := c.Bind(&input); err != nil {
@@ -122,7 +122,7 @@ func (r resource) create(c echo.Context) error {
 // @Param           id   path      int  true  "current connection id"
 // @Param           request body UpdateConnectionRequest true "query params"
 // @Success         200  {object}  connection.Connection
-// @Router          /apps/:app_id/connections/{id} [put]
+// @Router          /apps/{app_id}/connections/{id} [put]
 func (r resource) update(c echo.Context) error {
 	var input UpdateConnectionRequest
 	if err := c.Bind(&input); err != nil {
@@ -150,7 +150,7 @@ func (r resource) update(c echo.Context) error {
 // @Param           id   path      int  true  "current connection id"
 // @Param           request body CreateConnectionRequest true "query params"
 // @Success         200  {object}  connection.Connection
-// @Router          /apps/:app_id/connections/{id} [delete]
+// @Router          /apps/{app_id}/connections/{id} [delete]
 func (r resource) delete(c echo.Context) error {
 	connection, err := r.service.Delete(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {

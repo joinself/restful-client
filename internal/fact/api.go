@@ -40,7 +40,7 @@ type resource struct {
 // @Param        connection_id   path      int  true  "Connection id"
 // @Param        id   path      int  true  "Fact request id"
 // @Success      200  {object}  Fact
-// @Router       /apps/:app_id/connections/{connection_id}/facts/{id} [get]
+// @Router       /apps/{app_id}/connections/{connection_id}/facts/{id} [get]
 func (r resource) get(c echo.Context) error {
 	fact, err := r.service.Get(c.Request().Context(), c.Param("id"))
 	if err != nil {
@@ -72,7 +72,7 @@ type response struct {
 // @Param          source query int false "source"
 // @Param          fact query int false "fact"
 // @Success        200  {object}  response
-// @Router         /apps/:app_id/connections/{connection_id}/facts [get]
+// @Router         /apps/{app_id}/connections/{connection_id}/facts [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
 
