@@ -25,7 +25,7 @@ type WebhookPayload struct {
 	// Type is the type of the message.
 	Type string `json:"typ"`
 	// URI is the URI you can fetch more information about the object on the data field.
-	URI string `json"uri"`
+	URI string `json:"uri"`
 	// Data the object to be sent.
 	Data interface{} `json:"data"`
 }
