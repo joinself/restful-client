@@ -138,6 +138,7 @@ func (s *service) processChatMessage(payload map[string]interface{}) error {
 	msg := entity.Message{
 		ConnectionID: c.ID,
 		ISS:          cm.ISS,
+		JTI:          cm.JTI,
 		Body:         cm.Body,
 		IAT:          time.Now(),
 		CreatedAt:    time.Now(),

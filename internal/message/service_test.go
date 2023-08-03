@@ -51,7 +51,6 @@ func TestUpdateMessageRequest_Validate(t *testing.T) {
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
 	s := NewService(&mock.MessageRepositoryMock{}, logger, nil)
-
 	ctx := context.Background()
 
 	connection := 1
@@ -85,28 +84,28 @@ func Test_service_CRUD(t *testing.T) {
 	_, _ = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "test2"})
 
 	// update
-	message, err = s.Update(ctx, "app", "connection", id, UpdateMessageRequest{Body: "test updated"})
+	message, err = s.Update(ctx, "app", "connection", message.JTI, UpdateMessageRequest{Body: "test updated"})
 	assert.Nil(t, err)
 	assert.Equal(t, "test updated", message.Body)
-	_, err = s.Update(ctx, "app", "connection", 1, UpdateMessageRequest{Body: "test updated"})
+	_, err = s.Update(ctx, "app", "connection", "1", UpdateMessageRequest{Body: "test updated"})
 	assert.NotNil(t, err)
 
 	// validation error in update
-	_, err = s.Update(ctx, "app", "connection", id, UpdateMessageRequest{Body: ""})
+	_, err = s.Update(ctx, "app", "connection", message.JTI, UpdateMessageRequest{Body: ""})
 	assert.NotNil(t, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 2, count)
 
 	// unexpected error in update
-	_, err = s.Update(ctx, "app", "connection", id, UpdateMessageRequest{Body: "error"})
+	_, err = s.Update(ctx, "app", "connection", message.JTI, UpdateMessageRequest{Body: "error"})
 	assert.Equal(t, errCRUD, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 2, count)
 
 	// get
-	_, err = s.Get(ctx, 1)
+	_, err = s.Get(ctx, "1")
 	assert.NotNil(t, err)
-	message, err = s.Get(ctx, id)
+	message, err = s.Get(ctx, message.JTI)
 	assert.Nil(t, err)
 	assert.Equal(t, "test updated", message.Body)
 	assert.Equal(t, id, message.ID)
@@ -116,11 +115,10 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, 2, len(messages))
 
 	// delete
-	_, err = s.Delete(ctx, 1)
+	err = s.Delete(ctx, "non existing")
 	assert.NotNil(t, err)
-	message, err = s.Delete(ctx, id)
+	err = s.Delete(ctx, message.JTI)
 	assert.Nil(t, err)
-	assert.Equal(t, id, message.ID)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 }
