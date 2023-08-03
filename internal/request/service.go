@@ -3,6 +3,7 @@ package request
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -69,11 +70,19 @@ type service struct {
 	atRepo  attestation.Repository
 	logger  log.Logger
 	clients map[string]RequesterService
+	w       map[string]*webhook.Webhook
 }
 
 // NewService creates a new request service.
-func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repository, logger log.Logger, clients map[string]RequesterService) Service {
-	return service{repo, fRepo, atRepo, logger, clients}
+func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repository, logger log.Logger, clients map[string]RequesterService, ws map[string]*webhook.Webhook) Service {
+	return service{
+		repo,
+		fRepo,
+		atRepo,
+		logger,
+		clients,
+		ws,
+	}
 }
 
 // Get returns the request with the specified the request ID.
@@ -191,21 +200,21 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 	}
 
 	// TODO: send the current status to the callback function if exists
-	go s.sendCallback(appid, req)
+	go s.sendCallback(appid, selfID, req)
 }
 
-func (s service) sendCallback(appID string, req entity.Request) {
-	if req.Callback == "" {
-		return
-	}
-
+func (s service) sendCallback(appID, selfID string, req entity.Request) {
 	resp, err := s.Get(context.Background(), appID, req.ID)
 	if err != nil {
 		s.logger.Info("error getting request: %v", err)
 		return
 	}
 
-	err = webhook.Post(req.Callback, resp)
+	err = s.w[appID].Post(webhook.WebhookPayload{
+		Type: webhook.TYPE_REQUEST,
+		URI:  fmt.Sprintf("/apps/%s/connections/%s/requests/%s", appID, selfID, req.ID),
+		Data: resp,
+	})
 	if err != nil {
 		s.logger.Info(err)
 	}

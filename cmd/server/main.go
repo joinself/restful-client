@@ -24,6 +24,7 @@ import (
 	"github.com/joinself/restful-client/internal/self"
 	"github.com/joinself/restful-client/pkg/dbcontext"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/webhook"
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -111,6 +112,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	healthcheck.RegisterHandlers(rg, Version)
 
 	authHandler := auth.Handler(cfg.JWTSigningKey)
+	callbackURLs := setupCallbackUrls(cfg)
 
 	// Repositories
 	connectionRepo := connection.NewRepository(db, logger)
@@ -123,10 +125,12 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	fcs := make(map[string]connection.FactService, len(clients))
 	rcs := make(map[string]fact.IssuerService, len(clients))
 	rrcs := make(map[string]request.RequesterService, len(clients))
+	callbacks := make(map[string]*webhook.Webhook, len(clients))
 	for id, c := range clients {
 		fcs[id] = c.FactService()
 		rcs[id] = c.FactService()
 		rrcs[id] = c.FactService()
+		callbacks[id] = webhook.NewWebhook(callbackURLs[id])
 	}
 
 	cService := connection.NewService(connectionRepo, logger, fcs)
@@ -155,7 +159,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		authHandler, logger,
 	)
 	request.RegisterHandlers(rg.Group(""),
-		request.NewService(requestRepo, factRepo, attestationRepo, logger, rrcs),
+		request.NewService(requestRepo, factRepo, attestationRepo, logger, rrcs, callbacks),
 		cService,
 		authHandler, logger,
 	)
@@ -164,11 +168,10 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		logger,
 	)
 
-	callbackURLs := setupCallbackUrls(cfg)
 	for id, client := range clients {
 		logger.Infof("starting client %s", id)
 		self.RunService(
-			self.NewService(client, connectionRepo, factRepo, messageRepo, callbackURLs[id], logger),
+			self.NewService(client, connectionRepo, factRepo, messageRepo, logger, webhook.NewWebhook(callbackURLs[id])),
 			logger,
 		)
 	}
