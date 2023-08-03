@@ -1,1 +1,1 @@
-CREATE UNIQUE INDEX message_jti_idx ON message (jti);
+CREATE UNIQUE INDEX message_jti_idx ON message (nullif(jti, ''));
