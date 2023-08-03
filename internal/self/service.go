@@ -160,7 +160,7 @@ func (s *service) processChatMessage(payload map[string]interface{}) error {
 
 	return webhook.Post(s.callbackURL, WebhookPayload{
 		Type: WEBHOOK_TYPE_MESSAGE,
-		URI:  fmt.Sprintf("/apps/%s/connections/%s/messages/%d", s.selfID, c.SelfID, msg.ID),
+		URI:  fmt.Sprintf("/apps/%s/connections/%s/messages/%s", s.selfID, c.SelfID, msg.JTI),
 		Data: msg})
 }
 
