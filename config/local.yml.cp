@@ -7,6 +7,8 @@ self_apps:
     self_env: "sandbox" # Self environment you want to point to.
     message_notification_url: "" # The URL to send incoming messages notifications to.
 jwt_signing_key: "" # Signing key for JWT.
+jwt_expiration: 24 # JWT expiration in hours.
+refresh_token_expiration: 128 # JWT refresh expiration in hours.
 user: "demo" # User to be used for JWT authentication.
 password: "pass" # Password to be used for JWT authentication.
 serve_docs: "true" # Serves the docs from the local server on localhost:8080/docs
