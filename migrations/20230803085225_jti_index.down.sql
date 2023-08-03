@@ -1,0 +1,1 @@
+DROP INDEX message_jti_idx;

@@ -2,6 +2,7 @@ package message
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
@@ -13,7 +14,7 @@ import (
 // Repository encapsulates the logic to access messages from the data source.
 type Repository interface {
 	// Get returns the message with the specified message ID.
-	Get(ctx context.Context, id int) (entity.Message, error)
+	Get(ctx context.Context, id string) (entity.Message, error)
 	// Count returns the number of messages.
 	Count(ctx context.Context) (int, error)
 	// Query returns the list of messages with the given offset and limit.
@@ -23,7 +24,7 @@ type Repository interface {
 	// Update updates the message with given ID in the storage.
 	Update(ctx context.Context, message entity.Message) error
 	// Delete removes the message with given ID from the storage.
-	Delete(ctx context.Context, id int) error
+	Delete(ctx context.Context, id string) error
 }
 
 // repository persists messages in database
@@ -38,9 +39,19 @@ func NewRepository(db *dbcontext.DB, logger log.Logger) Repository {
 }
 
 // Get reads the message with the specified ID from the database.
-func (r repository) Get(ctx context.Context, id int) (entity.Message, error) {
+func (r repository) Get(ctx context.Context, jti string) (entity.Message, error) {
 	var message entity.Message
-	err := r.db.With(ctx).Select().Model(id, &message)
+
+	err := r.db.With(ctx).
+		Select().
+		From("message").
+		Where(dbx.HashExp{"jti": jti}).
+		One(&message)
+
+	if &message == nil {
+		return message, errors.New("message not found")
+	}
+
 	return message, err
 }
 
@@ -56,8 +67,8 @@ func (r repository) Update(ctx context.Context, message entity.Message) error {
 }
 
 // Delete deletes an message with the specified ID from the database.
-func (r repository) Delete(ctx context.Context, id int) error {
-	message, err := r.Get(ctx, id)
+func (r repository) Delete(ctx context.Context, jti string) error {
+	message, err := r.Get(ctx, jti)
 	if err != nil {
 		return err
 	}

@@ -43,16 +43,11 @@ type resource struct {
 // @Security     BearerAuth
 // @Param        app_id   path      string  true  "App id"
 // @Param        connection_id   path      string  true  "Connection id"
-// @Param        id   path      int  true  "Message id"
+// @Param        jti   path      string  true  "Message JTI"
 // @Success      200  {object}  Message
-// @Router       /apps/{app_id}/connections/{connection_id}/messages/{id} [get]
+// @Router       /apps/{app_id}/connections/{connection_id}/messages/{jti} [get]
 func (r resource) get(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	message, err := r.service.Get(c.Request().Context(), id)
+	message, err := r.service.Get(c.Request().Context(), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
@@ -154,10 +149,10 @@ func (r resource) create(c echo.Context) error {
 // @Security        BearerAuth
 // @Param           app_id   path      string  true  "App id"
 // @Param           connection_id   path      string  true  "Connection id"
-// @Param           message_id   path      int  true  "Message id"
+// @Param           jti   path      string  true  "Message jti"
 // @Param           request body UpdateMessageRequest true "message request"
 // @Success         200  {object}  Message
-// @Router          /apps/{app_id}/connections/{connection_id}/messages/{message_id} [put]
+// @Router          /apps/{app_id}/connections/{connection_id}/messages/{jti} [put]
 func (r resource) update(c echo.Context) error {
 	var input UpdateMessageRequest
 	if err := c.Bind(&input); err != nil {
@@ -165,11 +160,12 @@ func (r resource) update(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "")
 	}
 
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
-	}
-	message, err := r.service.Update(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), id, input)
+	message, err := r.service.Update(
+		c.Request().Context(),
+		c.Param("app_id"),
+		c.Param("connection_id"),
+		c.Param("id"),
+		input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -178,15 +174,10 @@ func (r resource) update(c echo.Context) error {
 }
 
 func (r resource) delete(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	message, err := r.service.Delete(c.Request().Context(), id)
+	err := r.service.Delete(c.Request().Context(), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, message)
+	return c.JSON(http.StatusOK, "")
 }

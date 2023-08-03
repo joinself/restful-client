@@ -17,7 +17,7 @@ func TestAPI(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 	repo := &mock.MessageRepositoryMock{Items: []entity.Message{
-		{ID: 1, ConnectionID: 123, ISS: "", CID: "", RID: "", Body: "hello!", IAT: time.Now(), CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		{ID: 1, JTI: "1", ConnectionID: 123, ISS: "", CID: "", RID: "", Body: "hello!", IAT: time.Now(), CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}}
 	connRepo := &mock.ConnectionRepositoryMock{Items: []entity.Connection{
 		{ID: 123, SelfID: "connection", AppID: "app1", Name: "connection123", CreatedAt: time.Now(), UpdatedAt: time.Now()},
@@ -45,7 +45,7 @@ func TestAPI(t *testing.T) {
 		{Name: "update verify", Method: "GET", URL: "/apps/app1/connections/connection/messages/1", Body: "", Header: header, WantStatus: http.StatusOK, WantResponse: `*messagexyz*`},
 		{Name: "update auth error", Method: "PUT", URL: "/apps/app1/connections/connection/messages/1", Body: `{"body":"messagexyz"}`, Header: nil, WantStatus: http.StatusUnauthorized, WantResponse: ""},
 		{Name: "update input error", Method: "PUT", URL: "/apps/app1/connections/connection/messages/1", Body: `"body":"messagexyz"}`, Header: header, WantStatus: http.StatusBadRequest, WantResponse: ""},
-		{Name: "delete ok", Method: "DELETE", URL: "/apps/app1/connections/connection/messages/1", Body: ``, Header: header, WantStatus: http.StatusOK, WantResponse: "*messagexyz*"},
+		{Name: "delete ok", Method: "DELETE", URL: "/apps/app1/connections/connection/messages/1", Body: ``, Header: header, WantStatus: http.StatusOK, WantResponse: ""},
 		{Name: "delete verify", Method: "DELETE", URL: "/apps/app1/connections/connection/messages/1", Body: ``, Header: header, WantStatus: http.StatusNotFound, WantResponse: ""},
 		{Name: "delete auth error", Method: "DELETE", URL: "/apps/app1/connections/connection/messages/1", Body: ``, Header: nil, WantStatus: http.StatusUnauthorized, WantResponse: ""},
 	}
