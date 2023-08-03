@@ -11,19 +11,12 @@ import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/message"
+	"github.com/joinself/restful-client/pkg/helper"
 	"github.com/joinself/restful-client/pkg/log"
-	"github.com/joinself/restful-client/pkg/self"
 	"github.com/joinself/restful-client/pkg/webhook"
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/chat"
 	"github.com/joinself/self-go-sdk/messaging"
-)
-
-const (
-	// WEBHOOK_TYPE_MESSAGE webhook type used when a message is received
-	WEBHOOK_TYPE_MESSAGE = "message"
-	// WEBHOOK_TYPE_FACT_RESPONSE webhook type used when an untracked fact response is received
-	WEBHOOK_TYPE_FACT_RESPONSE = "fact_response"
 )
 
 // Service interface for self service.
@@ -43,25 +36,25 @@ type WebhookPayload struct {
 }
 
 type service struct {
-	client      *selfsdk.Client
-	cRepo       connection.Repository
-	fRepo       fact.Repository
-	mRepo       message.Repository
-	logger      log.Logger
-	selfID      string
-	callbackURL string
+	client *selfsdk.Client
+	cRepo  connection.Repository
+	fRepo  fact.Repository
+	mRepo  message.Repository
+	logger log.Logger
+	selfID string
+	w      *webhook.Webhook
 }
 
 // NewService creates a new fact service.
-func NewService(client *selfsdk.Client, cRepo connection.Repository, fRepo fact.Repository, mRepo message.Repository, callbackURL string, logger log.Logger) Service {
+func NewService(client *selfsdk.Client, cRepo connection.Repository, fRepo fact.Repository, mRepo message.Repository, logger log.Logger, w *webhook.Webhook) Service {
 	s := service{
-		client:      client,
-		cRepo:       cRepo,
-		fRepo:       fRepo,
-		mRepo:       mRepo,
-		logger:      logger,
-		selfID:      client.SelfAppID(),
-		callbackURL: callbackURL,
+		client: client,
+		cRepo:  cRepo,
+		fRepo:  fRepo,
+		mRepo:  mRepo,
+		logger: logger,
+		selfID: client.SelfAppID(),
+		w:      w,
 	}
 	s.SetupHooks()
 
@@ -125,8 +118,8 @@ func (s *service) processConnectionResp(payload map[string]interface{}) error {
 		return err
 	}
 
-	return webhook.Post(s.callbackURL, WebhookPayload{
-		Type: WEBHOOK_TYPE_FACT_RESPONSE,
+	return s.w.Post(webhook.WebhookPayload{
+		Type: webhook.TYPE_CONNECTION,
 		URI:  fmt.Sprintf("/apps/%s/connections/%s", s.selfID, conn.SelfID),
 		Data: conn})
 }
@@ -158,14 +151,14 @@ func (s *service) processChatMessage(payload map[string]interface{}) error {
 		return err
 	}
 
-	return webhook.Post(s.callbackURL, WebhookPayload{
-		Type: WEBHOOK_TYPE_MESSAGE,
+	return s.w.Post(webhook.WebhookPayload{
+		Type: webhook.TYPE_MESSAGE,
 		URI:  fmt.Sprintf("/apps/%s/connections/%s/messages/%s", s.selfID, c.SelfID, msg.JTI),
 		Data: msg})
 }
 
 func (s *service) getOrCreateConnection(selfID, name string) (entity.Connection, error) {
-	selfID = self.FlattenSelfID(selfID)
+	selfID = helper.FlattenSelfID(selfID)
 	c, err := s.cRepo.Get(context.Background(), s.selfID, selfID)
 	if err == nil {
 		return c, nil
