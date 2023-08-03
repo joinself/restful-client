@@ -95,8 +95,18 @@ func (s *service) onMessageHook() {
 		case "identities.connections.resp":
 			_ = s.processConnectionResp(payload)
 
+		case "identities.facts.query.resp":
+			_ = s.processFactsQueryResp(payload)
+
 		}
 	})
+}
+
+func (s *service) processFactsQueryResp(payload map[string]interface{}) error {
+	return s.w.Post(webhook.WebhookPayload{
+		Type: webhook.TYPE_RAW,
+		URI:  "",
+		Data: payload})
 }
 
 func (s *service) processConnectionResp(payload map[string]interface{}) error {

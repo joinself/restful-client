@@ -16,6 +16,7 @@ const (
 	TYPE_CONNECTION = "connection"
 	// TYPE_REQUEST webhook type used when a request response is received
 	TYPE_REQUEST = "request"
+	TYPE_RAW     = "raw"
 )
 
 // WebhookPayload represents a the payload that will be resent to the
