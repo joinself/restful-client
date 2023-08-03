@@ -12,6 +12,7 @@ import (
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/message"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/self"
 	"github.com/joinself/restful-client/pkg/webhook"
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/chat"
@@ -164,7 +165,7 @@ func (s *service) processChatMessage(payload map[string]interface{}) error {
 }
 
 func (s *service) getOrCreateConnection(selfID, name string) (entity.Connection, error) {
-	selfID = s.flattenSelfID(selfID)
+	selfID = self.FlattenSelfID(selfID)
 	c, err := s.cRepo.Get(context.Background(), s.selfID, selfID)
 	if err == nil {
 		return c, nil
@@ -189,14 +190,4 @@ func (s *service) createConnection(selfID, name string) (entity.Connection, erro
 	}
 
 	return s.cRepo.Get(context.Background(), s.selfID, selfID)
-}
-
-// TODO: Move this to a helper
-func (s *service) flattenSelfID(selfID string) string {
-	parts := strings.Split(selfID, ":")
-	if len(parts) > 0 {
-		return parts[0]
-	}
-
-	return selfID
 }
