@@ -112,7 +112,13 @@ func (s *service) processConnectionResp(payload map[string]interface{}) error {
 		iss = parts[0]
 	}
 
-	conn, err := s.getOrCreateConnection(iss)
+	// TODO: we still need to figure out how to manage connection profile image.
+	name := "-"
+	if data, ok := payload["data"].(map[string]string); ok {
+		name = data["name"]
+	}
+
+	conn, err := s.getOrCreateConnection(iss, name)
 	if err != nil {
 		s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
 		return err
@@ -128,7 +134,7 @@ func (s *service) processChatMessage(payload map[string]interface{}) error {
 	cm := chat.NewMessage(s.client.ChatService(), []string{payload["aud"].(string)}, payload)
 
 	// Get connection or create one.
-	c, err := s.getOrCreateConnection(cm.ISS)
+	c, err := s.getOrCreateConnection(cm.ISS, "-")
 	if err != nil {
 		s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
 		return err
@@ -157,14 +163,14 @@ func (s *service) processChatMessage(payload map[string]interface{}) error {
 		Data: msg})
 }
 
-func (s *service) getOrCreateConnection(selfID string) (entity.Connection, error) {
+func (s *service) getOrCreateConnection(selfID, name string) (entity.Connection, error) {
 	selfID = s.flattenSelfID(selfID)
 	c, err := s.cRepo.Get(context.Background(), s.selfID, selfID)
 	if err == nil {
 		return c, nil
 	}
 
-	return s.createConnection(selfID, "-")
+	return s.createConnection(selfID, name)
 }
 
 func (s *service) createConnection(selfID, name string) (entity.Connection, error) {
