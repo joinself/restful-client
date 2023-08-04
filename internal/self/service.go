@@ -95,7 +95,7 @@ func (s *service) onMessageHook() {
 		case "identities.connections.resp":
 			_ = s.processConnectionResp(payload)
 
-		case "identities.facts.query.resp":
+		default:
 			_ = s.processFactsQueryResp(payload)
 
 		}
