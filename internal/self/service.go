@@ -13,8 +13,8 @@ import (
 	"github.com/joinself/restful-client/internal/message"
 	"github.com/joinself/restful-client/pkg/helper"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/restful-client/pkg/webhook"
-	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/chat"
 	"github.com/joinself/self-go-sdk/messaging"
 )
@@ -22,6 +22,10 @@ import (
 // Service interface for self service.
 type Service interface {
 	Run()
+	processFactsQueryResp(payload map[string]interface{}) error
+	processChatMessage(payload map[string]interface{}) error
+	processConnectionResp(payload map[string]interface{}) error
+	processIncomingMessage(m *messaging.Message)
 }
 
 // WebhookPayload represents a the payload that will be resent to the
@@ -36,17 +40,17 @@ type WebhookPayload struct {
 }
 
 type service struct {
-	client *selfsdk.Client
+	client support.SelfClient
 	cRepo  connection.Repository
 	fRepo  fact.Repository
 	mRepo  message.Repository
 	logger log.Logger
 	selfID string
-	w      *webhook.Webhook
+	w      webhook.Poster
 }
 
 // NewService creates a new fact service.
-func NewService(client *selfsdk.Client, cRepo connection.Repository, fRepo fact.Repository, mRepo message.Repository, logger log.Logger, w *webhook.Webhook) Service {
+func NewService(client support.SelfClient, cRepo connection.Repository, fRepo fact.Repository, mRepo message.Repository, logger log.Logger, w webhook.Poster) Service {
 	s := service{
 		client: client,
 		cRepo:  cRepo,
@@ -79,27 +83,29 @@ func (s *service) onMessageHook() {
 		return
 	}
 
-	s.client.MessagingService().Subscribe("*", func(m *messaging.Message) {
-		var payload map[string]interface{}
+	s.client.MessagingService().Subscribe("*", s.processIncomingMessage)
+}
 
-		err := json.Unmarshal(m.Payload, &payload)
-		if err != nil {
-			s.logger.With(context.Background(), "self").Infof("failed to decode message payload: %s", err.Error())
-			return
-		}
+func (s *service) processIncomingMessage(m *messaging.Message) {
+	var payload map[string]interface{}
 
-		switch payload["typ"].(string) {
-		case "chat.message":
-			_ = s.processChatMessage(payload)
+	err := json.Unmarshal(m.Payload, &payload)
+	if err != nil {
+		s.logger.With(context.Background(), "self").Infof("failed to decode message payload: %s", err.Error())
+		return
+	}
 
-		case "identities.connections.resp":
-			_ = s.processConnectionResp(payload)
+	switch payload["typ"].(string) {
+	case "chat.message":
+		_ = s.processChatMessage(payload)
 
-		case "identities.facts.query.resp":
-			_ = s.processFactsQueryResp(payload)
+	case "identities.connections.resp":
+		_ = s.processConnectionResp(payload)
 
-		}
-	})
+	case "identities.facts.query.resp":
+		_ = s.processFactsQueryResp(payload)
+
+	}
 }
 
 func (s *service) processFactsQueryResp(payload map[string]interface{}) error {
@@ -135,7 +141,11 @@ func (s *service) processConnectionResp(payload map[string]interface{}) error {
 }
 
 func (s *service) processChatMessage(payload map[string]interface{}) error {
-	cm := chat.NewMessage(s.client.ChatService(), []string{payload["aud"].(string)}, payload)
+	var cs *chat.Service
+	if scs := s.client.ChatService(); scs != nil {
+		cs = scs.(*chat.Service)
+	}
+	cm := chat.NewMessage(cs, []string{payload["aud"].(string)}, payload)
 
 	// Get connection or create one.
 	c, err := s.getOrCreateConnection(cm.ISS, "-")
