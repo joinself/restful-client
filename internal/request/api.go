@@ -37,7 +37,7 @@ type resource struct {
 // @Success      200  {object}  Request
 // @Router       /apps/{app_id}/connections/{connection_id}/requests/{id} [get]
 func (r resource) get(c echo.Context) error {
-	request, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
+	request, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}

@@ -3,7 +3,6 @@ package request
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -18,7 +17,7 @@ import (
 
 // Service encapsulates usecase logic for requests.
 type Service interface {
-	Get(ctx context.Context, appID, id string) (Request, error)
+	Get(ctx context.Context, appID, connID, id string) (Request, error)
 	Create(ctx context.Context, appID, selfID string, connection int, input CreateRequest) (Request, error)
 }
 
@@ -86,7 +85,7 @@ func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repos
 }
 
 // Get returns the request with the specified the request ID.
-func (s service) Get(ctx context.Context, appID, id string) (Request, error) {
+func (s service) Get(ctx context.Context, appID, connID, id string) (Request, error) {
 	request, err := s.repo.Get(ctx, id)
 	if err != nil {
 		return Request{}, err
@@ -104,7 +103,7 @@ func (s service) Get(ctx context.Context, appID, id string) (Request, error) {
 		if err == nil {
 			for _, f := range facts {
 				resources = append(resources, RequestResource{
-					URI: f.URI(appID),
+					URI: f.URI(appID, connID),
 				})
 			}
 		}
@@ -164,7 +163,7 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 	// Send the message to the connection.
 	go s.sendRequest(f, appID, selfID)
 
-	return s.Get(ctx, appID, id)
+	return s.Get(ctx, appID, selfID, id)
 }
 
 // sendRequest sends a request to the specified connection through Self Network.
@@ -204,7 +203,7 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 }
 
 func (s service) sendCallback(appID, selfID string, req entity.Request) {
-	resp, err := s.Get(context.Background(), appID, req.ID)
+	resp, err := s.Get(context.Background(), appID, selfID, req.ID)
 	if err != nil {
 		s.logger.Info("error getting request: %v", err)
 		return
@@ -212,7 +211,7 @@ func (s service) sendCallback(appID, selfID string, req entity.Request) {
 
 	err = s.w[appID].Post(webhook.WebhookPayload{
 		Type: webhook.TYPE_REQUEST,
-		URI:  fmt.Sprintf("/apps/%s/connections/%s/requests/%s", appID, selfID, req.ID),
+		URI:  req.URI(appID, selfID),
 		Data: resp,
 	})
 	if err != nil {

@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -29,4 +30,8 @@ type Request struct {
 
 func (r *Request) IsResponded() bool {
 	return (r.Status == "responded")
+}
+
+func (r *Request) URI(app, connection string) string {
+	return fmt.Sprintf("/v1/apps/%s/connections/%s/requests/%s", app, connection, r.ID)
 }

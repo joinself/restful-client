@@ -28,6 +28,6 @@ type Fact struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-func (f *Fact) URI(app string) string {
-	return fmt.Sprintf("/v1/apps/%s/connections/%d/facts/%s", app, f.ConnectionID, f.ID)
+func (f *Fact) URI(app, connection string) string {
+	return fmt.Sprintf("/v1/apps/%s/connections/%s/facts/%s", app, connection, f.ID)
 }

@@ -20,7 +20,7 @@ type Repository interface {
 	// Delete deletes an request with the specified ID from the database.
 	Delete(ctx context.Context, id string) error
 	// SetStatus updates the status of the given request.
-	SetStatus(ctx context.Context, id string, status string) error
+	SetStatus(ctx context.Context, id, status string) error
 }
 
 // repository persists requests in database
