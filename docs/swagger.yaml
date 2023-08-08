@@ -24,11 +24,15 @@ definitions:
     properties:
       password:
         type: string
+      refresh_token:
+        type: string
       username:
         type: string
     type: object
   auth.AuthResponse:
     properties:
+      refresh_token:
+        type: string
       token:
         type: string
     type: object
@@ -169,8 +173,6 @@ definitions:
         type: string
       iat:
         type: string
-      id:
-        type: integer
       iss:
         type: string
       jti:
@@ -315,8 +317,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates a new connection, permits ACLs and sends a request for
-        public information.
+      description: Creates a new connection and sends a request for public information.
       parameters:
       - description: App id
         in: path
@@ -522,7 +523,7 @@ paths:
       summary: Sends a message.
       tags:
       - messages
-  /apps/{app_id}/connections/{connection_id}/messages/{id}:
+  /apps/{app_id}/connections/{connection_id}/messages/{jti}:
     get:
       consumes:
       - application/json
@@ -538,11 +539,11 @@ paths:
         name: connection_id
         required: true
         type: string
-      - description: Message id
+      - description: Message JTI
         in: path
-        name: id
+        name: jti
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -555,7 +556,6 @@ paths:
       summary: Gets a message.
       tags:
       - messages
-  /apps/{app_id}/connections/{connection_id}/messages/{message_id}:
     put:
       consumes:
       - application/json
@@ -571,11 +571,11 @@ paths:
         name: connection_id
         required: true
         type: string
-      - description: Message id
+      - description: Message jti
         in: path
-        name: message_id
+        name: jti
         required: true
-        type: integer
+        type: string
       - description: message request
         in: body
         name: request

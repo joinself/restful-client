@@ -106,7 +106,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new connection, permits ACLs and sends a request for public information.",
+                "description": "Creates a new connection and sends a request for public information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -425,7 +425,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/apps/{app_id}/connections/{connection_id}/messages/{id}": {
+        "/apps/{app_id}/connections/{connection_id}/messages/{jti}": {
             "get": {
                 "security": [
                     {
@@ -459,9 +459,9 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "Message id",
-                        "name": "id",
+                        "type": "string",
+                        "description": "Message JTI",
+                        "name": "jti",
                         "in": "path",
                         "required": true
                     }
@@ -474,9 +474,7 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/apps/{app_id}/connections/{connection_id}/messages/{message_id}": {
+            },
             "put": {
                 "security": [
                     {
@@ -510,9 +508,9 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "Message id",
-                        "name": "message_id",
+                        "type": "string",
+                        "description": "Message jti",
+                        "name": "jti",
                         "in": "path",
                         "required": true
                     },
@@ -888,6 +886,9 @@ const docTemplate = `{
                 "password": {
                     "type": "string"
                 },
+                "refresh_token": {
+                    "type": "string"
+                },
                 "username": {
                     "type": "string"
                 }
@@ -896,6 +897,9 @@ const docTemplate = `{
         "auth.AuthResponse": {
             "type": "object",
             "properties": {
+                "refresh_token": {
+                    "type": "string"
+                },
                 "token": {
                     "type": "string"
                 }
@@ -1111,9 +1115,6 @@ const docTemplate = `{
                 },
                 "iat": {
                     "type": "string"
-                },
-                "id": {
-                    "type": "integer"
                 },
                 "iss": {
                     "type": "string"

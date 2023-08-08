@@ -25,11 +25,6 @@ type FactService interface {
 	Request(*fact.FactRequest) (*fact.FactResponse, error)
 }
 
-type ACLManager interface {
-	PermitConnection(selfID string) error
-	RevokeConnection(selfID string) error
-}
-
 // Connection represents the data about an connection.
 type Connection struct {
 	entity.Connection

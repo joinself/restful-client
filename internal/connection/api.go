@@ -87,7 +87,7 @@ func (r resource) query(c echo.Context) error {
 
 // CreateConnection godoc
 // @Summary         Creates a new connection.
-// @Description  	Creates a new connection, permits ACLs and sends a request for public information.
+// @Description  	Creates a new connection and sends a request for public information.
 // @Tags            connections
 // @Accept          json
 // @Produce         json
