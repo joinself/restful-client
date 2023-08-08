@@ -24,6 +24,7 @@ import (
 	"github.com/joinself/restful-client/internal/self"
 	"github.com/joinself/restful-client/pkg/dbcontext"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/restful-client/pkg/webhook"
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/labstack/echo/v4"
@@ -170,8 +171,9 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 
 	for id, client := range clients {
 		logger.Infof("starting client %s", id)
+		c := support.NewSelfClient(client)
 		self.RunService(
-			self.NewService(client, connectionRepo, factRepo, messageRepo, logger, webhook.NewWebhook(callbackURLs[id])),
+			self.NewService(c, connectionRepo, factRepo, messageRepo, logger, webhook.NewWebhook(callbackURLs[id])),
 			logger,
 		)
 	}

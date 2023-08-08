@@ -30,6 +30,9 @@ type WebhookPayload struct {
 	Data interface{} `json:"data"`
 }
 
+type Poster interface {
+	Post(p WebhookPayload) error
+}
 type Webhook struct {
 	callbackURL string
 }
