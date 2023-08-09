@@ -11,18 +11,20 @@ import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/message"
+	"github.com/joinself/restful-client/internal/request"
 	"github.com/joinself/restful-client/pkg/helper"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/restful-client/pkg/webhook"
 	"github.com/joinself/self-go-sdk/chat"
+	selffact "github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/messaging"
 )
 
 // Service interface for self service.
 type Service interface {
 	Run()
-	processFactsQueryResp(payload map[string]interface{}) error
+	processFactsQueryResp(body []byte, payload map[string]interface{}) error
 	processChatMessage(payload map[string]interface{}) error
 	processConnectionResp(payload map[string]interface{}) error
 	processIncomingMessage(m *messaging.Message)
@@ -39,26 +41,40 @@ type WebhookPayload struct {
 	Data interface{} `json:"data"`
 }
 
+type Config struct {
+	SelfClient     support.SelfClient
+	ConnectionRepo connection.Repository
+	FactRepo       fact.Repository
+	MessageRepo    message.Repository
+	RequestRepo    request.Repository
+	Logger         log.Logger
+	Poster         webhook.Poster
+	RequestService request.Service
+}
 type service struct {
-	client support.SelfClient
-	cRepo  connection.Repository
-	fRepo  fact.Repository
-	mRepo  message.Repository
-	logger log.Logger
-	selfID string
-	w      webhook.Poster
+	client   support.SelfClient
+	cRepo    connection.Repository
+	fRepo    fact.Repository
+	mRepo    message.Repository
+	rRepo    request.Repository
+	logger   log.Logger
+	selfID   string
+	w        webhook.Poster
+	rService request.Service
 }
 
 // NewService creates a new fact service.
-func NewService(client support.SelfClient, cRepo connection.Repository, fRepo fact.Repository, mRepo message.Repository, logger log.Logger, w webhook.Poster) Service {
+func NewService(c Config) Service {
 	s := service{
-		client: client,
-		cRepo:  cRepo,
-		fRepo:  fRepo,
-		mRepo:  mRepo,
-		logger: logger,
-		selfID: client.SelfAppID(),
-		w:      w,
+		client:   c.SelfClient,
+		cRepo:    c.ConnectionRepo,
+		fRepo:    c.FactRepo,
+		mRepo:    c.MessageRepo,
+		rRepo:    c.RequestRepo,
+		logger:   c.Logger,
+		selfID:   c.SelfClient.SelfAppID(),
+		rService: c.RequestService,
+		w:        c.Poster,
 	}
 	s.SetupHooks()
 
@@ -103,16 +119,48 @@ func (s *service) processIncomingMessage(m *messaging.Message) {
 		_ = s.processConnectionResp(payload)
 
 	case "identities.facts.query.resp":
-		_ = s.processFactsQueryResp(payload)
+		_ = s.processFactsQueryResp(m.Payload, payload)
 
 	}
 }
 
-func (s *service) processFactsQueryResp(payload map[string]interface{}) error {
+func (s *service) processFactsQueryResp(body []byte, payload map[string]interface{}) error {
+	var resp struct {
+		*selffact.FactResponse
+		CID string `json:"cid"`
+	}
+	iss := payload["iss"].(string)
+	err := json.Unmarshal(body, &resp)
+	if err != nil {
+		return err
+	}
+	facts := resp.Facts
+
+	conn, err := s.getOrCreateConnection(iss, "-")
+	if err != nil {
+		s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
+		return err
+	}
+
+	req, err := s.rRepo.Get(context.Background(), resp.CID)
+	if err != nil {
+		req = entity.Request{
+			ConnectionID: conn.ID,
+		}
+	}
+	createdFacts := s.rService.CreateFactsFromResponse(iss, req, facts)
+	// Return the created facts entity URI.
+	for i, _ := range createdFacts {
+		createdFacts[i].URL = createdFacts[i].URI(s.selfID)
+	}
+
+	// Callback the client webhook
 	return s.w.Post(webhook.WebhookPayload{
-		Type: webhook.TYPE_RAW,
+		Type: webhook.TYPE_FACT_RESPONSE,
 		URI:  "",
-		Data: payload})
+		Data: entity.Response{
+			Facts: createdFacts,
+		}})
 }
 
 func (s *service) processConnectionResp(payload map[string]interface{}) error {

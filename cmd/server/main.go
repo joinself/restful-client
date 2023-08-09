@@ -114,6 +114,10 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 
 	authHandler := auth.Handler(cfg.JWTSigningKey)
 	callbackURLs := setupCallbackUrls(cfg)
+	dlCodes := map[string]string{}
+	for _, c := range cfg.SelfApps {
+		dlCodes[c.SelfAppID] = c.DLCode
+	}
 
 	// Repositories
 	connectionRepo := connection.NewRepository(db, logger)
@@ -135,6 +139,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	}
 
 	cService := connection.NewService(connectionRepo, logger, fcs)
+	rService := request.NewService(requestRepo, factRepo, attestationRepo, logger, rrcs, callbacks, dlCodes)
 
 	// Handlers
 	app.RegisterHandlers(rg.Group(""),
@@ -160,7 +165,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		authHandler, logger,
 	)
 	request.RegisterHandlers(rg.Group(""),
-		request.NewService(requestRepo, factRepo, attestationRepo, logger, rrcs, callbacks),
+		rService,
 		cService,
 		authHandler, logger,
 	)
@@ -171,9 +176,17 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 
 	for id, client := range clients {
 		logger.Infof("starting client %s", id)
-		c := support.NewSelfClient(client)
 		self.RunService(
-			self.NewService(c, connectionRepo, factRepo, messageRepo, logger, webhook.NewWebhook(callbackURLs[id])),
+			self.NewService(self.Config{
+				SelfClient:     support.NewSelfClient(client),
+				ConnectionRepo: connectionRepo,
+				FactRepo:       factRepo,
+				MessageRepo:    messageRepo,
+				RequestRepo:    requestRepo,
+				RequestService: rService,
+				Logger:         logger,
+				Poster:         webhook.NewWebhook(callbackURLs[id]),
+			}),
 			logger,
 		)
 	}

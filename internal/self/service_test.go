@@ -13,11 +13,13 @@ import (
 )
 
 type config struct {
-	mRepo *mock.MessageRepositoryMock
-	cRepo *mock.ConnectionRepositoryMock
-	fRepo *mock.FactRepositoryMock
-	wMock *mock.PosterMock
-	sMock *mock.SelfMock
+	mRepo  *mock.MessageRepositoryMock
+	cRepo  *mock.ConnectionRepositoryMock
+	fRepo  *mock.FactRepositoryMock
+	wMock  *mock.PosterMock
+	sMock  *mock.SelfMock
+	rRepo  *mock.RequestRepositoryMock
+	rsMock *RequestServiceMock
 }
 
 func buildService(c *config) Service {
@@ -31,14 +33,29 @@ func buildService(c *config) Service {
 	if c.fRepo == nil {
 		c.fRepo = &mock.FactRepositoryMock{}
 	}
+	if c.rRepo == nil {
+		c.rRepo = &mock.RequestRepositoryMock{}
+	}
 	if c.sMock == nil {
 		c.sMock = &mock.SelfMock{}
 	}
 	if c.wMock == nil {
 		c.wMock = &mock.PosterMock{}
 	}
+	if c.rsMock == nil {
+		c.rsMock = &RequestServiceMock{}
+	}
 
-	return NewService(c.sMock, c.cRepo, c.fRepo, c.mRepo, logger, c.wMock)
+	return NewService(Config{
+		SelfClient:     c.sMock,
+		ConnectionRepo: c.cRepo,
+		FactRepo:       c.fRepo,
+		MessageRepo:    c.mRepo,
+		RequestRepo:    c.rRepo,
+		Logger:         logger,
+		Poster:         c.wMock,
+		RequestService: c.rsMock,
+	})
 
 }
 
@@ -46,14 +63,19 @@ func TestProcessFactsQueryResp(t *testing.T) {
 	c := config{}
 	s := buildService(&c)
 
-	var payload map[string]interface{}
+	body := []byte(`{"facts":[]}`)
+	payload := map[string]interface{}{
+		"iss": "ISS",
+	}
 	var ExportProcessQueryResp = (Service).processFactsQueryResp
-	ExportProcessQueryResp(s, payload)
+	err := ExportProcessQueryResp(s, body, payload)
+	assert.NoError(t, err)
 
 	last := c.wMock.History[len(c.wMock.History)-1]
-	assert.Equal(t, webhook.TYPE_RAW, last.Type)
+	assert.Equal(t, webhook.TYPE_FACT_RESPONSE, last.Type)
 	assert.Equal(t, "", last.URI)
-	assert.Equal(t, payload, last.Data)
+	resp := last.Data.(entity.Response)
+	assert.Equal(t, 0, len(resp.Facts))
 }
 
 func TestProcessChatMessage(t *testing.T) {
@@ -171,16 +193,17 @@ func TestProcessIncomingMessage(t *testing.T) {
 	tests := map[string]string{
 		"chat.message":                webhook.TYPE_MESSAGE,
 		"identities.connections.resp": webhook.TYPE_CONNECTION,
-		"identities.facts.query.resp": webhook.TYPE_RAW,
+		"identities.facts.query.resp": webhook.TYPE_FACT_RESPONSE,
 	}
 
 	for typ, result := range tests {
 		payload, err := json.Marshal(map[string]interface{}{
-			"typ": typ,
-			"iss": "ISS",
-			"msg": "MSG",
-			"jti": "JTI",
-			"aud": "AUD",
+			"typ":    typ,
+			"iss":    "ISS",
+			"msg":    "MSG",
+			"jti":    "JTI",
+			"aud":    "AUD",
+			"status": "accepted",
 			"data": map[string]string{
 				"name": "NAME",
 			},
