@@ -32,8 +32,8 @@ type resource struct {
 // @Security        BearerAuth
 // @Param           app_id   path      string  true  "App id"
 // @Param           connection_id   path      string  true  "Connection id"
-// @Param           request body SystemNotification true "system notification"
-// @Success         200  {string}
+// @Param           request body SystemNotificationData true "system notification"
+// @Success         200
 // @Router          /apps/{app_id}/connections/{connection_id} [post]
 func (r resource) create(c echo.Context) error {
 	var input SystemNotificationData

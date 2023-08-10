@@ -115,4 +115,4 @@ migrate-reset: ## reset database and re-run all migrations
 
 .PHONY: gen-openapi
 gen-openapi: ## generates openapi documentation under /docs folder
-	swag init -d cmd/server/,internal/healthcheck/,internal/auth,internal/connection,internal/fact,internal/message,internal/entity,internal/request,internal/app
+	swag init -d cmd/server/,internal/healthcheck/,internal/auth,internal/connection,internal/fact,internal/message,internal/entity,internal/request,internal/app,internal/notification

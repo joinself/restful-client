@@ -202,6 +202,25 @@ definitions:
       total_count:
         type: integer
     type: object
+  notification.SystemNotificationData:
+    properties:
+      metadata:
+        properties:
+          payload:
+            type: string
+          type:
+            type: string
+        type: object
+      notification:
+        properties:
+          message:
+            type: string
+          title:
+            type: string
+          type:
+            type: string
+        type: object
+    type: object
   request.CreateRequest:
     properties:
       callback:
@@ -342,6 +361,38 @@ paths:
       summary: Creates a new connection.
       tags:
       - connections
+  /apps/{app_id}/connections/{connection_id}:
+    post:
+      consumes:
+      - application/json
+      description: Sends a system notification to the given connection
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Connection id
+        in: path
+        name: connection_id
+        required: true
+        type: string
+      - description: system notification
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/notification.SystemNotificationData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - BearerAuth: []
+      summary: Sends a system notification.
+      tags:
+      - notifications
   /apps/{app_id}/connections/{connection_id}/facts:
     get:
       consumes:
