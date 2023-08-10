@@ -20,6 +20,7 @@ import (
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/healthcheck"
 	"github.com/joinself/restful-client/internal/message"
+	"github.com/joinself/restful-client/internal/notification"
 	"github.com/joinself/restful-client/internal/request"
 	"github.com/joinself/restful-client/internal/self"
 	"github.com/joinself/restful-client/pkg/dbcontext"
@@ -167,6 +168,11 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	auth.RegisterHandlers(rg.Group(""),
 		auth.NewService(cfg, logger),
 		logger,
+	)
+
+	notification.RegisterHandlers(rg.Group(""),
+		notification.NewService(logger, clients),
+		authHandler, logger,
 	)
 
 	for id, client := range clients {
