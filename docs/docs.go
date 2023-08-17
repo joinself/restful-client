@@ -581,7 +581,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/connection.Connection"
+                            "$ref": "#/definitions/request.Request"
                         }
                     }
                 }
@@ -1067,6 +1067,9 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "uri": {
+                    "type": "string"
                 }
             }
         },
@@ -1176,6 +1179,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/request.FactRequest"
                     }
                 },
+                "out_of_band": {
+                    "type": "boolean"
+                },
                 "type": {
                     "type": "string"
                 }
@@ -1204,6 +1210,9 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "deep_link": {
+                    "type": "string"
+                },
                 "facts": {
                     "type": "array",
                     "items": {
@@ -1211,6 +1220,9 @@ const docTemplate = `{
                     }
                 },
                 "id": {
+                    "type": "string"
+                },
+                "qr_code": {
                     "type": "string"
                 },
                 "resources": {

@@ -579,7 +579,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/connection.Connection"
+                            "$ref": "#/definitions/request.Request"
                         }
                     }
                 }
@@ -1065,6 +1065,9 @@
                 },
                 "updated_at": {
                     "type": "string"
+                },
+                "uri": {
+                    "type": "string"
                 }
             }
         },
@@ -1174,6 +1177,9 @@
                         "$ref": "#/definitions/request.FactRequest"
                     }
                 },
+                "out_of_band": {
+                    "type": "boolean"
+                },
                 "type": {
                     "type": "string"
                 }
@@ -1202,6 +1208,9 @@
                 "created_at": {
                     "type": "string"
                 },
+                "deep_link": {
+                    "type": "string"
+                },
                 "facts": {
                     "type": "array",
                     "items": {
@@ -1209,6 +1218,9 @@
                     }
                 },
                 "id": {
+                    "type": "string"
+                },
+                "qr_code": {
                     "type": "string"
                 },
                 "resources": {
