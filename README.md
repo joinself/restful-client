@@ -233,6 +233,15 @@ command,
 ./server -config=./config/prod.yml
 ```
 
+## Client generation
+
+This service comes with openapi implementation, so you can generate a SDK on your preferred language, we're using [openapi generator](https://github.com/OpenAPITools/openapi-generator) with a syntax like:
+```shell
+openapi-generator generate -i docs/swagger.yaml -g ruby -o ../joinself-restful-ruby
+```
+Visit [OpenAPI Generator](https://github.com/OpenAPITools/openapi-generator) site to check if your language is supported.
+
+
 ## Support
 
 Looking for help? Reach out to us at [support@joinself.zendesk.com](mailto:support@joinself.zendesk.com)
