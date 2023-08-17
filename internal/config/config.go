@@ -22,6 +22,7 @@ type SelfAppConfig struct {
 	SelfStorageDir      string `yaml:"self_storage_dir"`
 	SelfEnv             string `yaml:"self_env"`
 	CallbackURL         string `yaml:"message_notification_url"`
+	DLCode              string `yaml:"dl_code" env:"DL_CODE"`
 }
 
 // Config represents an application configuration.

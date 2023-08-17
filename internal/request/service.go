@@ -3,8 +3,11 @@ package request
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
+
+	b64 "encoding/base64"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
@@ -20,11 +23,14 @@ import (
 type Service interface {
 	Get(ctx context.Context, appID, id string) (Request, error)
 	Create(ctx context.Context, appID, selfID string, connection int, input CreateRequest) (Request, error)
+	CreateFactsFromResponse(selfID string, req entity.Request, facts []selffact.Fact) []entity.Fact
 }
 
 // RequesterService service to manage sending and receiving request requests
 type RequesterService interface {
 	Request(*selffact.FactRequest) (*selffact.FactResponse, error)
+	GenerateQRCode(req *selffact.QRFactRequest) ([]byte, error)
+	GenerateDeepLink(req *selffact.DeepLinkFactRequest) (string, error)
 }
 
 type RequestResource struct {
@@ -38,6 +44,8 @@ type Request struct {
 	Facts     []FactRequest     `json:"facts"`
 	Auth      bool              `json:"auth,omitempty"`
 	Status    string            `json:"status"`
+	QRCode    string            `json:"qr_code,omitempty"`
+	DeepLink  string            `json:"deep_link,omitempty"`
 	Resources []RequestResource `json:"resources,omitempty"`
 	CreatedAt time.Time         `json:"created_at"`
 	UpdatedAt time.Time         `json:"updated_at"`
@@ -54,6 +62,7 @@ type CreateRequest struct {
 	Facts       []FactRequest `json:"facts"`
 	Description string        `json:"description"`
 	Callback    string        `json:"callback"`
+	OutOfBand   bool          `json:"out_of_band,omitempty"`
 }
 
 // Validate validates the CreateRequest fields.
@@ -71,10 +80,11 @@ type service struct {
 	logger  log.Logger
 	clients map[string]RequesterService
 	w       map[string]*webhook.Webhook
+	dlCodes map[string]string
 }
 
 // NewService creates a new request service.
-func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repository, logger log.Logger, clients map[string]RequesterService, ws map[string]*webhook.Webhook) Service {
+func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repository, logger log.Logger, clients map[string]RequesterService, ws map[string]*webhook.Webhook, dlCodes map[string]string) Service {
 	return service{
 		repo,
 		fRepo,
@@ -82,6 +92,7 @@ func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repos
 		logger,
 		clients,
 		ws,
+		dlCodes,
 	}
 }
 
@@ -161,6 +172,30 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 		return Request{}, err
 	}
 
+	if req.OutOfBand {
+		r, err := s.buildSelfFactQRRequest(f)
+		if err != nil {
+			s.logger.Debug("error building Self Fact Request")
+			return Request{}, err
+		}
+		qrdata, err := s.clients[appID].GenerateQRCode(r)
+		if err != nil {
+			s.logger.Debug("error generating QR Code")
+			return Request{}, err
+		}
+		link := ""
+		dlr, err := s.buildSelfFactDLRequest(f, appID)
+		if err == nil {
+			link, err = s.clients[appID].GenerateDeepLink(dlr)
+		}
+
+		persisted, err := s.Get(ctx, appID, id)
+		persisted.QRCode = b64.StdEncoding.EncodeToString(qrdata)
+		persisted.DeepLink = link
+
+		return persisted, err
+	}
+
 	// Send the message to the connection.
 	go s.sendRequest(f, appID, selfID)
 
@@ -194,7 +229,7 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 		// Save the received facts.
 		if req.Type == "fact" || req.Type == "auth" {
 
-			s.createFacts(selfID, req, resp.Facts)
+			s.CreateFactsFromResponse(selfID, req, resp.Facts)
 		}
 		s.markRequestAs(req.ID, "responded")
 	}
@@ -251,6 +286,78 @@ func (s service) buildSelfFactRequest(selfID string, req entity.Request) (*selff
 	return r, nil
 }
 
+// buildSelfFactQRRequest builds a fact request from a given entity.Request
+func (s service) buildSelfFactQRRequest(req entity.Request) (*selffact.QRFactRequest, error) {
+	var incomingFacts []entity.RequestFacts
+	err := json.Unmarshal(req.Facts, &incomingFacts)
+	if err != nil {
+		s.logger.Errorf("failed processing response: %v", err)
+		return nil, err
+	}
+
+	facts := make([]selffact.Fact, len(incomingFacts))
+	for i, f := range incomingFacts {
+		facts[i] = selffact.Fact{
+			Fact:    f.Name,
+			Sources: f.Sources,
+		}
+	}
+
+	r := &selffact.QRFactRequest{
+		ConversationID: req.ID,
+		Description:    req.Description,
+		Facts:          facts,
+		Expiry:         time.Minute * 5,
+		QRConfig: selffact.QRConfig{
+			Size:            400,       // this is optional/defaulted
+			BackgroundColor: "#FFFFFF", // this is optional/defaulted
+			ForegroundColor: "#000000", // this is optional/defaulted
+		},
+	}
+
+	if req.Auth {
+		r.Auth = true
+	}
+
+	return r, nil
+}
+
+// buildSelfFactQRRequest builds a fact request from a given entity.Request
+func (s service) buildSelfFactDLRequest(req entity.Request, appID string) (*selffact.DeepLinkFactRequest, error) {
+	if _, ok := s.dlCodes[appID]; !ok || s.dlCodes[appID] == "" {
+		return nil, errors.New("dl code not configured")
+	}
+
+	var incomingFacts []entity.RequestFacts
+	err := json.Unmarshal(req.Facts, &incomingFacts)
+	if err != nil {
+		s.logger.Errorf("failed processing response: %v", err)
+		return nil, err
+	}
+
+	facts := make([]selffact.Fact, len(incomingFacts))
+	for i, f := range incomingFacts {
+		facts[i] = selffact.Fact{
+			Fact:    f.Name,
+			Sources: f.Sources,
+		}
+	}
+
+	r := &selffact.DeepLinkFactRequest{
+		Description: req.Description,
+		Facts:       facts,
+		Callback:    s.dlCodes[appID],
+		Expiry:      time.Minute * 5,
+	}
+
+	if req.Auth {
+		r.Auth = true
+	}
+	r.ConversationID = uuid.New().String()
+
+	return r, nil
+}
+
 func (s service) markRequestAs(id, status string) {
 	err := s.repo.SetStatus(context.Background(), id, status)
 	if err != nil {
@@ -258,7 +365,8 @@ func (s service) markRequestAs(id, status string) {
 	}
 }
 
-func (s service) createFacts(selfID string, req entity.Request, facts []selffact.Fact) {
+func (s service) CreateFactsFromResponse(selfID string, req entity.Request, facts []selffact.Fact) []entity.Fact {
+	output := []entity.Fact{}
 	for _, receivedFact := range facts {
 		// Create the received fact.
 		id := entity.GenerateID()
@@ -287,7 +395,9 @@ func (s service) createFacts(selfID string, req entity.Request, facts []selffact
 		}
 
 		s.createAttestations(id, receivedFact)
+		output = append(output, f)
 	}
+	return output
 }
 
 func (s service) createAttestations(id string, fact selffact.Fact) {
