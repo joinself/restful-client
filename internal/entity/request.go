@@ -17,7 +17,7 @@ type RequestFacts struct {
 type Request struct {
 	ID           string    `json:"id"`
 	Type         string    `json:"typ"`
-	ConnectionID int       `json:"-"`
+	ConnectionID *int      `json:"-"`
 	Facts        []byte    `json:"facts"`
 	Description  string    `json:"description"`
 	Auth         bool      `json:"auth,omitempty"`

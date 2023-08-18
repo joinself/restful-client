@@ -64,6 +64,6 @@ func (m *FactRepositoryMock) SetStatus(ctx context.Context, id string, status st
 	return nil
 }
 
-func (r FactRepositoryMock) FindByRequestID(ctx context.Context, connectionID int, requestID string) ([]entity.Fact, error) {
+func (r FactRepositoryMock) FindByRequestID(ctx context.Context, connectionID *int, requestID string) ([]entity.Fact, error) {
 	return []entity.Fact{}, nil
 }

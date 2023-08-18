@@ -1,0 +1,2 @@
+ALTER TABLE request
+ALTER COLUMN connection_id SET NOT NULL;

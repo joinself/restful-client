@@ -22,13 +22,13 @@ func (m RequestServiceMock) Get(ctx context.Context, appID, id string) (request.
 	return request.Request{}, sql.ErrNoRows
 }
 
-func (m *RequestServiceMock) Create(ctx context.Context, appID, selfID string, connection int, input request.CreateRequest) (request.Request, error) {
+func (m *RequestServiceMock) Create(ctx context.Context, appID string, connection *entity.Connection, input request.CreateRequest) (request.Request, error) {
 	r := request.Request{}
 	m.Items = append(m.Items, r)
 	return r, nil
 }
 
-func (m *RequestServiceMock) CreateFactsFromResponse(selfID string, req entity.Request, facts []selffact.Fact) []entity.Fact {
+func (m *RequestServiceMock) CreateFactsFromResponse(conn entity.Connection, req entity.Request, facts []selffact.Fact) []entity.Fact {
 	r := request.Request{}
 	m.Items = append(m.Items, r)
 	return nil
