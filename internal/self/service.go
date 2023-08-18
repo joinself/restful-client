@@ -145,7 +145,7 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 	req, err := s.rRepo.Get(context.Background(), resp.CID)
 	if err != nil {
 		req = entity.Request{
-			ConnectionID: conn.ID,
+			ConnectionID: &conn.ID,
 		}
 	} else {
 		req.Status = resp.Status
@@ -156,7 +156,7 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 			return err
 		}
 	}
-	createdFacts := s.rService.CreateFactsFromResponse(iss, req, facts)
+	createdFacts := s.rService.CreateFactsFromResponse(conn, req, facts)
 	// Return the created facts entity URI.
 	for i, _ := range createdFacts {
 		createdFacts[i].URL = createdFacts[i].URI(s.selfID)

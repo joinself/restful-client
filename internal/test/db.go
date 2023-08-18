@@ -93,6 +93,6 @@ func CreateRequest(ctx context.Context, db *dbcontext.DB, id string, connectionI
 
 	return db.With(ctx).Model(&entity.Request{
 		ID:           id,
-		ConnectionID: connectionID,
+		ConnectionID: &connectionID,
 	}).Insert()
 }

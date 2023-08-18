@@ -22,8 +22,8 @@ import (
 // Service encapsulates usecase logic for requests.
 type Service interface {
 	Get(ctx context.Context, appID, id string) (Request, error)
-	Create(ctx context.Context, appID, selfID string, connection int, input CreateRequest) (Request, error)
-	CreateFactsFromResponse(selfID string, req entity.Request, facts []selffact.Fact) []entity.Fact
+	Create(ctx context.Context, appID string, conn *entity.Connection, input CreateRequest) (Request, error)
+	CreateFactsFromResponse(conn entity.Connection, req entity.Request, facts []selffact.Fact) []entity.Fact
 }
 
 // RequesterService service to manage sending and receiving request requests
@@ -62,6 +62,7 @@ type CreateRequest struct {
 	Facts       []FactRequest `json:"facts"`
 	Description string        `json:"description"`
 	Callback    string        `json:"callback"`
+	SelfID      string        `json:"connection_self_id"`
 	OutOfBand   bool          `json:"out_of_band,omitempty"`
 }
 
@@ -132,7 +133,7 @@ func (s service) Get(ctx context.Context, appID, id string) (Request, error) {
 }
 
 // Create creates a new request.
-func (s service) Create(ctx context.Context, appID, selfID string, connection int, req CreateRequest) (Request, error) {
+func (s service) Create(ctx context.Context, appID string, connection *entity.Connection, req CreateRequest) (Request, error) {
 	if err := req.Validate(); err != nil {
 		return Request{}, err
 	}
@@ -152,15 +153,17 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 	}
 
 	f := entity.Request{
-		ID:           id,
-		ConnectionID: connection,
-		Type:         req.Type,
-		Facts:        factsBody,
-		Status:       "requested",
-		Callback:     req.Callback,
-		Description:  req.Description,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ID:          id,
+		Type:        req.Type,
+		Facts:       factsBody,
+		Status:      "requested",
+		Callback:    req.Callback,
+		Description: req.Description,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	if connection != nil && connection.ID != 0 {
+		f.ConnectionID = &connection.ID
 	}
 
 	if req.Type == "auth" {
@@ -197,7 +200,9 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 	}
 
 	// Send the message to the connection.
-	go s.sendRequest(f, appID, selfID)
+	if connection != nil {
+		go s.sendRequest(f, appID, connection.SelfID)
+	}
 
 	return s.Get(ctx, appID, id)
 }
@@ -228,8 +233,11 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 	} else {
 		// Save the received facts.
 		if req.Type == "fact" || req.Type == "auth" {
-
-			s.CreateFactsFromResponse(selfID, req, resp.Facts)
+			conn := entity.Connection{
+				ID:     *req.ConnectionID,
+				SelfID: selfID,
+			}
+			s.CreateFactsFromResponse(conn, req, resp.Facts)
 		}
 		s.markRequestAs(req.ID, "responded")
 	}
@@ -365,7 +373,7 @@ func (s service) markRequestAs(id, status string) {
 	}
 }
 
-func (s service) CreateFactsFromResponse(selfID string, req entity.Request, facts []selffact.Fact) []entity.Fact {
+func (s service) CreateFactsFromResponse(conn entity.Connection, req entity.Request, facts []selffact.Fact) []entity.Fact {
 	output := []entity.Fact{}
 	for _, receivedFact := range facts {
 		// Create the received fact.
@@ -379,9 +387,9 @@ func (s service) CreateFactsFromResponse(selfID string, req entity.Request, fact
 
 		f := entity.Fact{
 			ID:           id,
-			ConnectionID: req.ConnectionID,
+			ConnectionID: conn.ID,
 			RequestID:    req.ID,
-			ISS:          selfID,
+			ISS:          conn.SelfID,
 			Status:       entity.STATUS_ACCEPTED,
 			Fact:         receivedFact.Fact,
 			Source:       source,

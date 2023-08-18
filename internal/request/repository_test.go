@@ -28,7 +28,7 @@ func TestRepository(t *testing.T) {
 
 	// create
 	req := entity.Request{
-		ConnectionID: connection,
+		ConnectionID: &connection,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -38,7 +38,7 @@ func TestRepository(t *testing.T) {
 	// get
 	message, err := repo.Get(ctx, req.ID)
 	assert.Nil(t, err)
-	assert.Equal(t, connection, message.ConnectionID)
+	assert.Equal(t, connection, *message.ConnectionID)
 
 	// get unexisting
 	req, err = repo.Get(ctx, "unexisting")
