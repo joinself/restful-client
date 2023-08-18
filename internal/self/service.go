@@ -147,6 +147,14 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 		req = entity.Request{
 			ConnectionID: conn.ID,
 		}
+	} else {
+		req.Status = resp.Status
+		req.UpdatedAt = time.Now()
+		err = s.rRepo.Update(context.Background(), req)
+		if err != nil {
+			s.logger.With(context.Background(), "self").Info("error updating request " + err.Error())
+			return err
+		}
 	}
 	createdFacts := s.rService.CreateFactsFromResponse(iss, req, facts)
 	// Return the created facts entity URI.

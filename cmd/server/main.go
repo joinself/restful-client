@@ -72,7 +72,7 @@ func main() {
 }
 
 // buildHandler sets up the HTTP routing and builds an HTTP handler.
-//	@title			Echo Swagger Example API
+//	@title			Joinself restful-client API
 //	@version		1.0
 //	@description	This is the api for Joinself restful client.
 //	@termsOfService	http://swagger.io/terms/
@@ -100,6 +100,13 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	/*
+		// TODO: move this to an environment variable.
+		e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+			AllowOrigins: []string{"*"},
+			AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+		}))
+	*/
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "method=${method}, uri=${uri}, status=${status}\n",
 	}))
