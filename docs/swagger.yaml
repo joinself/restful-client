@@ -227,6 +227,8 @@ definitions:
     properties:
       callback:
         type: string
+      connection_self_id:
+        type: string
       description:
         type: string
       facts:
@@ -290,7 +292,7 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: Echo Swagger Example API
+  title: Joinself restful-client API
   version: "1.0"
 paths:
   /apps:
@@ -653,73 +655,6 @@ paths:
       summary: Sends a system notification.
       tags:
       - notifications
-  /apps/{app_id}/connections/{connection_id}/requests:
-    post:
-      consumes:
-      - application/json
-      description: Sends a request request to the specified self user.
-      parameters:
-      - description: App id
-        in: path
-        name: app_id
-        required: true
-        type: string
-      - description: Connection id
-        in: path
-        name: connection_id
-        required: true
-        type: string
-      - description: query params
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.CreateRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/request.Request'
-      security:
-      - BearerAuth: []
-      summary: Sends a request request.
-      tags:
-      - requests
-  /apps/{app_id}/connections/{connection_id}/requests/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Get request details by request request id.
-      parameters:
-      - description: App id
-        in: path
-        name: app_id
-        required: true
-        type: string
-      - description: Connection id
-        in: path
-        name: connection_id
-        required: true
-        type: string
-      - description: Request request id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/request.Request'
-      security:
-      - BearerAuth: []
-      summary: Get request details.
-      tags:
-      - requests
   /apps/{app_id}/connections/{id}:
     delete:
       consumes:
@@ -815,6 +750,63 @@ paths:
       summary: Updates a connection.
       tags:
       - connections
+  /apps/{app_id}/requests:
+    post:
+      consumes:
+      - application/json
+      description: Sends a request request to the specified self user.
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/request.Request'
+      security:
+      - BearerAuth: []
+      summary: Sends a request request.
+      tags:
+      - requests
+  /apps/{app_id}/requests/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get request details by request request id.
+      parameters:
+      - description: App id
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Request request id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/request.Request'
+      security:
+      - BearerAuth: []
+      summary: Get request details.
+      tags:
+      - requests
   /healthcheck:
     get:
       consumes:

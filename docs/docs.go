@@ -584,110 +584,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/apps/{app_id}/connections/{connection_id}/requests": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Sends a request request to the specified self user.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "requests"
-                ],
-                "summary": "Sends a request request.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "App id",
-                        "name": "app_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Connection id",
-                        "name": "connection_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "query params",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.CreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/request.Request"
-                        }
-                    }
-                }
-            }
-        },
-        "/apps/{app_id}/connections/{connection_id}/requests/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get request details by request request id.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "requests"
-                ],
-                "summary": "Get request details.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "App id",
-                        "name": "app_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Connection id",
-                        "name": "connection_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Request request id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/request.Request"
-                        }
-                    }
-                }
-            }
-        },
         "/apps/{app_id}/connections/{id}": {
             "get": {
                 "security": [
@@ -829,6 +725,96 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/connection.Connection"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{app_id}/requests": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sends a request request to the specified self user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Sends a request request.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/request.Request"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{app_id}/requests/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get request details by request request id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Get request details.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Request request id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/request.Request"
                         }
                     }
                 }
@@ -1250,6 +1236,9 @@ const docTemplate = `{
                 "callback": {
                     "type": "string"
                 },
+                "connection_self_id": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -1346,7 +1335,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/v1/",
 	Schemes:          []string{"http,", "https"},
-	Title:            "Echo Swagger Example API",
+	Title:            "Joinself restful-client API",
 	Description:      "This is the api for Joinself restful client.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

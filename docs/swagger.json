@@ -6,7 +6,7 @@
     "swagger": "2.0",
     "info": {
         "description": "This is the api for Joinself restful client.",
-        "title": "Echo Swagger Example API",
+        "title": "Joinself restful-client API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
@@ -582,110 +582,6 @@
                 }
             }
         },
-        "/apps/{app_id}/connections/{connection_id}/requests": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Sends a request request to the specified self user.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "requests"
-                ],
-                "summary": "Sends a request request.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "App id",
-                        "name": "app_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Connection id",
-                        "name": "connection_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "query params",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/request.CreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/request.Request"
-                        }
-                    }
-                }
-            }
-        },
-        "/apps/{app_id}/connections/{connection_id}/requests/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get request details by request request id.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "requests"
-                ],
-                "summary": "Get request details.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "App id",
-                        "name": "app_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Connection id",
-                        "name": "connection_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Request request id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/request.Request"
-                        }
-                    }
-                }
-            }
-        },
         "/apps/{app_id}/connections/{id}": {
             "get": {
                 "security": [
@@ -827,6 +723,96 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/connection.Connection"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{app_id}/requests": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sends a request request to the specified self user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Sends a request request.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/request.Request"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{app_id}/requests/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get request details by request request id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "requests"
+                ],
+                "summary": "Get request details.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App id",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Request request id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/request.Request"
                         }
                     }
                 }
@@ -1246,6 +1232,9 @@
             "type": "object",
             "properties": {
                 "callback": {
+                    "type": "string"
+                },
+                "connection_self_id": {
                     "type": "string"
                 },
                 "description": {
