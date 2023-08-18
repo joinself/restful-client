@@ -344,16 +344,16 @@ func (s service) buildSelfFactDLRequest(req entity.Request, appID string) (*self
 	}
 
 	r := &selffact.DeepLinkFactRequest{
-		Description: req.Description,
-		Facts:       facts,
-		Callback:    s.dlCodes[appID],
-		Expiry:      time.Minute * 5,
+		ConversationID: req.ID,
+		Description:    req.Description,
+		Facts:          facts,
+		Callback:       s.dlCodes[appID],
+		Expiry:         time.Minute * 5,
 	}
 
 	if req.Auth {
 		r.Auth = true
 	}
-	r.ConversationID = uuid.New().String()
 
 	return r, nil
 }
