@@ -73,6 +73,9 @@ func (s service) Send(ctx context.Context, appID, selfID string, data SystemNoti
 	for _, device := range devices {
 		recipients = append(recipients, selfID+":"+string(device))
 	}
+	if len(recipients) == 0 {
+		return nil
+	}
 
 	err = s.clients[appID].MessagingService().Send(recipients, cid, body)
 	if err != nil {
