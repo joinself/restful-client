@@ -649,7 +649,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: ""
       security:
       - BearerAuth: []
       summary: Sends a system notification.

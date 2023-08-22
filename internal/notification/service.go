@@ -16,15 +16,15 @@ type Service interface {
 
 // SystemNotification
 type SystemNotificationData struct {
-	Notification struct {
+	Notification *struct {
 		Type    string `json:"type"`
 		Title   string `json:"title"`
 		Message string `json:"message"`
-	} `json:"notification"`
-	Metadata struct {
+	} `json:"notification,omitempty"`
+	Metadata *struct {
 		Type    string `json:"type"`
 		Payload string `json:"payload"`
-	} `json:"metadata"`
+	} `json:"metadata,omitempty"`
 }
 
 // Validate validates the SystemNotification fields.
