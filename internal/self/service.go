@@ -168,7 +168,9 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 		URI:  "",
 		Data: entity.Response{
 			Facts: createdFacts,
-		}})
+		},
+		Payload: payload,
+	})
 }
 
 func (s *service) processConnectionResp(payload map[string]interface{}) error {

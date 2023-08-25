@@ -28,6 +28,8 @@ type WebhookPayload struct {
 	URI string `json:"uri"`
 	// Data the object to be sent.
 	Data interface{} `json:"data"`
+	// Payload the response payload received.
+	Payload map[string]interface{} `json:"payload,omitempty"`
 }
 
 type Poster interface {
