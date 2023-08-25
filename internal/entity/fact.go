@@ -15,7 +15,7 @@ const (
 type Fact struct {
 	ID           string    `json:"id"`
 	ConnectionID int       `json:"-"`
-	RequestID    string    `json:"request_id"`
+	RequestID    *string   `json:"request_id"`
 	ISS          string    `json:"iss"`
 	CID          string    `json:"cid,omitempty"`
 	JTI          string    `json:"jti,omitempty"`

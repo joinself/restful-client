@@ -1,0 +1,2 @@
+ALTER TABLE fact
+ALTER COLUMN request_id DROP NOT NULL;

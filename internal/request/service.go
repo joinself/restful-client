@@ -388,7 +388,6 @@ func (s service) CreateFactsFromResponse(conn entity.Connection, req entity.Requ
 		f := entity.Fact{
 			ID:           id,
 			ConnectionID: conn.ID,
-			RequestID:    req.ID,
 			ISS:          conn.SelfID,
 			Status:       entity.STATUS_ACCEPTED,
 			Fact:         receivedFact.Fact,
@@ -396,6 +395,10 @@ func (s service) CreateFactsFromResponse(conn entity.Connection, req entity.Requ
 			CreatedAt:    now,
 			UpdatedAt:    now,
 		}
+		if len(req.ID) > 0 {
+			f.RequestID = &req.ID
+		}
+
 		err := s.fRepo.Create(context.Background(), f)
 		if err != nil {
 			s.logger.Errorf("failed creating fact: %v", err)

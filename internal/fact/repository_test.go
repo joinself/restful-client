@@ -38,7 +38,7 @@ func TestRepository(t *testing.T) {
 	err = repo.Create(ctx, entity.Fact{
 		ID:           "test1",
 		ConnectionID: connection,
-		RequestID:    request,
+		RequestID:    &request,
 		Body:         "fact1",
 		IAT:          time.Now(),
 		CreatedAt:    time.Now(),
@@ -61,7 +61,7 @@ func TestRepository(t *testing.T) {
 	err = repo.Update(ctx, entity.Fact{
 		ID:           "test1",
 		ConnectionID: connection,
-		RequestID:    request,
+		RequestID:    &request,
 		Body:         "fact1 updated",
 		IAT:          time.Now(),
 		CreatedAt:    time.Now(),
