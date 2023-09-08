@@ -218,13 +218,16 @@ func setupSelfClients(cfg *config.Config) (map[string]*selfsdk.Client, error) {
 	clients := make(map[string]*selfsdk.Client, len(cfg.SelfApps))
 
 	for _, c := range cfg.SelfApps {
-		client, err := selfsdk.New(selfsdk.Config{
+		selfConfig := selfsdk.Config{
 			SelfAppID:           c.SelfAppID,
 			SelfAppDeviceSecret: c.SelfAppDeviceSecret,
 			StorageKey:          c.SelfStorageKey,
 			StorageDir:          c.SelfStorageDir,
-			Environment:         c.SelfEnv,
-		})
+		}
+		if c.SelfEnv != "production" {
+			selfConfig.Environment = c.SelfEnv
+		}
+		client, err := selfsdk.New(selfConfig)
 		if err != nil {
 			fmt.Println(err)
 			return nil, err
