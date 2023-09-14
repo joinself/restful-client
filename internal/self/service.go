@@ -84,9 +84,14 @@ func NewService(c Config) Service {
 // Run executes the background self listerners.
 func (s *service) Run() {
 	s.logger.With(context.Background()).Info("starting self client")
-	err := s.client.Start()
-	if err != nil {
+	for {
+		err := s.client.Start()
+		if err == nil {
+			break
+		}
+
 		s.logger.With(context.Background()).Error(err.Error())
+		time.Sleep(time.Second * 5)
 	}
 }
 
