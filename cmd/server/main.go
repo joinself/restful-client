@@ -225,7 +225,12 @@ func setupSelfClients(cfg *config.Config) (map[string]*selfsdk.Client, error) {
 			StorageDir:          c.SelfStorageDir,
 		}
 		if c.SelfEnv != "production" {
-			selfConfig.Environment = c.SelfEnv
+			if c.SelfEnv == "development" {
+				selfConfig.APIURL = c.SelfAPIURL
+				selfConfig.MessagingURL = c.SelfMessagingURL
+			} else {
+				selfConfig.Environment = c.SelfEnv
+			}
 		}
 		client, err := selfsdk.New(selfConfig)
 		if err != nil {

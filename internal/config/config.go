@@ -21,6 +21,8 @@ type SelfAppConfig struct {
 	SelfStorageKey      string `yaml:"self_storage_key"`
 	SelfStorageDir      string `yaml:"self_storage_dir"`
 	SelfEnv             string `yaml:"self_env"`
+	SelfAPIURL          string `yaml:"self_api_url"`
+	SelfMessagingURL    string `yaml:"self_messaging_url"`
 	CallbackURL         string `yaml:"message_notification_url"`
 	DLCode              string `yaml:"dl_code" env:"DL_CODE"`
 }
