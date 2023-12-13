@@ -8,6 +8,7 @@ import (
 	lg "log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -54,7 +55,13 @@ func main() {
 	}
 
 	// connect to the database
-	db, err := dbx.MustOpen("postgres", cfg.DSN)
+	err = os.MkdirAll(cfg.StorageDir, 0744)
+	if err != nil {
+		logger.Error(err)
+		os.Exit(-1)
+	}
+
+	db, err := dbx.MustOpen("sqlite3", filepath.Join(cfg.StorageDir, "client.db"))
 	if err != nil {
 		logger.Error(err)
 		os.Exit(-1)

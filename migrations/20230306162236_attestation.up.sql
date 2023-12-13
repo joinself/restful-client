@@ -1,12 +1,10 @@
 CREATE TABLE attestation
 (
-    id              VARCHAR NOT NULL UNIQUE DEFAULT gen_random_uuid(),
-    fact_id         VARCHAR,
+    id              TEXT NOT NULL UNIQUE DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-a' || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
+    fact_id         TEXT,
     body            TEXT,
     value           TEXT,
-    created_at      TIMESTAMP NOT NULL,
-    updated_at      TIMESTAMP NOT NULL,
-    CONSTRAINT fk_fact
-      FOREIGN KEY(fact_id) 
-	  REFERENCES fact(id)
+    created_at      DATETIME NOT NULL,
+    updated_at      DATETIME NOT NULL,
+    FOREIGN KEY(fact_id) REFERENCES fact(id)
 );

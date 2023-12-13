@@ -1,2 +1,0 @@
-ALTER TABLE request
-ALTER COLUMN connection_id DROP NOT NULL;

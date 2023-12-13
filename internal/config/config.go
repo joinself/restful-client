@@ -42,6 +42,7 @@ type Config struct {
 	User                   string          `yaml:"user" env:"USER"`
 	Password               string          `yaml:"password" env:"PASSWORD"`
 	ServeDocs              string          `yaml:"serve_docs" env:"SERVE_DOCS"`
+	StorageDir             string          `yaml:"storage_dir" env:"STORAGE_DIR"`
 }
 
 // Validate validates the application configuration.
