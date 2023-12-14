@@ -20,7 +20,7 @@ import (
 
 var db *dbcontext.DB
 
-const CONFIG_RELATIVE_FILE = "../../config/test.yml"
+const CONFIG_RELATIVE_FILE = "../../config/local.yml"
 
 // DB returns the database connection for testing purpose.
 func DB(t *testing.T) *dbcontext.DB {

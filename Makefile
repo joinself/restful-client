@@ -5,7 +5,7 @@ LDFLAGS := -ldflags "-X main.Version=${VERSION}"
 
 CONFIG_FILE ?= ./config/local.yml
 APP_DSN ?= $(shell sed -n 's/^dsn:[[:space:]]*"\(.*\)"/\1/p' $(CONFIG_FILE))
-MIGRATE := migrate -path=/migrations/ -database "$(APP_DSN)"
+MIGRATE := migrate -path=./migrations/ -database "$(APP_DSN)"
 
 PID_FILE := './.pid'
 FSWATCH_FILE := './fswatch.cfg'
@@ -63,22 +63,11 @@ clean: ## remove temporary files
 version: ## display the version of the API server
 	@echo $(VERSION)
 
-.PHONY: db-start
-db-start: ## start the database server
-	@mkdir -p testdata/postgres
-	docker run --rm --name postgres -v $(shell pwd)/testdata:/testdata \
-		-v $(shell pwd)/testdata/postgres:/var/lib/postgresql/data \
-		-e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=go_restful -d -p 5432:5432 postgres
-
-.PHONY: db-stop
-db-stop: ## stop the database server
-	docker stop postgres
-
 .PHONY: testdata
 testdata: ## populate the database with test data
 	make migrate-reset
 	@echo "Populating test data..."
-	@docker exec -it postgres psql "$(APP_DSN)" -f /testdata/testdata.sql
+	@sqlite3 APP_DSN < /testdata/testdata.sql
 
 .PHONY: lint
 lint: ## run golint on all Go package
@@ -94,7 +83,7 @@ fmt: ## run "go fmt" on all Go packages
 .PHONY: migrate
 migrate: ## run all new database migrations
 	@echo "Running all new database migrations..."
-	@echo " -> $(MIGRATE)"
+	@echo " -> $(MIGRATE) up"
 	@$(MIGRATE) up
 
 .PHONY: migrate-down

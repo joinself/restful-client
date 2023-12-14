@@ -31,9 +31,6 @@ git clone https://github.com/joinself/restful-client.git
 
 cd restful-client
 
-# start a PostgreSQL database server in a Docker container
-make db-start
-
 # seed the database with some test data
 make testdata
 
