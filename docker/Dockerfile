@@ -4,8 +4,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     curl -Lo /tmp/self-omemo.deb https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo_0.5.0_amd64.deb && \
     apt-get install -y --no-install-recommends /tmp/self-omemo.deb && \
-    curl -Lo /tmp/migrate.tar.gz https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-amd64.tar.gz && \
-    tar zxf /tmp/migrate.tar.gz -C /tmp
+    curl -Lo /tmp/migrate.tar.gz https://download.joinself.com/golang-migrate/migrate-sqlite3-4.16.2.tar.gz && \
+    tar -zxf /tmp/migrate.tar.gz -C /tmp
 
 WORKDIR /build
 
