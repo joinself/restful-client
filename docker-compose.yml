@@ -1,15 +1,23 @@
-version: '2.1'
 services:
-  server:
-    image: server
-    platform: linux/x86_64
+  restful-client:
+    #image: ghcr.io/joinself/restful-client:latest
     build:
-      context: .
-      dockerfile: cmd/server/Dockerfile
+      dockerfile: docker/Dockerfile
+    environment:
+      RESTFUL_CLIENT_JWT_SIGNING_KEY: 
+      RESTFUL_CLIENT_USER: self
+      RESTFUL_CLIENT_PASSWORD: secret
+      RESTFUL_CLIENT_STORAGE_DIR: /data
+      RESTFUL_CLIENT_STORAGE_KEY: secret
+      RESTFUL_CLIENT_APP_ID:
+      RESTFUL_CLIENT_APP_DEVICE_SECRET:
+      RESTFUL_CLIENT_APP_ENV: review
+      RESTFUL_CLIENT_APP_MESSAGE_NOTIFICATION_URL:
     ports:
       - "8080:8080"
     volumes:
-      - server:/data
+      - restful-client:/data
+    restart: unless-stopped
 
 volumes:
-  server:
+  restful-client:
