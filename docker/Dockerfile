@@ -22,8 +22,7 @@ FROM debian:bullseye-20231120-slim
 
 COPY --from=builder /build/restful-client /srv
 COPY --from=builder /build/docker/entrypoint.sh /srv
-COPY --from=builder /build/migrations /srv
+COPY --from=builder /build/migrations /srv/migrations
 COPY --from=builder /tmp/migrate /usr/local/bin
 
-ENTRYPOINT ["sh", "-c", "/srv/entrypoint.sh"]
-#ENTRYPOINT ["/srv/entrypoint.sh"]
+ENTRYPOINT ["/srv/entrypoint.sh"]
