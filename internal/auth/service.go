@@ -41,8 +41,8 @@ type service struct {
 func NewService(cfg *config.Config, logger log.Logger) Service {
 	return service{
 		cfg.JWTSigningKey,
-		cfg.JWTExpiration,
-		cfg.RefreshTokenExpiration,
+		cfg.JWTExpirationTimeInHours,
+		cfg.RefreshTokenExpirationInHours,
 		cfg.User,
 		cfg.Password,
 		logger}
