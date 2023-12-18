@@ -20,6 +20,10 @@ RUN go build -o restful-client /build/cmd/server
 
 FROM debian:bullseye-20231120-slim
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /build/restful-client /srv
 COPY --from=builder /build/docker/entrypoint.sh /srv
 COPY --from=builder /build/migrations /srv/migrations
