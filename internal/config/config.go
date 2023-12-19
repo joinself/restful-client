@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	defaultServerPort         = 8080
-	defaultJWTExpirationHours = 72
+	defaultServerPort                    = 8080
+	defaultJWTExpirationHours            = 72
+	defaultRefreshTokenExpirationInHours = 128
 )
 
 // Self config object
@@ -29,56 +30,94 @@ type SelfAppConfig struct {
 
 // Config represents an application configuration.
 type Config struct {
-	// the server port. Defaults to 8080
-	ServerPort int `yaml:"server_port" env:"SERVER_PORT"`
-	// the data source name (DSN) for connecting to the database. required.
-	DSN string `yaml:"dsn" env:"DSN,secret"`
-	// JWT signing key. required.
-	JWTSigningKey string `yaml:"jwt_signing_key" env:"JWT_SIGNING_KEY,secret"`
-	// JWT expiration in hours. Defaults to 72 hours (3 days)
-	JWTExpiration          int             `yaml:"jwt_expiration" env:"JWT_EXPIRATION"`
-	RefreshTokenExpiration int             `yaml:"refresh_token_expiration" env:"REFRESH_TOKEN_EXPIRATION"`
-	SelfApps               []SelfAppConfig `yaml:"self_apps" env:"SELF_APPS"`
-	User                   string          `yaml:"user" env:"USER"`
-	Password               string          `yaml:"password" env:"PASSWORD"`
-	ServeDocs              string          `yaml:"serve_docs" env:"SERVE_DOCS"`
-	StorageDir             string          `yaml:"storage_dir" env:"STORAGE_DIR"`
+	// File Filesystem YAML based configuration.
+	SelfApps []SelfAppConfig `yaml:"self_apps"`
+
+	// OPTIONAL based configuration
+	// RefreshTokenExpiration JWT refresh expiration in hours.
+	RefreshTokenExpirationInHours int `env:"REFRESH_TOKEN_EXPIRATION"`
+	// JWTExpiration JWT expiration in hours.
+	JWTExpirationTimeInHours int `env:"JWT_EXPIRATION_TIME_IN_HOURS"`
+	// ServeDocs string _(true|false)_ defining if docs should be served from the localhost on "/docs" path.
+	ServeDocs string `env:"SERVE_DOCS"`
+	// ServerPort the server port. Defaults to 8080
+	ServerPort int `env:"SERVER_PORT"`
+	// DefaultAppCallbackURL the default callback url for any incoming messages.
+	DefaultAppCallbackURL string `env:"APP_MESSAGE_NOTIFICATION_URL"`
+	ClientConfigFile      string `env:"CONFIG_FILE"`
+
+	// REQUIRED ENV based configuration
+	// JWTSigningKey The signing key used to build the jwt tokens shared with the api clients.
+	JWTSigningKey string `env:"JWT_SIGNING_KEY"`
+	// User The default user used on the authentication endpoints.
+	User string `env:"USER"`
+	// Password The default password used on the authentication endpoints.
+	Password string `env:"PASSWORD"`
+	// StorageDir The default user used on the authentication endpoints.
+	StorageDir string `env:"STORAGE_DIR"`
+	// StorageKey The default storage key used to encrypt sessions.
+	StorageKey string `env:"STORAGE_KEY"`
+	// DefaultAppID the default self app identifier.
+	DefaultAppID string `env:"APP_ID"`
+	// DefaultAppSecret the default self app secret.
+	DefaultAppSecret string `env:"APP_SECRET"`
+	// DefaultAppEnv the default self app environment.
+	DefaultAppEnv string `env:"APP_ENV"`
 }
 
 // Validate validates the application configuration.
 func (c Config) Validate() error {
 	return validation.ValidateStruct(&c,
-		validation.Field(&c.DSN, validation.Required),
 		validation.Field(&c.JWTSigningKey, validation.Required),
+		validation.Field(&c.User, validation.Required),
+		validation.Field(&c.Password, validation.Required),
+		validation.Field(&c.StorageDir, validation.Required),
+		validation.Field(&c.StorageKey, validation.Required),
+		validation.Field(&c.DefaultAppID, validation.Required),
+		validation.Field(&c.DefaultAppEnv, validation.Required),
 	)
 }
 
 // Load returns an application configuration which is populated from the given configuration file and environment variables.
-func Load(file string, logger log.Logger) (*Config, error) {
+func Load(logger log.Logger) (*Config, error) {
 	// default config
 	c := Config{
-		ServerPort:    defaultServerPort,
-		JWTExpiration: defaultJWTExpirationHours,
-	}
-
-	// load from YAML config file
-	bytes, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, err
-	}
-	if err = yaml.Unmarshal(bytes, &c); err != nil {
-		return nil, err
+		RefreshTokenExpirationInHours: defaultRefreshTokenExpirationInHours,
+		JWTExpirationTimeInHours:      defaultJWTExpirationHours,
+		ServeDocs:                     "false",
+		ServerPort:                    defaultServerPort,
 	}
 
 	// load from environment variables prefixed with "APP_"
-	if err = env.New("APP_", logger.Infof).Load(&c); err != nil {
+	if err := env.New("RESTFUL_CLIENT_", logger.Infof).Load(&c); err != nil {
 		return nil, err
+	}
+
+	if c.DefaultAppID != "" {
+		defaultApp := SelfAppConfig{
+			SelfAppID:           c.DefaultAppID,
+			SelfAppDeviceSecret: c.DefaultAppSecret,
+			SelfStorageKey:      c.StorageKey,
+			SelfStorageDir:      c.StorageDir,
+			SelfEnv:             c.DefaultAppEnv,
+			CallbackURL:         c.DefaultAppCallbackURL,
+		}
+		c.SelfApps = []SelfAppConfig{defaultApp}
+	}
+
+	if c.ClientConfigFile != "" {
+		// Load extra apps
+		// TODO: Load extra apps from the provided yaml config.
+		bytes, err := ioutil.ReadFile(c.ClientConfigFile)
+		if err != nil {
+			return nil, err
+		}
+		if err = yaml.Unmarshal(bytes, &c); err != nil {
+			return nil, err
+		}
+
 	}
 
 	// validation
-	if err = c.Validate(); err != nil {
-		return nil, err
-	}
-
-	return &c, err
+	return &c, c.Validate()
 }
