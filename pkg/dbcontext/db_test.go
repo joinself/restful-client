@@ -12,8 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const DSN = "sqlite3:///Users/adriancidrejugo/self/self-storage/client.db"
-
 func TestNew(t *testing.T) {
 	runDBTest(t, func(db *dbx.DB) {
 		dbc := New(db)
@@ -105,8 +103,6 @@ func TestDB_TransactionHandler(t *testing.T) {
 */
 
 func runDBTest(t *testing.T, f func(db *dbx.DB)) {
-	// TODO: Get this stuff from an env var...
-	//storageDir := "/Users/adriancidrejugo/self/self-storage/"
 	storageDir := os.Getenv("RESTFUL_CLIENT_STORAGE_DIR") + "/"
 	println("storageDir: ", storageDir)
 	db, err := dbx.MustOpen("sqlite3", filepath.Join(storageDir, "client.db"))

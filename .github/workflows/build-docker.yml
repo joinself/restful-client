@@ -46,7 +46,7 @@ jobs:
             git tag -a ${version} -m "${version}"
             git push origin ${version}
 
-            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f cmd/server/Dockerfile .
+            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f docker/Dockerfile .
             docker tag ${CONTAINER_REGISTRY_URL}:${version} ${CONTAINER_REGISTRY_URL}:latest
             echo "${GH_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker push ${CONTAINER_REGISTRY_URL}:${version}
@@ -63,7 +63,7 @@ jobs:
 
             slack-release-notification -v ${version}
           else
-            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f cmd/server/Dockerfile .
+            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f docker/Dockerfile .
           fi
       - name: Failure notification
         if: ${{ github.ref == 'refs/heads/main' && failure() }}
