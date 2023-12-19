@@ -12,7 +12,14 @@ jobs:
       - name: Test
         shell: bash
         env:
+          RESTFUL_CLIENT_JWT_SIGNING_KEY: secret
+          RESTFUL_CLIENT_USER: self
+          RESTFUL_CLIENT_PASSWORD: secret
           RESTFUL_CLIENT_STORAGE_DIR: /tmp
+          RESTFUL_CLIENT_STORAGE_KEY: secret
+          RESTFUL_CLIENT_APP_ID: c4f81d86-9dac-40fd-9830-13c66a0b2345
+          RESTFUL_CLIENT_APP_SECRET: sk_1:56qJGhYCJmTHsYChCp3sPSjmiGlN2yG0KakYDquMAD0
+          RESTFUL_CLIENT_APP_ENV: review
         run: |
           . ${GITHUB_WORKSPACE}/.ci/env
           curl -Lo /tmp/go.tar.gz https://go.dev/dl/go1.19.1.linux-amd64.tar.gz
