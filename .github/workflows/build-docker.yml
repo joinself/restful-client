@@ -47,8 +47,10 @@ jobs:
             git push origin ${version}
 
             docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f cmd/server/Dockerfile .
+            docker tag ${CONTAINER_REGISTRY_URL}:${version} ${CONTAINER_REGISTRY_URL}:latest
             echo "${GH_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker push ${CONTAINER_REGISTRY_URL}:${version}
+            docker push ${CONTAINER_REGISTRY_URL}:latest
 
             subject=$(git log -n 1 --format=%s)
             body=$(git log -n 1 --format=%b | grep -E '^\*|^-' | sed 's/^*/-/g') || true
