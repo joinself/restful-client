@@ -3,6 +3,7 @@ package dbcontext
 import (
 	"context"
 	"database/sql"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -106,7 +107,8 @@ func TestDB_TransactionHandler(t *testing.T) {
 func runDBTest(t *testing.T, f func(db *dbx.DB)) {
 	// TODO: Get this stuff from an env var...
 	//storageDir := "/Users/adriancidrejugo/self/self-storage/"
-	storageDir := "#{ENV['RESTFUL_CLIENT_STORAGE_DIR']}/"
+	storageDir := os.Getenv("RESTFUL_CLIENT_STORAGE_DIR") + "/"
+	println("storageDir: ", storageDir)
 	db, err := dbx.MustOpen("sqlite3", filepath.Join(storageDir, "client.db"))
 	if err != nil {
 		t.Error(err)
