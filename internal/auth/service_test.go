@@ -15,11 +15,11 @@ import (
 func Test_service_Authenticate(t *testing.T) {
 	logger, _ := log.NewForTest()
 	cfg := config.Config{
-		JWTSigningKey:          "test",
-		JWTExpiration:          100,
-		RefreshTokenExpiration: 100,
-		User:                   "demo",
-		Password:               "pass",
+		JWTSigningKey:                 "test",
+		JWTExpirationTimeInHours:      100,
+		RefreshTokenExpirationInHours: 100,
+		User:                          "demo",
+		Password:                      "pass",
 	}
 	s := NewService(&cfg, logger)
 	_, err := s.Login(context.Background(), "unknown", "bad")
@@ -52,11 +52,11 @@ func Test_service_GenerateJWT(t *testing.T) {
 func Test_refresh_token(t *testing.T) {
 	logger, _ := log.NewForTest()
 	cfg := config.Config{
-		JWTSigningKey:          "test",
-		JWTExpiration:          100,
-		RefreshTokenExpiration: 100,
-		User:                   "demo",
-		Password:               "pass",
+		JWTSigningKey:                 "test",
+		JWTExpirationTimeInHours:      100,
+		RefreshTokenExpirationInHours: 100,
+		User:                          "demo",
+		Password:                      "pass",
 	}
 
 	s := NewService(&cfg, logger)

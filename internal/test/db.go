@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -28,8 +27,7 @@ func DB(t *testing.T) *dbcontext.DB {
 		return db
 	}
 	logger, _ := log.NewForTest()
-	cf := fmt.Sprintf("%s/%s", getSourcePath(), CONFIG_RELATIVE_FILE)
-	cfg, err := config.Load(cf, logger)
+	cfg, err := config.Load(logger)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
