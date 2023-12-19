@@ -28,8 +28,8 @@ func DB(t *testing.T) *dbcontext.DB {
 		return db
 	}
 	logger, _ := log.NewForTest()
-	cf := fmt.Sprintf("%s/%s", getSourcePath(), CONFIG_RELATIVE_FILE)
-	cfg, err := config.Load(cf, logger)
+	//cf := fmt.Sprintf("%s/%s", getSourcePath(), CONFIG_RELATIVE_FILE)
+	cfg, err := config.Load(logger)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
