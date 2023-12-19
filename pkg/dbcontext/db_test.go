@@ -105,7 +105,8 @@ func TestDB_TransactionHandler(t *testing.T) {
 
 func runDBTest(t *testing.T, f func(db *dbx.DB)) {
 	// TODO: Get this stuff from an env var...
-	storageDir := "/Users/adriancidrejugo/self/self-storage/"
+	//storageDir := "/Users/adriancidrejugo/self/self-storage/"
+	storageDir := "#{ENV['RESTFUL_CLIENT_STORAGE_DIR']}/"
 	db, err := dbx.MustOpen("sqlite3", filepath.Join(storageDir, "client.db"))
 	if err != nil {
 		t.Error(err)
