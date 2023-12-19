@@ -4,15 +4,15 @@ services:
     build:
       dockerfile: docker/Dockerfile
     environment:
-      RESTFUL_CLIENT_JWT_SIGNING_KEY: something
+      RESTFUL_CLIENT_JWT_SIGNING_KEY: secret
       RESTFUL_CLIENT_USER: self
       RESTFUL_CLIENT_PASSWORD: secret
       RESTFUL_CLIENT_STORAGE_DIR: /data
       RESTFUL_CLIENT_STORAGE_KEY: secret
-      RESTFUL_CLIENT_APP_ID: 
-      RESTFUL_CLIENT_APP_SECRET: 
-      RESTFUL_CLIENT_APP_ENV: review
-      RESTFUL_CLIENT_APP_MESSAGE_NOTIFICATION_URL:
+      RESTFUL_CLIENT_APP_ID: c4f81d86-9dac-40fd-9830-13c66a0b2345
+      RESTFUL_CLIENT_APP_SECRET: sk_1:56qJGhYCJmTHsYChCp3sPSjmiGlN2yG0KakYDquMAD0
+      RESTFUL_CLIENT_APP_ENV: sandbox
+      RESTFUL_CLIENT_APP_MESSAGE_NOTIFICATION_URL: https://example.com
     ports:
       - "8080:8080"
     volumes:
