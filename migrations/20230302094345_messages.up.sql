@@ -1,6 +1,6 @@
 CREATE TABLE message
 (
-    id              SERIAL PRIMARY KEY,
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
     connection_id   INTEGER NOT NULL,
     iss             VARCHAR(255) DEFAULT '' NOT NULL,
     cid             VARCHAR(255) DEFAULT '' NOT NULL,

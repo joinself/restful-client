@@ -23,7 +23,7 @@ jobs:
           git config --global user.name ci
           git config --global user.email ops@joinself.com
 
-          tags=$(git tag | sort -V)
+          tags=$(git tag | sort -V | grep -E "^[0-9]*.[0-9]*.[0-9]*$")
           commit_message=$(git show -s --format=%s)
           if [[ "${tags}" == "" ]]; then
             version="0.1.0"
@@ -46,9 +46,11 @@ jobs:
             git tag -a ${version} -m "${version}"
             git push origin ${version}
 
-            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f cmd/server/Dockerfile .
+            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f docker/Dockerfile .
+            docker tag ${CONTAINER_REGISTRY_URL}:${version} ${CONTAINER_REGISTRY_URL}:latest
             echo "${GH_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker push ${CONTAINER_REGISTRY_URL}:${version}
+            docker push ${CONTAINER_REGISTRY_URL}:latest
 
             subject=$(git log -n 1 --format=%s)
             body=$(git log -n 1 --format=%b | grep -E '^\*|^-' | sed 's/^*/-/g') || true
@@ -61,7 +63,7 @@ jobs:
 
             slack-release-notification -v ${version}
           else
-            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f cmd/server/Dockerfile .
+            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f docker/Dockerfile .
           fi
       - name: Failure notification
         if: ${{ github.ref == 'refs/heads/main' && failure() }}

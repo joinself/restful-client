@@ -2,9 +2,9 @@ package test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"testing"
@@ -14,10 +14,12 @@ import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/dbcontext"
 	"github.com/joinself/restful-client/pkg/log"
-	_ "github.com/lib/pq" // initialize posgresql for test
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var db *dbcontext.DB
+
+const CONFIG_RELATIVE_FILE = "../../config/local.yml"
 
 // DB returns the database connection for testing purpose.
 func DB(t *testing.T) *dbcontext.DB {
@@ -25,13 +27,18 @@ func DB(t *testing.T) *dbcontext.DB {
 		return db
 	}
 	logger, _ := log.NewForTest()
-	cf := fmt.Sprintf("%s/../../config/%s.yml", getSourcePath(), getEnv("ENV", "local"))
-	cfg, err := config.Load(cf, logger)
+	cfg, err := config.Load(logger)
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
 	}
-	dbc, err := dbx.MustOpen("postgres", cfg.DSN)
+	err = os.MkdirAll(cfg.StorageDir, 0744)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	dbc, err := dbx.MustOpen("sqlite3", filepath.Join(cfg.StorageDir, "client.db"))
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -41,19 +48,11 @@ func DB(t *testing.T) *dbcontext.DB {
 	return db
 }
 
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
-
 // ResetTables truncates all data in the specified tables.
 func ResetTables(t *testing.T, db *dbcontext.DB, tables ...string) {
 	for _, table := range tables {
 		q := `
-			DELETE FROM ` + table + `;
-			TRUNCATE TABLE ` + table + ` CASCADE;`
+			DELETE FROM ` + table + `;`
 		_, err := db.DB().NewQuery(q).Execute()
 		if err != nil {
 			t.Error(err)

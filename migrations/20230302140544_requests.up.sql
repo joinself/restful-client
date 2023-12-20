@@ -1,14 +1,11 @@
-CREATE TABLE request
-(
-    id              VARCHAR NOT NULL UNIQUE DEFAULT gen_random_uuid(),
-    connection_id   INTEGER NOT NULL,
-    type            VARCHAR(255) NOT NULL,
-    status          VARCHAR(255) DEFAULT 'requested',
-    facts           TEXT NOT NULL,
-    auth            BOOLEAN,
-    created_at      TIMESTAMP NOT NULL,
-    updated_at      TIMESTAMP NOT NULL,
-    CONSTRAINT fk_connection
-      FOREIGN KEY(connection_id)
-	  REFERENCES connection(id)
+CREATE TABLE request (
+    id TEXT NOT NULL UNIQUE DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-a' || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
+    connection_id INTEGER,
+    type TEXT NOT NULL,
+    status TEXT DEFAULT 'requested',
+    facts TEXT, --NOT NULL,
+    auth INTEGER,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    FOREIGN KEY(connection_id) REFERENCES connection(id)
 );

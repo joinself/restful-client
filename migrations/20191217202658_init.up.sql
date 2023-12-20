@@ -1,6 +1,6 @@
 CREATE TABLE connection
 (
-    id         SERIAL PRIMARY KEY,
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
     selfid     VARCHAR NOT NULL,
     appid      VARCHAR NOT NULL,
     name       VARCHAR NOT NULL,

@@ -1,2 +1,0 @@
-ALTER TABLE fact
-ALTER COLUMN request_id SET NOT NULL;

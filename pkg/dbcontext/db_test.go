@@ -4,14 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"os"
+	"path/filepath"
 	"testing"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
-	_ "github.com/lib/pq" // initialize posgresql for test
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )
-
-const DSN = "postgres://127.0.0.1/go_restful?sslmode=disable&user=postgres&password=postgres"
 
 func TestNew(t *testing.T) {
 	runDBTest(t, func(db *dbx.DB) {
@@ -104,11 +103,9 @@ func TestDB_TransactionHandler(t *testing.T) {
 */
 
 func runDBTest(t *testing.T, f func(db *dbx.DB)) {
-	dsn, ok := os.LookupEnv("APP_DSN")
-	if !ok {
-		dsn = DSN
-	}
-	db, err := dbx.MustOpen("postgres", dsn)
+	storageDir := os.Getenv("RESTFUL_CLIENT_STORAGE_DIR") + "/"
+	println("storageDir: ", storageDir)
+	db, err := dbx.MustOpen("sqlite3", filepath.Join(storageDir, "client.db"))
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -119,7 +116,7 @@ func runDBTest(t *testing.T, f func(db *dbx.DB)) {
 
 	sqls := []string{
 		"CREATE TABLE IF NOT EXISTS dbcontexttest (id VARCHAR PRIMARY KEY, name VARCHAR)",
-		"TRUNCATE dbcontexttest",
+		"DELETE FROM dbcontexttest",
 	}
 	for _, s := range sqls {
 		_, err = db.NewQuery(s).Execute()

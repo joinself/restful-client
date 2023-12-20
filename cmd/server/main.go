@@ -8,6 +8,7 @@ import (
 	lg "log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -39,22 +40,26 @@ import (
 // Version indicates the current version of the application.
 var Version = "1.0.0"
 
-var flagConfig = flag.String("config", "./config/local.yml", "path to the config file")
-
 func main() {
 	flag.Parse()
 	// create root logger tagged with server version
 	logger := log.New().With(context.Background(), "version", Version)
 
 	// load application configurations
-	cfg, err := config.Load(*flagConfig, logger)
+	cfg, err := config.Load(logger)
 	if err != nil {
 		logger.Errorf("failed to load application configuration: %s", err)
 		os.Exit(-1)
 	}
 
 	// connect to the database
-	db, err := dbx.MustOpen("postgres", cfg.DSN)
+	err = os.MkdirAll(cfg.StorageDir, 0744)
+	if err != nil {
+		logger.Error(err)
+		os.Exit(-1)
+	}
+
+	db, err := dbx.MustOpen("sqlite3", filepath.Join(cfg.StorageDir, "client.db"))
 	if err != nil {
 		logger.Error(err)
 		os.Exit(-1)
