@@ -71,6 +71,7 @@ Database migration tool. https://github.com/golang-migrate/migrate
 git clone https://github.com/joinself/restful-client.git
 cd restful-client
 
+# Replace <SELF_APP_ID> and <SELF_APP_SECRET> with your application ID and secret key.
 export RESTFUL_CLIENT_JWT_SIGNING_KEY=secret
 export RESTFUL_CLIENT_USER=self
 export RESTFUL_CLIENT_PASSWORD=secret
