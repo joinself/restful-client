@@ -6,43 +6,86 @@ This joinself client is designed to act as a proxy between your app and The Self
 
 ## Getting Started
 
-### Docker compose
+There are a few different ways to run this service depending on what it is you want to do. The easiest method is to use Docker Compose with the example configuration from the repository. If you're looking to contribute back to the project then the `Build from source` section is for you.
 
-This project is provided with an easy setup based on [docker-compose](https://docs.docker.com/compose/). This will allow you to run the api without dealing with environment configurations.
+### Docker Compose
 
-To run the restful client based on docker compose you just need to configure `config/local.yml` file with your data and run:
+An example `docker-compose.yml` can be found at the root of this project.
+
+Add your application ID, secret key and any other changes you require then start the service.
+
+```bash
+docker compose up
 ```
-$ docker-compose up
+
+### Docker
+
+To run the service directly via Docker amend the environment variables as required and run:
+
+```bash
+docker run -it \
+  -e RESTFUL_CLIENT_JWT_SIGNING_KEY=secret \
+  -e RESTFUL_CLIENT_USER=self \
+  -e RESTFUL_CLIENT_PASSWORD=secret \
+  -e RESTFUL_CLIENT_STORAGE_DIR=/data \
+  -e RESTFUL_CLIENT_STORAGE_KEY=secret \
+  -e RESTFUL_CLIENT_APP_ID=<SELF_APP_ID> \
+  -e RESTFUL_CLIENT_APP_SECRET=<SELF_APP_SECRET> \
+  -e RESTFUL_CLIENT_APP_ENV=sandbox \
+  -p 8080:8080 \
+  -v restful-client:/data \
+  ghcr.io/joinself/restful-client:latest
 ```
 
-### Running it locally
+> Note: Replace `SELF_APP_ID` and `SELF_APP_SECRET` with your application ID and secret key.
 
-If this is your first time encountering Go, please follow [the instructions](https://golang.org/doc/install) to
-install Go on your computer. The kit requires **Go 1.17 or above**.
+### Build from source
 
-[Docker](https://www.docker.com/get-started) is also needed if you want to try the kit without setting up your
-own database server. The kit requires **Docker 17.05 or higher** for the multi-stage build support.
+#### Requirements
 
-After installing Go and Docker, run the following commands to start experiencing this restflu client:
+- Go 1.19+
+- Self OMEMO
+- Golang Migrate CLI
 
-```shell
-# download the restful self client
+##### Self OMEMO
+
+End-to-end encryption protocol. https://github.com/joinself/self-omemo
+
+```bash
+curl -Lo /tmp/self-omemo.deb https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo_0.5.0_amd64.deb
+apt-get install -y /tmp/self-omemo.deb
+```
+
+##### Database Migration CLI
+
+Database migration tool. https://github.com/golang-migrate/migrate
+
+```bash
+  curl -Lo /tmp/migrate.tar.gz https://download.joinself.com/golang-migrate/migrate-sqlite3-4.16.2.tar.gz && \
+  tar -zxf /tmp/migrate.tar.gz -C /usr/local/bin
+```
+
+#### Build
+
+``` bash
 git clone https://github.com/joinself/restful-client.git
-
 cd restful-client
 
-# seed the database with some test data
-make testdata
+# Replace <SELF_APP_ID> and <SELF_APP_SECRET> with your application ID and secret key.
+export RESTFUL_CLIENT_JWT_SIGNING_KEY=secret
+export RESTFUL_CLIENT_USER=self
+export RESTFUL_CLIENT_PASSWORD=secret
+export RESTFUL_CLIENT_STORAGE_DIR=/data
+export RESTFUL_CLIENT_STORAGE_KEY=secret
+export RESTFUL_CLIENT_APP_ID=<SELF_APP_ID>
+export RESTFUL_CLIENT_APP_SECRET=<SELF_APP_SECRET>
+export RESTFUL_CLIENT_APP_ENV=sandbox
 
-# run the RESTful API server
-make run
-
-# or run the API server with live reloading, which is useful during development
-# requires fswatch (https://github.com/emcrisostomo/fswatch)
-make run-live
+make migrate
+go run cmd/server/main.go
 ```
 
-At this point you should be able to access the RESTful client server accessible through at `http://127.0.0.1:8080`. 
+The service should now be accessible at `https://localhost:8080`.
 
 ## Endpoints
 
@@ -206,17 +249,6 @@ The application configuration is represented in `internal/config/config.go`. Whe
 it loads the configuration from environment variables.
 The path to the configuration of extra self apps file is specified via the `RESTFUL_CLIENT_CONFIG_FILE` command line argument which should use the format defined by `./config/apps.yml.cp`. Configurations
 specified in environment variables should be named with the `RESTFUL_CLIENT_` prefix and in upper case. When a configuration. 
-
-## Deployment
-
-The application can be run as a docker container. You can use `make build-docker` to build the application 
-into a docker image. The docker container starts with the `cmd/server/entryscript.sh`.
-
-You can also run `make build` to build an executable binary named `server`. Then start the API server using the following command,
-
-```shell
-./server
-```
 
 ## Client generation
 
