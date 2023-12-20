@@ -6,6 +6,8 @@ This joinself client is designed to act as a proxy between your app and The Self
 
 ## Getting Started
 
+There are a few different ways to run this service depending on what it is you want to do. The easiest method is to use Docker Compose with the example configuration from the repository. If you're looking to contribute back to the project then the `Build from source` section is for you.
+
 ### Docker Compose
 
 An example `docker-compose.yml` can be found at the root of this project.
@@ -18,7 +20,7 @@ docker compose up
 
 ### Docker
 
-Amend the environment variables as required e.g. add your application ID and secret key.
+To run the service directly via Docker amend the environment variables as required and run:
 
 ```bash
 docker run -it \
@@ -34,6 +36,8 @@ docker run -it \
   -v restful-client:/data \
   ghcr.io/joinself/restful-client:latest
 ```
+
+> Note: Replace `SELF_APP_ID` and `SELF_APP_SECRET` with your application ID and secret key.
 
 ### Build from source
 
