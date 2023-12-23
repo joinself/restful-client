@@ -3,6 +3,7 @@ module github.com/joinself/restful-client
 go 1.13
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-ozzo/ozzo-dbx v1.5.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.1.0
 	github.com/gofrs/uuid v4.4.0+incompatible
