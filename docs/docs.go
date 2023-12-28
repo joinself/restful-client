@@ -31,7 +31,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new account and sends a request for public information.",
+                "description": "Creates a new account and sends a request for public information. You must be authenticated as an admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -70,7 +70,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes an existing account and sends a request for public information and avoids incoming comms from that account.",
+                "description": "Deletes an existing account and sends a request for public information and avoids incoming comms from that account. You must be authenticated as an admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -116,7 +116,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "List restful client configured apps.",
+                "description": "List restful client configured apps. You must be authenticated as an admin.",
                 "consumes": [
                     "application/json"
                 ],

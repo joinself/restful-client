@@ -330,6 +330,7 @@ paths:
       consumes:
       - application/json
       description: Creates a new account and sends a request for public information.
+        You must be authenticated as an admin.
       parameters:
       - description: query params
         in: body
@@ -354,7 +355,8 @@ paths:
       consumes:
       - application/json
       description: Deletes an existing account and sends a request for public information
-        and avoids incoming comms from that account.
+        and avoids incoming comms from that account. You must be authenticated as
+        an admin.
       parameters:
       - description: current account username
         in: path
@@ -383,7 +385,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: List restful client configured apps.
+      description: List restful client configured apps. You must be authenticated
+        as an admin.
       produces:
       - application/json
       responses:
