@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -26,6 +27,12 @@ type Identity interface {
 	GetID() string
 	// GetName returns the user name.
 	GetName() string
+	IsAdmin() bool
+	GetResources() []string
+}
+
+type AccountGetter interface {
+	Get(ctx context.Context, username, password string) (entity.Account, error)
 }
 
 type service struct {
@@ -34,17 +41,19 @@ type service struct {
 	rTokenExpiration int
 	user             string
 	password         string
+	accountRepo      AccountGetter
 	logger           log.Logger
 }
 
 // NewService creates a new authentication service.
-func NewService(cfg *config.Config, logger log.Logger) Service {
+func NewService(cfg *config.Config, ar AccountGetter, logger log.Logger) Service {
 	return service{
 		cfg.JWTSigningKey,
 		cfg.JWTExpirationTimeInHours,
 		cfg.RefreshTokenExpirationInHours,
 		cfg.User,
 		cfg.Password,
+		ar,
 		logger}
 }
 
@@ -104,10 +113,27 @@ func (s service) Refresh(ctx context.Context, token string) (AuthResponse, error
 func (s service) authenticate(ctx context.Context, username, password string) Identity {
 	logger := s.logger.With(ctx, "user", username)
 
-	// TODO: the following authentication logic is only for demo purpose
+	// This is the ENVIRONMENT configured credentials.
 	if username == s.user && password == s.password {
-		logger.Infof("authentication successful")
-		return entity.User{ID: "100", Name: s.user}
+		logger.Infof("admin authentication successful")
+		return entity.User{
+			ID:        "0",
+			Name:      s.user,
+			Admin:     true,
+			Resources: []string{},
+		}
+	}
+
+	// TODO: lookup for the account related with this credentials.
+	a, err := s.accountRepo.Get(ctx, username, password)
+	if err == nil {
+		logger.Infof("non-admin authentication successful")
+		return entity.User{
+			ID:        strconv.Itoa(a.ID),
+			Name:      a.UserName,
+			Admin:     false,
+			Resources: []string{"app1"},
+		}
 	}
 
 	logger.Infof("authentication failed")
@@ -132,6 +158,8 @@ func (s service) generateJWT(identity Identity) (string, error) {
 	claims := &jwtCustomClaims{
 		identity.GetID(),
 		identity.GetName(),
+		identity.IsAdmin(),
+		identity.GetResources(),
 		jwt.RegisteredClaims{
 			Subject:   identity.GetID(),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

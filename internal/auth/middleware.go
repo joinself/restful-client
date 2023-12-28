@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"context"
 	"net/http"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joinself/restful-client/internal/entity"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -11,8 +11,10 @@ import (
 )
 
 type jwtCustomClaims struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID        string   `json:"id"`
+	Name      string   `json:"name"`
+	Admin     bool     `json:"admin"`
+	Resources []string `json:"resources"`
 	jwt.RegisteredClaims
 }
 
@@ -35,20 +37,54 @@ const (
 )
 
 // WithUser returns a context that contains the user identity from the given JWT.
-func WithUser(ctx context.Context, id, name string) context.Context {
-	return context.WithValue(ctx, userKey, entity.User{
-		ID:   id,
-		Name: name,
-	})
+func WithUser(ctx echo.Context, token *jwt.Token) {
+	println("setting : ")
+	println(token)
+	ctx.Set("user", token)
 }
 
 // CurrentUser returns the user identity from the given context.
 // Nil is returned if no user identity is found in the context.
-func CurrentUser(ctx context.Context) Identity {
-	if user, ok := ctx.Value(userKey).(entity.User); ok {
-		return user
+func CurrentUser(c echo.Context) Identity {
+	t := c.Get("user")
+	spew.Dump(t)
+
+	token, ok := c.Get("user").(*jwt.Token)
+	println("got : ")
+	println(token)
+	if !ok {
+		return nil
 	}
-	return nil
+	claims, ok := token.Claims.(*jwtCustomClaims) // by default claims is of type `jwt.MapClaims`
+	if !ok {
+		return nil
+	}
+	return entity.User{
+		ID:        claims.ID,
+		Name:      claims.Name,
+		Admin:     claims.Admin,
+		Resources: claims.Resources,
+	}
+}
+
+// HasAccessToResource checks if the current user has access to a specific resource.
+func HasAccessToResource(c echo.Context, resource string) bool {
+	u := CurrentUser(c)
+	if u == nil {
+		return false
+	}
+
+	if u.IsAdmin() {
+		return true
+	}
+
+	for _, v := range u.GetResources() {
+		if v == resource {
+			return true
+		}
+	}
+
+	return false
 }
 
 // MockAuthHandler creates a mock authentication middleware for testing purpose.

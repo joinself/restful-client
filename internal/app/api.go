@@ -3,6 +3,7 @@ package app
 import (
 	"net/http"
 
+	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
 	selfsdk "github.com/joinself/self-go-sdk"
@@ -38,7 +39,7 @@ type response struct {
 
 // ListApps godoc
 // @Summary        List apps.
-// @Description    List restful client configured apps.
+// @Description    List restful client configured apps. You must be authenticated as an admin.
 // @Tags           apps
 // @Accept         json
 // @Produce        json
@@ -46,6 +47,11 @@ type response struct {
 // @Success        200  {object} response
 // @Router         /apps [get]
 func (r resource) list(c echo.Context) error {
+	user := auth.CurrentUser(c)
+	if user == nil || !user.IsAdmin() {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	apps := []app{}
 	for id := range r.clients {
 		apps = append(apps, app{ID: id})

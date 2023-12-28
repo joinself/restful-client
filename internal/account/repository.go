@@ -6,6 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"errors"
+	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/joinself/restful-client/internal/entity"
@@ -18,8 +19,10 @@ const saltSize = 16
 
 // Repository encapsulates the logic to access accounts from the data source.
 type Repository interface {
-	// Get returns the account with the specified account ID.
-	Get(ctx context.Context, appID, selfID string) (entity.Account, error)
+	// Get returns the account with the specified username and password.
+	Get(ctx context.Context, username, password string) (entity.Account, error)
+	// GetByUsername returns the account with the specified username.
+	GetByUsername(ctx context.Context, username string) (entity.Account, error)
 	// Count returns the number of accounts.
 	Count(ctx context.Context) (int, error)
 	// Create saves a new account in the storage.
@@ -43,6 +46,20 @@ func NewRepository(db *dbcontext.DB, logger log.Logger) Repository {
 
 // Get reads the account with the specified ID from the database.
 func (r repository) Get(ctx context.Context, userName, password string) (entity.Account, error) {
+	a, err := r.GetByUsername(ctx, userName)
+	if err != nil {
+		return a, err
+	}
+
+	if !r.isValidPassword(a, password) {
+		return entity.Account{}, errors.New("invalid password")
+	}
+
+	return a, err
+}
+
+// GetByUsername reads the account with the specified username from the database.
+func (r repository) GetByUsername(ctx context.Context, userName string) (entity.Account, error) {
 	var accounts []entity.Account
 
 	err := r.db.With(ctx).
@@ -53,12 +70,6 @@ func (r repository) Get(ctx context.Context, userName, password string) (entity.
 
 	if len(accounts) == 0 {
 		return entity.Account{}, errors.New("sql: no rows in result set")
-	}
-
-	a := accounts[0]
-
-	if !r.isValidPassword(a, password) {
-		return entity.Account{}, errors.New("invalid password")
 	}
 
 	return accounts[0], err
@@ -84,6 +95,7 @@ func (r repository) Update(ctx context.Context, account entity.Account) error {
 	// Generate the hashed password.
 	account.Salt = string(r.generateRandomSalt(saltSize))
 	account.HashedPassword = r.hashPassword(account.Password, []byte(account.Salt))
+	account.UpdatedAt = time.Now()
 
 	return r.db.With(ctx).Model(&account).Update()
 }

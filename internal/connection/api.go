@@ -3,6 +3,7 @@ package connection
 import (
 	"net/http"
 
+	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
 	"github.com/labstack/echo/v4"
@@ -40,6 +41,10 @@ type resource struct {
 // @Success      200  {object}  connection.Connection
 // @Router       /apps/{app_id}/connections/{id} [get]
 func (r resource) get(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	connection, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
@@ -69,6 +74,10 @@ type response struct {
 // @Success        200  {object}  response
 // @Router         /apps/{app_id}/connections [get]
 func (r resource) query(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	ctx := c.Request().Context()
 	count, err := r.service.Count(ctx)
 	if err != nil {
@@ -97,6 +106,10 @@ func (r resource) query(c echo.Context) error {
 // @Success         200  {object}  connection.Connection
 // @Router          /apps/{app_id}/connections [post]
 func (r resource) create(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	var input CreateConnectionRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
@@ -124,6 +137,10 @@ func (r resource) create(c echo.Context) error {
 // @Success         200  {object}  connection.Connection
 // @Router          /apps/{app_id}/connections/{id} [put]
 func (r resource) update(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	var input UpdateConnectionRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
@@ -152,6 +169,10 @@ func (r resource) update(c echo.Context) error {
 // @Success         200  {object}  connection.Connection
 // @Router          /apps/{app_id}/connections/{id} [delete]
 func (r resource) delete(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	connection, err := r.service.Delete(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())

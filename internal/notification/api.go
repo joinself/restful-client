@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/labstack/echo/v4"
 )
@@ -36,6 +37,10 @@ type resource struct {
 // @Success         200 ""
 // @Router          /apps/{app_id}/connections/{connection_id}/notify [post]
 func (r resource) create(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	var input SystemNotificationData
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)

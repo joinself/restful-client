@@ -13,6 +13,7 @@ import (
 	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
+	"github.com/joinself/restful-client/internal/account"
 	"github.com/joinself/restful-client/internal/app"
 	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/auth"
@@ -95,7 +96,7 @@ func main() {
 
 // @host		localhost:8080
 // @BasePath	/v1/
-// @schemes	http, https
+// @schemes		http https
 func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.Handler {
 	clients, err := setupSelfClients(cfg)
 	if err != nil {
@@ -138,6 +139,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	factRepo := fact.NewRepository(db, logger)
 	requestRepo := request.NewRepository(db, logger)
 	attestationRepo := attestation.NewRepository(db, logger)
+	accountRepo := account.NewRepository(db, logger)
 
 	// Services
 	fcs := make(map[string]connection.FactService, len(clients))
@@ -183,7 +185,12 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		authHandler, logger,
 	)
 	auth.RegisterHandlers(rg.Group(""),
-		auth.NewService(cfg, logger),
+		auth.NewService(cfg, accountRepo, logger),
+		logger,
+	)
+	account.RegisterHandlers(rg.Group(""),
+		account.NewService(accountRepo, logger),
+		authHandler,
 		logger,
 	)
 
