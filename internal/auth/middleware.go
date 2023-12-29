@@ -3,7 +3,6 @@ package auth
 import (
 	"net/http"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joinself/restful-client/internal/entity"
 	echojwt "github.com/labstack/echo-jwt/v4"
@@ -38,20 +37,13 @@ const (
 
 // WithUser returns a context that contains the user identity from the given JWT.
 func WithUser(ctx echo.Context, token *jwt.Token) {
-	println("setting : ")
-	println(token)
 	ctx.Set("user", token)
 }
 
 // CurrentUser returns the user identity from the given context.
 // Nil is returned if no user identity is found in the context.
 func CurrentUser(c echo.Context) Identity {
-	t := c.Get("user")
-	spew.Dump(t)
-
 	token, ok := c.Get("user").(*jwt.Token)
-	println("got : ")
-	println(token)
 	if !ok {
 		return nil
 	}
