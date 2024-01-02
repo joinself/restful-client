@@ -140,6 +140,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	requestRepo := request.NewRepository(db, logger)
 	attestationRepo := attestation.NewRepository(db, logger)
 	accountRepo := account.NewRepository(db, logger)
+	appRepo := app.NewRepository(db, logger)
 
 	// Services
 	fcs := make(map[string]connection.FactService, len(clients))
@@ -155,9 +156,11 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 
 	cService := connection.NewService(connectionRepo, logger, fcs)
 	rService := request.NewService(requestRepo, factRepo, attestationRepo, logger, rrcs, callbacks, dlCodes)
+	aService := app.NewService(appRepo, logger)
 
 	// Handlers
 	app.RegisterHandlers(rg.Group(""),
+		aService,
 		clients,
 		authHandler,
 		logger,

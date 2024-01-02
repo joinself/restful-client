@@ -8,11 +8,17 @@ import (
 	"testing"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
+	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )
 
+func setup() {
+	_ = godotenv.Load("../../.env")
+}
+
 func TestNew(t *testing.T) {
+	setup()
 	runDBTest(t, func(db *dbx.DB) {
 		dbc := New(db)
 		assert.NotNil(t, dbc)
@@ -21,6 +27,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestDB_Transactional(t *testing.T) {
+	setup()
 	runDBTest(t, func(db *dbx.DB) {
 		assert.Zero(t, runCountQuery(t, db))
 		dbc := New(db)

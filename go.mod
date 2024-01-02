@@ -36,6 +36,7 @@ require (
 	github.com/google/flatbuffers v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/joinself/self-crypto-go v0.0.0-20230620152847-d5b4947a8e3c // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect

@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/joho/godotenv"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/qiangxue/go-env"
 	"gopkg.in/yaml.v2"
@@ -80,6 +81,8 @@ func (c Config) Validate() error {
 
 // Load returns an application configuration which is populated from the given configuration file and environment variables.
 func Load(logger log.Logger) (*Config, error) {
+	_ = godotenv.Load("../../.env")
+
 	// default config
 	c := Config{
 		RefreshTokenExpirationInHours: defaultRefreshTokenExpirationInHours,

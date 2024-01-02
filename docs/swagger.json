@@ -133,6 +133,43 @@
                         }
                     }
                 }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new app and sends a request for public information. You must be authenticated as an admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "app"
+                ],
+                "summary": "Creates a new app.",
+                "parameters": [
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app.CreateAppRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.App"
+                        }
+                    }
+                }
             }
         },
         "/apps/{app_id}/connections": {
@@ -903,6 +940,52 @@
                 }
             }
         },
+        "/apps/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing app and sends a request for public information and avoids incoming comms from that app. You must be authenticated as an admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apps"
+                ],
+                "summary": "Deletes an existing app.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "current app id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app.CreateAppRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/app.App"
+                        }
+                    }
+                }
+            }
+        },
         "/healthcheck": {
             "get": {
                 "description": "check the service is up and running",
@@ -1010,6 +1093,57 @@
                     }
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "app.App": {
+            "type": "object",
+            "properties": {
+                "callback": {
+                    "description": "Callback is the url that will be hit when a message is received.",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "device_secret": {
+                    "description": "DeviceSecret is the secret key for the device created at the developer portal.",
+                    "type": "string"
+                },
+                "env": {
+                    "description": "Env is self environment you want to point to, when empty, it will default to production.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "AppID is the Self app self identifier.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name is the Self app name.",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "app.CreateAppRequest": {
+            "type": "object",
+            "properties": {
+                "callback": {
+                    "type": "string"
+                },
+                "env": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "secret": {
                     "type": "string"
                 }
             }
@@ -1129,6 +1263,37 @@
                 },
                 "total_count": {
                     "type": "integer"
+                }
+            }
+        },
+        "entity.App": {
+            "type": "object",
+            "properties": {
+                "callback": {
+                    "description": "Callback is the url that will be hit when a message is received.",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "device_secret": {
+                    "description": "DeviceSecret is the secret key for the device created at the developer portal.",
+                    "type": "string"
+                },
+                "env": {
+                    "description": "Env is self environment you want to point to, when empty, it will default to production.",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "AppID is the Self app self identifier.",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name is the Self app name.",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },
