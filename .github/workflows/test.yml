@@ -26,12 +26,13 @@ jobs:
           echo "hit1"
           ls -lah /usr/local
           echo "hit2"
-          ls -lah /usr/local/go
-          echo "hit3"
           sudo tar -zxf /tmp/go.tar.gz -C /usr/local
+          echo $PATH
           PATH="${PATH}:/usr/local/go/bin"
-          echo "hit4"
+          echo "hit3"
           ls -lah /usr/local/go
+          echo "hit4"
+          echo $PATH
           echo "hit5"
           curl -Lo /tmp/self-omemo.deb https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo_0.5.0_amd64.deb
           sudo apt-get install -y /tmp/self-omemo.deb
