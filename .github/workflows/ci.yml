@@ -12,9 +12,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  #license-compliance:
-  #  uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
-  #  secrets: inherit
+  license-compliance:
+    uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
+    with:
+      container-image: joinself/license-finder:go-1.21.3
+    secrets: inherit
   secret-scan:
     uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
     with:
