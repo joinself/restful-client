@@ -31,3 +31,6 @@ config/local.yml
 
 # Thunder tets
 thunder-tests/
+
+# Environment configuration
+.env
