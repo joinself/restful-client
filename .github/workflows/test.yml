@@ -25,7 +25,6 @@ jobs:
           curl -Lo /tmp/go.tar.gz https://go.dev/dl/go1.21.3.linux-amd64.tar.gz
           sudo tar -zxf /tmp/go.tar.gz -C /usr/local
           PATH="/usr/local/go/bin:${PATH}"
-          #PATH="${PATH}:/usr/local/go/bin"
           curl -Lo /tmp/self-omemo.deb https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo_0.5.0_amd64.deb
           sudo apt-get install -y /tmp/self-omemo.deb
           curl -Lo /tmp/migrate.tar.gz https://download.joinself.com/golang-migrate/migrate-sqlite3-4.16.2.tar.gz && \
@@ -33,8 +32,6 @@ jobs:
           curl -Lo /tmp/golangci-lint.tar.gz https://github.com/golangci/golangci-lint/releases/download/v1.21.0/golangci-lint-1.21.0-linux-amd64.tar.gz
           tar -zxf /tmp/golangci-lint.tar.gz -C /tmp
           sudo cp /tmp/golangci-lint-1.21.0-linux-amd64/golangci-lint /usr/local/bin
-          go version
-          go env
           make lint
           make build
           make migrate
