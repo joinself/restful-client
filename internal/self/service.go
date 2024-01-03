@@ -16,6 +16,7 @@ import (
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/restful-client/pkg/webhook"
+	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/chat"
 	selffact "github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/messaging"
@@ -24,6 +25,9 @@ import (
 // Service interface for self service.
 type Service interface {
 	Run()
+	Stop()
+	Get() *selfsdk.Client
+	Poster() webhook.Poster
 	processFactsQueryResp(body []byte, payload map[string]interface{}) error
 	processChatMessage(payload map[string]interface{}) error
 	processConnectionResp(payload map[string]interface{}) error
@@ -93,6 +97,18 @@ func (s *service) Run() {
 		s.logger.With(context.Background()).Error(err.Error())
 		time.Sleep(time.Second * 5)
 	}
+}
+
+func (s *service) Stop() {
+	s.client.Stop()
+}
+
+func (s *service) Get() *selfsdk.Client {
+	return s.client.Get()
+}
+
+func (s *service) Poster() webhook.Poster {
+	return s.w
 }
 
 func (s *service) SetupHooks() {

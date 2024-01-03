@@ -3,7 +3,6 @@ package request
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/webhook"
+	selfsdk "github.com/joinself/self-go-sdk"
 	selffact "github.com/joinself/self-go-sdk/fact"
 )
 
@@ -24,6 +24,7 @@ type Service interface {
 	Get(ctx context.Context, appID, id string) (Request, error)
 	Create(ctx context.Context, appID string, conn *entity.Connection, input CreateRequest) (Request, error)
 	CreateFactsFromResponse(conn entity.Connection, req entity.Request, facts []selffact.Fact) []entity.Fact
+	SetRunner(runner SelfClientGetter)
 }
 
 // RequesterService service to manage sending and receiving request requests
@@ -74,27 +75,31 @@ func (m CreateRequest) Validate() error {
 	)
 }
 
+type SelfClientGetter interface {
+	Get(id string) (*selfsdk.Client, bool)
+	Poster(id string) (webhook.Poster, bool)
+}
+
 type service struct {
-	repo    Repository
-	fRepo   fact.Repository
-	atRepo  attestation.Repository
-	logger  log.Logger
-	clients map[string]RequesterService
-	w       map[string]*webhook.Webhook
-	dlCodes map[string]string
+	repo   Repository
+	fRepo  fact.Repository
+	atRepo attestation.Repository
+	runner SelfClientGetter
+	logger log.Logger
 }
 
 // NewService creates a new request service.
-func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repository, logger log.Logger, clients map[string]RequesterService, ws map[string]*webhook.Webhook, dlCodes map[string]string) Service {
+func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repository, logger log.Logger) Service {
 	return service{
-		repo,
-		fRepo,
-		atRepo,
-		logger,
-		clients,
-		ws,
-		dlCodes,
+		repo:   repo,
+		fRepo:  fRepo,
+		atRepo: atRepo,
+		logger: logger,
 	}
+}
+
+func (s service) SetRunner(runner SelfClientGetter) {
+	s.runner = runner
 }
 
 // Get returns the request with the specified the request ID.
@@ -181,7 +186,14 @@ func (s service) Create(ctx context.Context, appID string, connection *entity.Co
 			s.logger.Debug("error building Self Fact Request")
 			return Request{}, err
 		}
-		qrdata, err := s.clients[appID].GenerateQRCode(r)
+
+		client, ok := s.runner.Get(appID)
+		if !ok {
+			s.logger.Debug("client %s not found", appID)
+			return Request{}, err
+		}
+
+		qrdata, err := client.FactService().GenerateQRCode(r)
 		if err != nil {
 			s.logger.Debug("error generating QR Code")
 			return Request{}, err
@@ -189,7 +201,7 @@ func (s service) Create(ctx context.Context, appID string, connection *entity.Co
 		link := ""
 		dlr, err := s.buildSelfFactDLRequest(f, appID)
 		if err == nil {
-			link, err = s.clients[appID].GenerateDeepLink(dlr)
+			link, err = client.FactService().GenerateDeepLink(dlr)
 		}
 
 		persisted, err := s.Get(ctx, appID, id)
@@ -210,7 +222,8 @@ func (s service) Create(ctx context.Context, appID string, connection *entity.Co
 // sendRequest sends a request to the specified connection through Self Network.
 func (s service) sendRequest(req entity.Request, appid, selfID string) {
 	// Check if the self is initialized.
-	if _, ok := s.clients[appid]; !ok {
+	client, ok := s.runner.Get(appid)
+	if !ok {
 		s.logger.Debug("skipping as self is not initialized")
 		return
 	}
@@ -223,7 +236,7 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 	}
 
 	// Send the request.
-	resp, err := s.clients[appid].Request(r)
+	resp, err := client.FactService().Request(r)
 	if err != nil {
 		s.markRequestAs(req.ID, entity.STATUS_ERRORED)
 	} else if resp.Status == "rejected" {
@@ -253,7 +266,13 @@ func (s service) sendCallback(appID, selfID string, req entity.Request) {
 		return
 	}
 
-	err = s.w[appID].Post(webhook.WebhookPayload{
+	w, ok := s.runner.Poster(appID)
+	if !ok {
+		s.logger.Info("error calling back: %v not setup", appID)
+		return
+	}
+
+	err = w.Post(webhook.WebhookPayload{
 		Type: webhook.TYPE_REQUEST,
 		URI:  fmt.Sprintf("/apps/%s/connections/%s/requests/%s", appID, selfID, req.ID),
 		Data: resp,
@@ -332,9 +351,8 @@ func (s service) buildSelfFactQRRequest(req entity.Request) (*selffact.QRFactReq
 
 // buildSelfFactQRRequest builds a fact request from a given entity.Request
 func (s service) buildSelfFactDLRequest(req entity.Request, appID string) (*selffact.DeepLinkFactRequest, error) {
-	if _, ok := s.dlCodes[appID]; !ok || s.dlCodes[appID] == "" {
-		return nil, errors.New("dl code not configured")
-	}
+	// FIXME: dlCodes must be stored on the database, so consumed through the app_repository instead
+	dlCode := "default_non_working_dl_code"
 
 	var incomingFacts []entity.RequestFacts
 	err := json.Unmarshal(req.Facts, &incomingFacts)
@@ -355,7 +373,7 @@ func (s service) buildSelfFactDLRequest(req entity.Request, appID string) (*self
 		ConversationID: req.ID,
 		Description:    req.Description,
 		Facts:          facts,
-		Callback:       s.dlCodes[appID],
+		Callback:       dlCode,
 		Expiry:         time.Minute * 5,
 	}
 

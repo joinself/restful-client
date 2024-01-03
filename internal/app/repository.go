@@ -20,6 +20,8 @@ type Repository interface {
 	Update(ctx context.Context, app entity.App) error
 	// Delete removes the app with given ID from the storage.
 	Delete(ctx context.Context, id string) error
+	// List all the configured apps
+	List(ctx context.Context) ([]entity.App, error)
 }
 
 // repository persists apps in database
@@ -63,6 +65,16 @@ func (r repository) Count(ctx context.Context) (int, error) {
 	var count int
 	err := r.db.With(ctx).Select("COUNT(*)").From("app").Row(&count)
 	return count, err
+}
+
+func (r repository) List(ctx context.Context) ([]entity.App, error) {
+	var apps []entity.App
+	err := r.db.With(ctx).
+		Select().
+		OrderBy("id").
+		OrderBy("created_at DESC").
+		All(&apps)
+	return apps, err
 }
 
 func (r repository) getByID(ctx context.Context, id string) (entity.App, error) {
