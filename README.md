@@ -49,12 +49,7 @@ docker run -it \
 
 ##### Self OMEMO
 
-End-to-end encryption protocol. https://github.com/joinself/self-omemo
-
-```bash
-curl -Lo /tmp/self-omemo.deb https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo_0.5.0_amd64.deb
-apt-get install -y /tmp/self-omemo.deb
-```
+End-to-end encryption protocol. Refer to the [Installing a released version](https://github.com/joinself/self-omemo?tab=readme-ov-file#installing-a-released-version) for installation instructions on different OSS.
 
 ##### Database Migration CLI
 
