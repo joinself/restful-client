@@ -10,6 +10,8 @@ type SelfClient interface {
 	SelfAppID() string
 	MessagingService() MessagingService
 	ChatService() ChatService
+	Stop()
+	Get() *selfsdk.Client
 }
 
 type selfClient struct {
@@ -27,6 +29,12 @@ func (s *selfClient) MessagingService() MessagingService {
 }
 func (s *selfClient) ChatService() ChatService {
 	return s.client.ChatService()
+}
+func (s *selfClient) Stop() {
+	s.client.Close()
+}
+func (s *selfClient) Get() *selfsdk.Client {
+	return s.client
 }
 
 func NewSelfClient(client *selfsdk.Client) SelfClient {

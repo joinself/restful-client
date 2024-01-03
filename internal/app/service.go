@@ -6,12 +6,14 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/internal/self"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/self-go-sdk/fact"
 )
 
 // Service encapsulates usecase logic for apps.
 type Service interface {
+	List(ctx context.Context) []entity.App
 	Get(ctx context.Context, id string) (App, error)
 	Create(ctx context.Context, input CreateAppRequest) (App, error)
 	Delete(ctx context.Context, id string) (App, error)
@@ -49,12 +51,21 @@ func (m CreateAppRequest) Validate() error {
 
 type service struct {
 	repo   Repository
+	runner self.Runner
 	logger log.Logger
 }
 
 // NewService creates a new app service.
-func NewService(repo Repository, logger log.Logger) Service {
-	return service{repo, logger}
+func NewService(repo Repository, runner self.Runner, logger log.Logger) Service {
+	return service{repo, runner, logger}
+}
+
+func (s service) List(ctx context.Context) []entity.App {
+	apps, err := s.repo.List(ctx)
+	if err != nil {
+		return []entity.App{}
+	}
+	return apps
 }
 
 // Get returns the app with the specified the app ID.
@@ -77,7 +88,7 @@ func (s service) Create(ctx context.Context, req CreateAppRequest) (App, error) 
 	}
 
 	now := time.Now()
-	err = s.repo.Create(ctx, entity.App{
+	app := entity.App{
 		ID:           req.ID,
 		DeviceSecret: req.Secret,
 		Name:         req.Name,
@@ -85,10 +96,14 @@ func (s service) Create(ctx context.Context, req CreateAppRequest) (App, error) 
 		Callback:     req.Callback,
 		CreatedAt:    now,
 		UpdatedAt:    now,
-	})
+	}
+	err = s.repo.Create(ctx, app)
 	if err != nil {
 		return App{}, err
 	}
+
+	// Start the runner.
+	s.runner.Run(app)
 
 	return s.Get(ctx, req.ID)
 }
@@ -99,6 +114,9 @@ func (s service) Delete(ctx context.Context, id string) (App, error) {
 	if err != nil {
 		return App{}, err
 	}
+
+	// Start the runner.
+	s.runner.Stop(id)
 
 	if err = s.repo.Delete(ctx, app.ID); err != nil {
 		return App{}, err

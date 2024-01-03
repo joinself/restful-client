@@ -1,13 +1,10 @@
 package config
 
 import (
-	"io/ioutil"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joho/godotenv"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/qiangxue/go-env"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -32,8 +29,7 @@ type SelfAppConfig struct {
 // Config represents an application configuration.
 type Config struct {
 	// File Filesystem YAML based configuration.
-	SelfApps []SelfAppConfig `yaml:"self_apps"`
-
+	DefaultSelfApp *SelfAppConfig
 	// OPTIONAL based configuration
 	// RefreshTokenExpiration JWT refresh expiration in hours.
 	RefreshTokenExpirationInHours int `env:"REFRESH_TOKEN_EXPIRATION"`
@@ -45,8 +41,6 @@ type Config struct {
 	ServerPort int `env:"SERVER_PORT"`
 	// DefaultAppCallbackURL the default callback url for any incoming messages.
 	DefaultAppCallbackURL string `env:"APP_MESSAGE_NOTIFICATION_URL"`
-	ClientConfigFile      string `env:"CONFIG_FILE"`
-
 	// REQUIRED ENV based configuration
 	// JWTSigningKey The signing key used to build the jwt tokens shared with the api clients.
 	JWTSigningKey string `env:"JWT_SIGNING_KEY"`
@@ -74,14 +68,17 @@ func (c Config) Validate() error {
 		validation.Field(&c.Password, validation.Required),
 		validation.Field(&c.StorageDir, validation.Required),
 		validation.Field(&c.StorageKey, validation.Required),
-		validation.Field(&c.DefaultAppID, validation.Required),
-		validation.Field(&c.DefaultAppEnv, validation.Required),
+		// validation.Field(&c.DefaultAppID, validation.Required), // this is no longer required
+		// validation.Field(&c.DefaultAppEnv, validation.Required), // this is no longer required
 	)
 }
 
 // Load returns an application configuration which is populated from the given configuration file and environment variables.
 func Load(logger log.Logger) (*Config, error) {
-	_ = godotenv.Load("../../.env")
+	erro := godotenv.Load(".env")
+	if erro != nil {
+		logger.Debug(".env file not found, using system environment instead")
+	}
 
 	// default config
 	c := Config{
@@ -92,12 +89,12 @@ func Load(logger log.Logger) (*Config, error) {
 	}
 
 	// load from environment variables prefixed with "APP_"
-	if err := env.New("RESTFUL_CLIENT_", logger.Infof).Load(&c); err != nil {
+	if err := env.New("RESTFUL_CLIENT_", logger.Debugf).Load(&c); err != nil {
 		return nil, err
 	}
 
 	if c.DefaultAppID != "" {
-		defaultApp := SelfAppConfig{
+		c.DefaultSelfApp = &SelfAppConfig{
 			SelfAppID:           c.DefaultAppID,
 			SelfAppDeviceSecret: c.DefaultAppSecret,
 			SelfStorageKey:      c.StorageKey,
@@ -105,20 +102,6 @@ func Load(logger log.Logger) (*Config, error) {
 			SelfEnv:             c.DefaultAppEnv,
 			CallbackURL:         c.DefaultAppCallbackURL,
 		}
-		c.SelfApps = []SelfAppConfig{defaultApp}
-	}
-
-	if c.ClientConfigFile != "" {
-		// Load extra apps
-		// TODO: Load extra apps from the provided yaml config.
-		bytes, err := ioutil.ReadFile(c.ClientConfigFile)
-		if err != nil {
-			return nil, err
-		}
-		if err = yaml.Unmarshal(bytes, &c); err != nil {
-			return nil, err
-		}
-
 	}
 
 	// validation
