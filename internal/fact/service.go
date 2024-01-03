@@ -8,7 +8,7 @@ import (
 	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
-	selfsdk "github.com/joinself/self-go-sdk"
+	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/self-go-sdk/fact"
 )
 
@@ -73,19 +73,15 @@ func (m UpdateFactRequest) Validate() error {
 	)
 }
 
-type SelfClientGetter interface {
-	Get(id string) (*selfsdk.Client, bool)
-}
-
 type service struct {
 	repo   Repository
 	atRepo attestation.Repository
-	runner SelfClientGetter
+	runner support.SelfClientGetter
 	logger log.Logger
 }
 
 // NewService creates a new fact service.
-func NewService(repo Repository, atRepo attestation.Repository, runner SelfClientGetter, logger log.Logger) Service {
+func NewService(repo Repository, atRepo attestation.Repository, runner support.SelfClientGetter, logger log.Logger) Service {
 	return service{repo, atRepo, runner, logger}
 }
 

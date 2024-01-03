@@ -24,10 +24,9 @@ func TestAPI(t *testing.T) {
 		UpdatedAt: time.Now()},
 	}}
 
-	factClients := map[string]FactService{}
-
 	authHandler := auth.MockAuthHandler()
-	RegisterHandlers(router.Group(""), NewService(repo, logger, factClients), authHandler, logger)
+	runner := mock.NewRunnerMock()
+	RegisterHandlers(router.Group(""), NewService(repo, runner, logger), authHandler, logger)
 	header := auth.MockAuthHeader()
 
 	tests := []test.APITestCase{

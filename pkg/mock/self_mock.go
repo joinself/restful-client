@@ -3,6 +3,7 @@ package mock
 import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/support"
+	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/messaging"
 )
 
@@ -25,6 +26,13 @@ func (m *SelfMock) MessagingService() support.MessagingService {
 }
 
 func (m *SelfMock) ChatService() support.ChatService {
+	return nil
+}
+
+func (s *SelfMock) Stop() {
+}
+
+func (s *SelfMock) Get() *selfsdk.Client {
 	return nil
 }
 

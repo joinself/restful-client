@@ -50,7 +50,8 @@ func TestUpdateMessageRequest_Validate(t *testing.T) {
 
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
-	s := NewService(&mock.MessageRepositoryMock{}, logger, nil)
+	runner := mock.NewRunnerMock()
+	s := NewService(&mock.MessageRepositoryMock{}, runner, logger)
 	ctx := context.Background()
 
 	connection := 1

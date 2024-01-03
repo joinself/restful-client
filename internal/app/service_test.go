@@ -30,8 +30,9 @@ import (
 */
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
+	runner := mock.NewRunnerMock()
 
-	s := NewService(&mock.AppRepositoryMock{}, logger)
+	s := NewService(&mock.AppRepositoryMock{}, runner, logger)
 
 	ctx := context.Background()
 

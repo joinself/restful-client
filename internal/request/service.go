@@ -14,8 +14,8 @@ import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/restful-client/pkg/webhook"
-	selfsdk "github.com/joinself/self-go-sdk"
 	selffact "github.com/joinself/self-go-sdk/fact"
 )
 
@@ -24,7 +24,7 @@ type Service interface {
 	Get(ctx context.Context, appID, id string) (Request, error)
 	Create(ctx context.Context, appID string, conn *entity.Connection, input CreateRequest) (Request, error)
 	CreateFactsFromResponse(conn entity.Connection, req entity.Request, facts []selffact.Fact) []entity.Fact
-	SetRunner(runner SelfClientGetter)
+	SetRunner(runner support.SelfClientGetter)
 }
 
 // RequesterService service to manage sending and receiving request requests
@@ -75,16 +75,11 @@ func (m CreateRequest) Validate() error {
 	)
 }
 
-type SelfClientGetter interface {
-	Get(id string) (*selfsdk.Client, bool)
-	Poster(id string) (webhook.Poster, bool)
-}
-
 type service struct {
 	repo   Repository
 	fRepo  fact.Repository
 	atRepo attestation.Repository
-	runner SelfClientGetter
+	runner support.SelfClientGetter
 	logger log.Logger
 }
 
@@ -98,7 +93,7 @@ func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repos
 	}
 }
 
-func (s service) SetRunner(runner SelfClientGetter) {
+func (s service) SetRunner(runner support.SelfClientGetter) {
 	s.runner = runner
 }
 

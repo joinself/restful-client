@@ -20,6 +20,10 @@ func (m AppRepositoryMock) Get(ctx context.Context, id string) (entity.App, erro
 	return entity.App{}, sql.ErrNoRows
 }
 
+func (m AppRepositoryMock) List(ctx context.Context) ([]entity.App, error) {
+	return m.Items, nil
+}
+
 func (m AppRepositoryMock) Count(ctx context.Context) (int, error) {
 	return len(m.Items), nil
 }

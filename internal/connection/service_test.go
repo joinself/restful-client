@@ -47,9 +47,8 @@ func TestUpdateConnectionRequest_Validate(t *testing.T) {
 
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
-	factClients := map[string]FactService{}
-
-	s := NewService(&mock.ConnectionRepositoryMock{}, logger, factClients)
+	runner := mock.NewRunnerMock()
+	s := NewService(&mock.ConnectionRepositoryMock{}, runner, logger)
 
 	ctx := context.Background()
 

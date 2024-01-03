@@ -1,6 +1,7 @@
 package support
 
 import (
+	"github.com/joinself/restful-client/pkg/webhook"
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/messaging"
 )
@@ -46,3 +47,8 @@ type MessagingService interface {
 }
 
 type ChatService interface{}
+
+type SelfClientGetter interface {
+	Get(id string) (*selfsdk.Client, bool)
+	Poster(id string) (webhook.Poster, bool)
+}

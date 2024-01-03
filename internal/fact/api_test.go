@@ -27,13 +27,12 @@ func TestAPI(t *testing.T) {
 		{ID: "123", FactID: "123", Body: "body", Value: "value", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}}
 
-	factClients := map[string]connection.FactService{}
-
 	authHandler := auth.MockAuthHandler()
+	runner := mock.NewRunnerMock()
 	RegisterHandlers(
 		router.Group(""),
-		NewService(repo, atRepo, logger, nil),
-		connection.NewService(connRepo, logger, factClients),
+		NewService(repo, atRepo, runner, logger),
+		connection.NewService(connRepo, runner, logger),
 		authHandler,
 		logger)
 	header := auth.MockAuthHeader()

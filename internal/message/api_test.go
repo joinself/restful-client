@@ -22,13 +22,12 @@ func TestAPI(t *testing.T) {
 	connRepo := &mock.ConnectionRepositoryMock{Items: []entity.Connection{
 		{ID: 123, SelfID: "connection", AppID: "app1", Name: "connection123", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}}
-	factClients := map[string]connection.FactService{}
-
 	authHandler := auth.MockAuthHandler()
+	runner := mock.NewRunnerMock()
 	RegisterHandlers(
 		router.Group(""),
-		NewService(repo, logger, nil),
-		connection.NewService(connRepo, logger, factClients),
+		NewService(repo, runner, logger),
+		connection.NewService(connRepo, runner, logger),
 		authHandler,
 		logger)
 	header := auth.MockAuthHeader()

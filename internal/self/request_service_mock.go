@@ -6,11 +6,15 @@ import (
 
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/request"
+	"github.com/joinself/restful-client/pkg/support"
 	selffact "github.com/joinself/self-go-sdk/fact"
 )
 
 type RequestServiceMock struct {
 	Items []request.Request
+}
+
+func (m RequestServiceMock) SetRunner(runner support.SelfClientGetter) {
 }
 
 func (m RequestServiceMock) Get(ctx context.Context, appID, id string) (request.Request, error) {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joinself/restful-client/pkg/log"
-	selfsdk "github.com/joinself/self-go-sdk"
+	"github.com/joinself/restful-client/pkg/support"
 )
 
 // Service encapsulates usecase logic for messages.
@@ -32,17 +32,13 @@ func (m SystemNotificationData) Validate() error {
 	return nil
 }
 
-type SelfClientGetter interface {
-	Get(id string) (*selfsdk.Client, bool)
-}
-
 type service struct {
 	logger log.Logger
-	runner SelfClientGetter
+	runner support.SelfClientGetter
 }
 
 // NewService creates a new notification service.
-func NewService(runner SelfClientGetter, logger log.Logger) Service {
+func NewService(runner support.SelfClientGetter, logger log.Logger) Service {
 	return service{logger, runner}
 }
 
