@@ -74,8 +74,8 @@ func (c Config) Validate() error {
 }
 
 // Load returns an application configuration which is populated from the given configuration file and environment variables.
-func Load(logger log.Logger) (*Config, error) {
-	erro := godotenv.Load(".env")
+func Load(logger log.Logger, envPath string) (*Config, error) {
+	erro := godotenv.Load(envPath)
 	if erro != nil {
 		logger.Debug(".env file not found, using system environment instead")
 	}

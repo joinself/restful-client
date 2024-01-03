@@ -44,7 +44,7 @@ func main() {
 	logger := log.New().With(context.Background(), "version", Version)
 
 	// load application configurations
-	cfg, err := config.Load(logger)
+	cfg, err := config.Load(logger, ".env")
 	if err != nil {
 		logger.Errorf("failed to load application configuration: %s", err)
 		os.Exit(-1)
