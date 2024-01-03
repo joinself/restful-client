@@ -78,7 +78,6 @@ func (r repository) GetByUsername(ctx context.Context, userName string) (entity.
 // Create saves a new account record in the database.
 // It returns the ID of the newly inserted account record.
 func (r repository) Create(ctx context.Context, account entity.Account) error {
-	// TODO: check if the username already exists
 	// Generate the hashed password.
 	account.Salt = string(r.generateRandomSalt(saltSize))
 	account.HashedPassword = r.hashPassword(account.Password, []byte(account.Salt))

@@ -124,7 +124,6 @@ func (s service) authenticate(ctx context.Context, username, password string) Id
 		}
 	}
 
-	// TODO: lookup for the account related with this credentials.
 	a, err := s.accountRepo.Get(ctx, username, password)
 	if err == nil {
 		logger.Infof("non-admin authentication successful")
