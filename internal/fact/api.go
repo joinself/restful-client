@@ -3,6 +3,7 @@ package fact
 import (
 	"net/http"
 
+	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
@@ -42,6 +43,12 @@ type resource struct {
 // @Success      200  {object}  Fact
 // @Router       /apps/{app_id}/connections/{connection_id}/facts/{id} [get]
 func (r resource) get(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
+	// FIXME: This should take into account the given app_id so its clear it
+	// has access to this resources
 	fact, err := r.service.Get(c.Request().Context(), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
@@ -74,6 +81,10 @@ type response struct {
 // @Success        200  {object}  response
 // @Router         /apps/{app_id}/connections/{connection_id}/facts [get]
 func (r resource) query(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	ctx := c.Request().Context()
 
 	// Get the connection id
@@ -128,6 +139,10 @@ type CreateFactRequestDoc struct {
 // @Success         200
 // @Router          /apps/{app_id}/connections/{connection_id}/facts [post]
 func (r resource) create(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	var input CreateFactRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
@@ -150,6 +165,10 @@ func (r resource) create(c echo.Context) error {
 }
 
 func (r resource) update(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	var input UpdateFactRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
@@ -165,6 +184,10 @@ func (r resource) update(c echo.Context) error {
 }
 
 func (r resource) delete(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	fact, err := r.service.Delete(c.Request().Context(), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())

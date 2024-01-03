@@ -93,7 +93,7 @@ migrate-down: ## revert database to the last migration step
 .PHONY: migrate-new
 migrate-new: ## create a new database migration
 	@read -p "Enter the name of the new migration: " name; \
-	$(MIGRATE) create -ext sql -dir /migrations/ $${name// /_}
+	$(MIGRATE) create -ext sql -dir ./migrations/ $${name// /_}
 
 .PHONY: migrate-reset
 migrate-reset: ## reset database and re-run all migrations
@@ -104,4 +104,4 @@ migrate-reset: ## reset database and re-run all migrations
 
 .PHONY: gen-openapi
 gen-openapi: ## generates openapi documentation under /docs folder
-	swag init -d cmd/server/,internal/healthcheck/,internal/auth,internal/connection,internal/fact,internal/message,internal/entity,internal/request,internal/app,internal/notification
+	swag init -d cmd/server/,internal/healthcheck/,internal/auth,internal/connection,internal/fact,internal/message,internal/entity,internal/request,internal/app,internal/notification,internal/account

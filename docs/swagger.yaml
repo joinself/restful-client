@@ -1,5 +1,35 @@
 basePath: /v1/
 definitions:
+  account.Account:
+    properties:
+      created_at:
+        type: string
+      hashed_password:
+        type: string
+      id:
+        type: integer
+      password:
+        type: string
+      resources:
+        type: string
+      salt:
+        type: string
+      updated_at:
+        type: string
+      user_name:
+        type: string
+    type: object
+  account.CreateAccountRequest:
+    properties:
+      password:
+        type: string
+      resources:
+        items:
+          type: string
+        type: array
+      username:
+        type: string
+    type: object
   app.app:
     properties:
       id:
@@ -295,11 +325,68 @@ info:
   title: Joinself restful-client API
   version: "1.0"
 paths:
+  /accounts:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new account and sends a request for public information.
+        You must be authenticated as an admin.
+      parameters:
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/account.CreateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/account.Account'
+      security:
+      - BearerAuth: []
+      summary: Creates a new account.
+      tags:
+      - accounts
+  /accounts/{username}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing account and sends a request for public information
+        and avoids incoming comms from that account. You must be authenticated as
+        an admin.
+      parameters:
+      - description: current account username
+        in: path
+        name: username
+        required: true
+        type: integer
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/account.CreateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/account.Account'
+      security:
+      - BearerAuth: []
+      summary: Deletes an existing account.
+      tags:
+      - accounts
   /apps:
     get:
       consumes:
       - application/json
-      description: List restful client configured apps.
+      description: List restful client configured apps. You must be authenticated
+        as an admin.
       produces:
       - application/json
       responses:
@@ -849,7 +936,7 @@ paths:
       tags:
       - login
 schemes:
-- http,
+- http
 - https
 securityDefinitions:
   BearerAuth:

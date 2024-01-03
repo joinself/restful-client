@@ -43,7 +43,7 @@ docker run -it \
 
 #### Requirements
 
-- Go 1.19+
+- Go 1.21+
 - Self OMEMO
 - Golang Migrate CLI
 

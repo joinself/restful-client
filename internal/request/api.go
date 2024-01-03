@@ -3,6 +3,7 @@ package request
 import (
 	"net/http"
 
+	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
@@ -37,6 +38,10 @@ type resource struct {
 // @Success      200  {object}  Request
 // @Router       /apps/{app_id}/requests/{id} [get]
 func (r resource) get(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	request, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
@@ -57,6 +62,10 @@ func (r resource) get(c echo.Context) error {
 // @Success         200  {object}  Request
 // @Router          /apps/{app_id}/requests [post]
 func (r resource) create(c echo.Context) error {
+	if auth.HasAccessToResource(c, c.Param("app_id")) {
+		return c.JSON(http.StatusNotFound, "not found")
+	}
+
 	var input CreateRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
