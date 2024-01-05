@@ -194,24 +194,10 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 			Callback:     cfg.DefaultSelfApp.CallbackURL,
 		})
 	}
-	/*
-		for id, client := range clients {
-			logger.Infof("starting client %s", id)
-			self.RunService(
-				self.NewService(self.Config{
-					SelfClient:     support.NewSelfClient(client),
-					ConnectionRepo: connectionRepo,
-					FactRepo:       factRepo,
-					MessageRepo:    messageRepo,
-					RequestRepo:    requestRepo,
-					RequestService: rService,
-					Logger:         logger,
-					Poster:         webhook.NewWebhook(callbackURLs[id]),
-				}),
-				logger,
-			)
-		}
-	*/
+	for _, app := range aService.List(context.Background()) {
+		runner.Run(app)
+	}
+
 	if cfg.ServeDocs == "true" {
 		e.GET("/docs/*", echoSwagger.WrapHandler)
 	}
