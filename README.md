@@ -84,7 +84,7 @@ The service should now be accessible at `https://localhost:8080`.
 
 ## RESTful API
 
-For a full list of endpoints see [Swagger](https://editor.swagger.io/?url=https://raw.githubusercontent.com/joinself/restful-client/main/docs/swagger.json){:target="_blank"}.
+For a full list of endpoints see [Swagger](https://editor.swagger.io/?url=https://raw.githubusercontent.com/joinself/restful-client/main/docs/swagger.json).
 
 ### Examples
 
