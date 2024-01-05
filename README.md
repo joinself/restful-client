@@ -242,8 +242,31 @@ make migrate-reset
 
 The application configuration is represented in `internal/config/config.go`. When the application starts,
 it loads the configuration from environment variables.
-The path to the configuration of extra self apps file is specified via the `RESTFUL_CLIENT_CONFIG_FILE` command line argument which should use the format defined by `./config/apps.yml.cp`. Configurations
+Configurations
 specified in environment variables should be named with the `RESTFUL_CLIENT_` prefix and in upper case. When a configuration. 
+
+### Managed apps
+
+There are 2 ways you can setup your app on this service, based on environment variable, or dynamically setting it up through the api interface.
+
+*Environment variable based configuration*
+
+These are the environment variables that you'll need to provide to setup your app.
+```
+	- RESTFUL_CLIENT_APP_ID : the default self app identifier.
+	- RESTFUL_CLIENT_APP_SECRET : the default self app secret.
+	- RESTFUL_CLIENT_APP_ENV : the default self app environment.
+	- RESTFUL_CLIENT_APP_MESSAGE_NOTIFICATION_URL : the callback url for any incoming messages on the default app.
+  - RESTFUL_CLIENT_APP_DL_CODE : the code (get it from the developer portal) used to build dynamic links.
+```
+
+*Dynamically created apps*
+
+You can easily create apps through the rest api, check this example:
+```sh
+curl -X 'POST' 'http://localhost:8080/v1/login' -H 'accept: application/json' -H 'Content-Type: application/json' -d '{ "username": "<user>", "password": "<password>" }'
+curl -X 'POST' 'http://localhost:8080/v1/apps' -H 'accept: application/json' -H 'Authorization: Bearer <BEARER TOKEN>' -H 'Content-Type: application/json' -d '{ "id": "<APP_ID>", "secret": "<DEVICE_APP_SECRET>", "name": "<APP_NAME>", "env":"<APP_ENVIRONMENT>", "callback":"<CALLBACK>", "code":"<CODE>" }'
+```
 
 ## Client generation
 
