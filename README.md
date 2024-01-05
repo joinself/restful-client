@@ -100,7 +100,7 @@ curl -X 'POST' 'http://localhost:8080/v1/apps' -H 'accept: application/json' -H 
 
 ## OpenAPI
 
-This service follows the OpenAPI specification. API client libraries (SDKs), server stubs, documentation and configuration can be automatically built for your preferred language using the [openapi-generator](https://github.com/OpenAPITools/openapi-generator).
+This service follows the OpenAPI specification. API client libraries (SDKs), server stubs, documentation and configuration can be automatically built for your preferred language using [openapi-generator](https://github.com/OpenAPITools/openapi-generator).
 
 ```bash
 openapi-generator generate -i docs/swagger.yaml -g ruby -o self-restful-client-ruby
