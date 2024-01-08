@@ -23,7 +23,7 @@ type SelfAppConfig struct {
 	SelfAPIURL          string `yaml:"self_api_url"`
 	SelfMessagingURL    string `yaml:"self_messaging_url"`
 	CallbackURL         string `yaml:"message_notification_url"`
-	DLCode              string `yaml:"dl_code" env:"DL_CODE"`
+	DLCode              string `yaml:"dl_code"`
 }
 
 // Config represents an application configuration.
@@ -39,8 +39,6 @@ type Config struct {
 	ServeDocs string `env:"SERVE_DOCS"`
 	// ServerPort the server port. Defaults to 8080
 	ServerPort int `env:"SERVER_PORT"`
-	// DefaultAppCallbackURL the default callback url for any incoming messages.
-	DefaultAppCallbackURL string `env:"APP_MESSAGE_NOTIFICATION_URL"`
 	// REQUIRED ENV based configuration
 	// JWTSigningKey The signing key used to build the jwt tokens shared with the api clients.
 	JWTSigningKey string `env:"JWT_SIGNING_KEY"`
@@ -58,6 +56,10 @@ type Config struct {
 	DefaultAppSecret string `env:"APP_SECRET"`
 	// DefaultAppEnv the default self app environment.
 	DefaultAppEnv string `env:"APP_ENV"`
+	// DefaultAppCallbackURL the callback url for the env configured app.
+	DefaultAppCallbackURL string `env:"APP_MESSAGE_NOTIFICATION_URL"`
+	// DefaultAppCode the dynamic link generator code used for creating links.
+	DefaultAppCode string `env:"APP_CODE"`
 }
 
 // Validate validates the application configuration.
@@ -101,6 +103,7 @@ func Load(logger log.Logger, envPath string) (*Config, error) {
 			SelfStorageDir:      c.StorageDir,
 			SelfEnv:             c.DefaultAppEnv,
 			CallbackURL:         c.DefaultAppCallbackURL,
+			DLCode:              c.DefaultAppCode,
 		}
 	}
 

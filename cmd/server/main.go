@@ -130,7 +130,13 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	appRepo := app.NewRepository(db, logger)
 
 	// Services
-	rService := request.NewService(requestRepo, factRepo, attestationRepo, logger)
+	rService := request.NewService(
+		requestRepo,
+		factRepo,
+		attestationRepo,
+		appRepo,
+		logger,
+	)
 	runner := self.NewRunner(self.RunnerConfig{
 		ConnectionRepo: connectionRepo,
 		FactRepo:       factRepo,
@@ -192,6 +198,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 			DeviceSecret: cfg.DefaultSelfApp.SelfAppDeviceSecret,
 			Env:          cfg.DefaultSelfApp.SelfEnv,
 			Callback:     cfg.DefaultSelfApp.CallbackURL,
+			Code:         cfg.DefaultSelfApp.DLCode,
 		})
 	}
 	for _, app := range aService.List(context.Background()) {

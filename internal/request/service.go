@@ -34,6 +34,11 @@ type RequesterService interface {
 	GenerateDeepLink(req *selffact.DeepLinkFactRequest) (string, error)
 }
 
+type AppRepository interface {
+	// Get returns the app with the specified app ID.
+	Get(ctx context.Context, appID string) (entity.App, error)
+}
+
 type RequestResource struct {
 	URI string `json:"uri"`
 }
@@ -76,20 +81,22 @@ func (m CreateRequest) Validate() error {
 }
 
 type service struct {
-	repo   Repository
-	fRepo  fact.Repository
-	atRepo attestation.Repository
-	runner support.SelfClientGetter
-	logger log.Logger
+	repo    Repository
+	fRepo   fact.Repository
+	atRepo  attestation.Repository
+	appRepo AppRepository
+	runner  support.SelfClientGetter
+	logger  log.Logger
 }
 
 // NewService creates a new request service.
-func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repository, logger log.Logger) Service {
+func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repository, appRepo AppRepository, logger log.Logger) Service {
 	return service{
-		repo:   repo,
-		fRepo:  fRepo,
-		atRepo: atRepo,
-		logger: logger,
+		repo:    repo,
+		fRepo:   fRepo,
+		atRepo:  atRepo,
+		appRepo: appRepo,
+		logger:  logger,
 	}
 }
 
@@ -194,9 +201,12 @@ func (s service) Create(ctx context.Context, appID string, connection *entity.Co
 			return Request{}, err
 		}
 		link := ""
-		dlr, err := s.buildSelfFactDLRequest(f, appID)
-		if err == nil {
-			link, err = client.FactService().GenerateDeepLink(dlr)
+		app, err := s.appRepo.Get(ctx, appID)
+		if err == nil && len(app.Code) > 0 {
+			dlr, err := s.buildSelfFactDLRequest(f, app.Code)
+			if err == nil {
+				link, err = client.FactService().GenerateDeepLink(dlr)
+			}
 		}
 
 		persisted, err := s.Get(ctx, appID, id)
@@ -345,10 +355,7 @@ func (s service) buildSelfFactQRRequest(req entity.Request) (*selffact.QRFactReq
 }
 
 // buildSelfFactQRRequest builds a fact request from a given entity.Request
-func (s service) buildSelfFactDLRequest(req entity.Request, appID string) (*selffact.DeepLinkFactRequest, error) {
-	// FIXME: dlCodes must be stored on the database, so consumed through the app_repository instead
-	dlCode := "default_non_working_dl_code"
-
+func (s service) buildSelfFactDLRequest(req entity.Request, dlCode string) (*selffact.DeepLinkFactRequest, error) {
 	var incomingFacts []entity.RequestFacts
 	err := json.Unmarshal(req.Facts, &incomingFacts)
 	if err != nil {

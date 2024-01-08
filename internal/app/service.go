@@ -36,6 +36,7 @@ type CreateAppRequest struct {
 	Name     string `json:"name"`
 	Env      string `json:"env"`
 	Callback string `json:"callback"`
+	Code     string `json:"code"`
 }
 
 // Validate validates the CreateAppRequest fields.
@@ -94,6 +95,7 @@ func (s service) Create(ctx context.Context, req CreateAppRequest) (App, error) 
 		Name:         req.Name,
 		Env:          req.Env,
 		Callback:     req.Callback,
+		Code:         req.Code,
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
