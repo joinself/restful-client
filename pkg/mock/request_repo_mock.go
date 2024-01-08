@@ -5,10 +5,15 @@ import (
 	"database/sql"
 
 	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/pkg/support"
 )
 
 type RequestRepositoryMock struct {
 	Items []entity.Request
+}
+
+func (m RequestRepositoryMock) SetRunner(runner support.SelfClientGetter) {
+
 }
 
 func (m RequestRepositoryMock) Get(ctx context.Context, id string) (entity.Request, error) {

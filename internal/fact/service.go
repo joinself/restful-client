@@ -8,6 +8,7 @@ import (
 	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/self-go-sdk/fact"
 )
 
@@ -73,15 +74,15 @@ func (m UpdateFactRequest) Validate() error {
 }
 
 type service struct {
-	repo    Repository
-	atRepo  attestation.Repository
-	logger  log.Logger
-	clients map[string]IssuerService
+	repo   Repository
+	atRepo attestation.Repository
+	runner support.SelfClientGetter
+	logger log.Logger
 }
 
 // NewService creates a new fact service.
-func NewService(repo Repository, atRepo attestation.Repository, logger log.Logger, clients map[string]IssuerService) Service {
-	return service{repo, atRepo, logger, clients}
+func NewService(repo Repository, atRepo attestation.Repository, runner support.SelfClientGetter, logger log.Logger) Service {
+	return service{repo, atRepo, runner, logger}
 }
 
 // Get returns the fact with the specified the fact ID.
@@ -175,7 +176,8 @@ func (s service) Query(ctx context.Context, conn int, source, fact string, offse
 
 // issueFact issues a new fact and sends it to the hwe
 func (s service) issueFact(f CreateFactRequest, appid, selfid string) {
-	if _, ok := s.clients[appid]; !ok {
+	client, ok := s.runner.Get(appid)
+	if !ok {
 		s.logger.Debug("skipping as self is not initialized")
 		return
 	}
@@ -198,5 +200,5 @@ func (s service) issueFact(f CreateFactRequest, appid, selfid string) {
 		fi = append(fi, nf)
 	}
 
-	s.clients[appid].Issue(selfid, fi, []string{})
+	client.FactService().Issue(selfid, fi, []string{})
 }

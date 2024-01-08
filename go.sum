@@ -71,6 +71,8 @@ github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/gorilla/websocket v1.4.1 h1:q7AeDBpnBk8AogcD4DSag/Ukw/KV+YhzLj2bP5HvKCM=
 github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
+github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/joinself/self-crypto-go v0.0.0-20230620152847-d5b4947a8e3c h1:C8FrncqwDuGfR4XT1yXHtA/uukJwz1rXQ5Rug+WzU7M=
 github.com/joinself/self-crypto-go v0.0.0-20230620152847-d5b4947a8e3c/go.mod h1:x4Z50kboD7lDyyNLpaTMq/Y8ZIVg/j1JdTy6pAgxPrc=
 github.com/joinself/self-go-sdk v0.0.0-20230915061409-604d443dd45c h1:7drysmMJPWjE4Oq4ts4lltses3F059B1/ZHQd6xktlA=

@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
-	selfsdk "github.com/joinself/self-go-sdk"
+	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/self-go-sdk/chat"
 )
 
@@ -52,14 +52,14 @@ func (m UpdateMessageRequest) Validate() error {
 }
 
 type service struct {
-	repo    Repository
-	logger  log.Logger
-	clients map[string]*selfsdk.Client
+	repo   Repository
+	runner support.SelfClientGetter
+	logger log.Logger
 }
 
 // NewService creates a new message service.
-func NewService(repo Repository, logger log.Logger, clients map[string]*selfsdk.Client) Service {
-	return service{repo, logger, clients}
+func NewService(repo Repository, runner support.SelfClientGetter, logger log.Logger) Service {
+	return service{repo, runner, logger}
 }
 
 // Get returns the message with the specified the message ID.
@@ -156,19 +156,21 @@ func (s service) Query(ctx context.Context, connection int, messagesSince int, o
 }
 
 func (s service) sendMessage(appID, connection string, body string) (*chat.Message, error) {
-	if _, ok := s.clients[appID]; !ok {
+	client, ok := s.runner.Get(appID)
+	if !ok {
 		return nil, nil
 	}
 
-	return s.clients[appID].ChatService().Message([]string{connection}, body)
+	return client.ChatService().Message([]string{connection}, body)
 }
 
 func (s service) updateMessage(appID, connection, jti, body string) {
-	if _, ok := s.clients[appID]; !ok {
+	client, ok := s.runner.Get(appID)
+	if !ok {
 		return
 	}
 
-	s.clients[appID].ChatService().Edit(
+	client.ChatService().Edit(
 		[]string{connection},
 		jti,
 		body,

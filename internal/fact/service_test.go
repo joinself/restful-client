@@ -68,7 +68,8 @@ func TestUpdateFactRequest_Validate(t *testing.T) {
 
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
-	s := NewService(&mock.FactRepositoryMock{}, &mock.AttestationRepositoryMock{}, logger, nil)
+	runner := mock.NewRunnerMock()
+	s := NewService(&mock.FactRepositoryMock{}, &mock.AttestationRepositoryMock{}, runner, logger)
 
 	ctx := context.Background()
 

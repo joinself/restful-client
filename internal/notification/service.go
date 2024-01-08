@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joinself/restful-client/pkg/log"
-	selfsdk "github.com/joinself/self-go-sdk"
+	"github.com/joinself/restful-client/pkg/support"
 )
 
 // Service encapsulates usecase logic for messages.
@@ -33,23 +33,24 @@ func (m SystemNotificationData) Validate() error {
 }
 
 type service struct {
-	logger  log.Logger
-	clients map[string]*selfsdk.Client
+	logger log.Logger
+	runner support.SelfClientGetter
 }
 
 // NewService creates a new notification service.
-func NewService(logger log.Logger, clients map[string]*selfsdk.Client) Service {
-	return service{logger, clients}
+func NewService(runner support.SelfClientGetter, logger log.Logger) Service {
+	return service{logger, runner}
 }
 
 // Send sends a system notification.
 func (s service) Send(ctx context.Context, appID, selfID string, data SystemNotificationData) error {
-	if _, ok := s.clients[appID]; !ok {
+	client, ok := s.runner.Get(appID)
+	if !ok {
 		return nil
 	}
 
 	cid := uuid.New().String()
-	req, err := s.clients[appID].MessagingService().BuildRequest(map[string]interface{}{
+	req, err := client.MessagingService().BuildRequest(map[string]interface{}{
 		"typ":  "system.notify",
 		"sub":  selfID,
 		"cid":  cid,
@@ -64,7 +65,7 @@ func (s service) Send(ctx context.Context, appID, selfID string, data SystemNoti
 		return err
 	}
 
-	devices, err := s.clients[appID].IdentityService().GetDevices(selfID)
+	devices, err := client.IdentityService().GetDevices(selfID)
 	if err != nil {
 		return err
 	}
@@ -77,7 +78,7 @@ func (s service) Send(ctx context.Context, appID, selfID string, data SystemNoti
 		return nil
 	}
 
-	err = s.clients[appID].MessagingService().Send(recipients, cid, body)
+	err = client.MessagingService().Send(recipients, cid, body)
 	if err != nil {
 		return err
 	}

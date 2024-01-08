@@ -7,6 +7,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/self-go-sdk/fact"
 )
 
@@ -55,14 +56,14 @@ func (m UpdateConnectionRequest) Validate() error {
 }
 
 type service struct {
-	repo    Repository
-	logger  log.Logger
-	clients map[string]FactService
+	repo   Repository
+	runner support.SelfClientGetter
+	logger log.Logger
 }
 
 // NewService creates a new connection service.
-func NewService(repo Repository, logger log.Logger, clients map[string]FactService) Service {
-	return service{repo, logger, clients}
+func NewService(repo Repository, runner support.SelfClientGetter, logger log.Logger) Service {
+	return service{repo, runner, logger}
 }
 
 // Get returns the connection with the specified the connection ID.
@@ -152,12 +153,13 @@ func (s service) Query(ctx context.Context, appid string, offset, limit int) ([]
 }
 
 func (s service) requestPublicInfo(appid, selfid string) {
-	if _, ok := s.clients[appid]; !ok {
+	client, ok := s.runner.Get(appid)
+	if !ok {
 		s.logger.Debug("skipping as self is not initialized")
 		return
 	}
 
-	resp, err := s.clients[appid].Request(&fact.FactRequest{
+	resp, err := client.FactService().Request(&fact.FactRequest{
 		SelfID:      selfid,
 		Description: "info",
 		Facts:       []fact.Fact{{Fact: fact.FactDisplayName, Sources: []string{fact.SourceUserSpecified}}},

@@ -19,15 +19,13 @@ import (
 
 var db *dbcontext.DB
 
-const CONFIG_RELATIVE_FILE = "../../config/local.yml"
-
 // DB returns the database connection for testing purpose.
 func DB(t *testing.T) *dbcontext.DB {
 	if db != nil {
 		return db
 	}
 	logger, _ := log.NewForTest()
-	cfg, err := config.Load(logger)
+	cfg, err := config.Load(logger, "../../.env")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()

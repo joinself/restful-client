@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	lg "log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,6 +18,7 @@ import (
 	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/internal/config"
 	"github.com/joinself/restful-client/internal/connection"
+	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/healthcheck"
 	"github.com/joinself/restful-client/internal/message"
@@ -27,9 +27,6 @@ import (
 	"github.com/joinself/restful-client/internal/self"
 	"github.com/joinself/restful-client/pkg/dbcontext"
 	"github.com/joinself/restful-client/pkg/log"
-	"github.com/joinself/restful-client/pkg/support"
-	"github.com/joinself/restful-client/pkg/webhook"
-	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -47,7 +44,7 @@ func main() {
 	logger := log.New().With(context.Background(), "version", Version)
 
 	// load application configurations
-	cfg, err := config.Load(logger)
+	cfg, err := config.Load(logger, ".env")
 	if err != nil {
 		logger.Errorf("failed to load application configuration: %s", err)
 		os.Exit(-1)
@@ -98,11 +95,6 @@ func main() {
 // @BasePath	/v1/
 // @schemes		http https
 func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.Handler {
-	clients, err := setupSelfClients(cfg)
-	if err != nil {
-		lg.Fatalf("failed setting up self clients: %v", err.Error())
-	}
-
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
@@ -127,11 +119,6 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	healthcheck.RegisterHandlers(rg, Version)
 
 	authHandler := auth.Handler(cfg.JWTSigningKey)
-	callbackURLs := setupCallbackUrls(cfg)
-	dlCodes := map[string]string{}
-	for _, c := range cfg.SelfApps {
-		dlCodes[c.SelfAppID] = c.DLCode
-	}
 
 	// Repositories
 	connectionRepo := connection.NewRepository(db, logger)
@@ -140,42 +127,43 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	requestRepo := request.NewRepository(db, logger)
 	attestationRepo := attestation.NewRepository(db, logger)
 	accountRepo := account.NewRepository(db, logger)
+	appRepo := app.NewRepository(db, logger)
 
 	// Services
-	fcs := make(map[string]connection.FactService, len(clients))
-	rcs := make(map[string]fact.IssuerService, len(clients))
-	rrcs := make(map[string]request.RequesterService, len(clients))
-	callbacks := make(map[string]*webhook.Webhook, len(clients))
-	for id, c := range clients {
-		fcs[id] = c.FactService()
-		rcs[id] = c.FactService()
-		rrcs[id] = c.FactService()
-		callbacks[id] = webhook.NewWebhook(callbackURLs[id])
-	}
-
-	cService := connection.NewService(connectionRepo, logger, fcs)
-	rService := request.NewService(requestRepo, factRepo, attestationRepo, logger, rrcs, callbacks, dlCodes)
+	rService := request.NewService(requestRepo, factRepo, attestationRepo, logger)
+	runner := self.NewRunner(self.RunnerConfig{
+		ConnectionRepo: connectionRepo,
+		FactRepo:       factRepo,
+		MessageRepo:    messageRepo,
+		RequestRepo:    requestRepo,
+		RequestService: rService,
+		Logger:         logger,
+		StorageKey:     cfg.StorageKey,
+		StorageDir:     cfg.StorageDir,
+	})
+	rService.SetRunner(runner)
+	cService := connection.NewService(connectionRepo, runner, logger)
+	aService := app.NewService(appRepo, runner, logger)
 
 	// Handlers
 	app.RegisterHandlers(rg.Group(""),
-		clients,
+		aService,
 		authHandler,
 		logger,
 	)
-
 	connection.RegisterHandlers(rg.Group(""),
 		cService,
 		authHandler,
 		logger,
 	)
 	message.RegisterHandlers(rg.Group(""),
-		message.NewService(messageRepo, logger, clients),
+		message.NewService(messageRepo, runner, logger),
 		cService,
 		authHandler,
 		logger,
 	)
 	fact.RegisterHandlers(rg.Group(""),
-		fact.NewService(factRepo, attestationRepo, logger, rcs),
+		fact.NewService(factRepo, attestationRepo, runner, logger),
 		cService,
 		authHandler, logger,
 	)
@@ -193,27 +181,21 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		authHandler,
 		logger,
 	)
-
 	notification.RegisterHandlers(rg.Group(""),
-		notification.NewService(logger, clients),
+		notification.NewService(runner, logger),
 		authHandler, logger,
 	)
 
-	for id, client := range clients {
-		logger.Infof("starting client %s", id)
-		self.RunService(
-			self.NewService(self.Config{
-				SelfClient:     support.NewSelfClient(client),
-				ConnectionRepo: connectionRepo,
-				FactRepo:       factRepo,
-				MessageRepo:    messageRepo,
-				RequestRepo:    requestRepo,
-				RequestService: rService,
-				Logger:         logger,
-				Poster:         webhook.NewWebhook(callbackURLs[id]),
-			}),
-			logger,
-		)
+	if cfg.DefaultSelfApp != nil {
+		runner.Run(entity.App{
+			ID:           cfg.DefaultSelfApp.SelfAppID,
+			DeviceSecret: cfg.DefaultSelfApp.SelfAppDeviceSecret,
+			Env:          cfg.DefaultSelfApp.SelfEnv,
+			Callback:     cfg.DefaultSelfApp.CallbackURL,
+		})
+	}
+	for _, app := range aService.List(context.Background()) {
+		runner.Run(app)
 	}
 
 	if cfg.ServeDocs == "true" {
@@ -224,45 +206,6 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	fmt.Println(e.Start(":" + strconv.Itoa(cfg.ServerPort)))
 
 	return e
-}
-
-func setupSelfClients(cfg *config.Config) (map[string]*selfsdk.Client, error) {
-	clients := make(map[string]*selfsdk.Client, len(cfg.SelfApps))
-
-	for _, c := range cfg.SelfApps {
-		selfConfig := selfsdk.Config{
-			SelfAppID:           c.SelfAppID,
-			SelfAppDeviceSecret: c.SelfAppDeviceSecret,
-			StorageKey:          c.SelfStorageKey,
-			StorageDir:          c.SelfStorageDir,
-		}
-		if c.SelfEnv != "production" {
-			if c.SelfEnv == "development" {
-				selfConfig.APIURL = c.SelfAPIURL
-				selfConfig.MessagingURL = c.SelfMessagingURL
-			} else {
-				selfConfig.Environment = c.SelfEnv
-			}
-		}
-		client, err := selfsdk.New(selfConfig)
-		if err != nil {
-			fmt.Println(err)
-			return nil, err
-		}
-		clients[c.SelfAppID] = client
-	}
-
-	return clients, nil
-}
-
-func setupCallbackUrls(cfg *config.Config) map[string]string {
-	urls := make(map[string]string, len(cfg.SelfApps))
-
-	for _, c := range cfg.SelfApps {
-		urls[c.SelfAppID] = c.CallbackURL
-	}
-
-	return urls
 }
 
 // logDBQuery returns a logging function that can be used to log SQL queries.
