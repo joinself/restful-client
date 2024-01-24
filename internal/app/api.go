@@ -72,7 +72,7 @@ func (r resource) list(c echo.Context) error {
 // @Router          /apps [post]
 func (r resource) create(c echo.Context) error {
 	user := auth.CurrentUser(c)
-	if user == nil || !user.IsAdmin() {
+	if user == nil {
 		return c.JSON(http.StatusNotFound, "not found")
 	}
 
