@@ -156,7 +156,7 @@ func (r resource) update(c echo.Context) error {
 	return c.JSON(http.StatusOK, connection)
 }
 
-// CreateConnection godoc
+// UpdateConnection godoc
 // @Summary         Deletes an existing connection.
 // @Description  	Deletes an existing connection and sends a request for public information and avoids incoming comms from that connection.
 // @Tags            connections

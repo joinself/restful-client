@@ -45,7 +45,7 @@ func (m CreateAppRequest) Validate() error {
 		validation.Field(&m.ID, validation.Required, validation.Length(0, 128)),
 		validation.Field(&m.Secret, validation.Required, validation.Length(0, 128)),
 		validation.Field(&m.Name, validation.Required, validation.Length(0, 50)),
-		validation.Field(&m.Env, validation.Required, validation.Length(0, 10)),
+		validation.Field(&m.Env, validation.Required, validation.Length(0, 20)),
 	)
 }
 
