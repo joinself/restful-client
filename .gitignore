@@ -34,3 +34,6 @@ thunder-tests/
 
 # Environment configuration
 .env
+
+# IDE
+.vscode

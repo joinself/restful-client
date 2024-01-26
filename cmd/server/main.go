@@ -98,13 +98,11 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	/*
-		// TODO: move this to an environment variable.
-		e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-			AllowOrigins: []string{"*"},
-			AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
-		}))
-	*/
+	// TODO: move this to an environment variable.
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+	}))
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "method=${method}, uri=${uri}, status=${status}\n",
 	}))
@@ -137,6 +135,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		MessageRepo:    messageRepo,
 		RequestRepo:    requestRepo,
 		RequestService: rService,
+		AppRepo:        appRepo,
 		Logger:         logger,
 		StorageKey:     cfg.StorageKey,
 		StorageDir:     cfg.StorageDir,
@@ -194,7 +193,15 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 			Callback:     cfg.DefaultSelfApp.CallbackURL,
 		})
 	}
-	for _, app := range aService.List(context.Background()) {
+	status, err := aService.ListByStatus(context.Background(), []string{
+		entity.APP_CREATED_STATUS,
+		entity.APP_ENABLED_STATUS,
+	})
+	if err != nil {
+		logger.With(context.Background()).Error("Problem retrieving apps to be started")
+	}
+
+	for _, app := range status {
 		runner.Run(app)
 	}
 
