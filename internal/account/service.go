@@ -17,6 +17,7 @@ type Service interface {
 	Get(ctx context.Context, username, password string) (Account, error)
 	Create(ctx context.Context, input CreateAccountRequest) (Account, error)
 	Update(ctx context.Context, input UpdateAccountRequest) (Account, error)
+	SetPassword(ctx context.Context, username, password, newPassword string) error
 	Delete(ctx context.Context, username string) error
 	Count(ctx context.Context) (int, error)
 }
@@ -48,9 +49,10 @@ func (m CreateAccountRequest) Validate() error {
 
 // UpdateAccountRequest represents an account update request.
 type UpdateAccountRequest struct {
-	Username  string   `json:"username"`
-	Password  string   `json:"password"`
-	Resources []string `json:"resources"`
+	Username    string   `json:"username"`
+	Password    string   `json:"password"`
+	NewPassword string   `json:"new_password"`
+	Resources   []string `json:"resources"`
 }
 
 // Validate validates the CreateAccountRequest fields.
@@ -133,6 +135,16 @@ func (s service) Update(ctx context.Context, req UpdateAccountRequest) (Account,
 		return account, err
 	}
 	return account, nil
+}
+
+// SetPassword updates the password for the given account id.
+func (s service) SetPassword(ctx context.Context, username, password, newPassword string) error {
+	a, err := s.Get(ctx, username, password)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.SetPassword(ctx, a.ID, newPassword)
 }
 
 // Delete deletes the account with the specified ID.

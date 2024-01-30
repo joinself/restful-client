@@ -6,6 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
@@ -29,6 +30,8 @@ type Repository interface {
 	Create(ctx context.Context, account entity.Account) error
 	// Update updates the account with given ID in the storage.
 	Update(ctx context.Context, account entity.Account) error
+	// SetPassword updates the password for the given account id.
+	SetPassword(ctx context.Context, id int, password string) error
 	// Delete removes the account with given ID from the storage.
 	Delete(ctx context.Context, id int) error
 }
@@ -125,6 +128,17 @@ func (r repository) isValidPassword(a entity.Account, password string) bool {
 	hp := r.hashPassword(password, []byte(a.Salt))
 
 	return a.HashedPassword == hp
+}
+
+// SetPassword updates the password for the given account id.
+func (r repository) SetPassword(ctx context.Context, id int, password string) error {
+	salt := string(r.generateRandomSalt(saltSize))
+	hashedPassword := r.hashPassword(password, []byte(salt))
+
+	sql := "UPDATE account SET hashed_password='%s', salt='%s', updated_at=DATE('now') WHERE id=%d"
+	query := fmt.Sprintf(sql, hashedPassword, string(salt), id)
+	_, err := r.db.DB().NewQuery(query).Execute()
+	return err
 }
 
 // Combine password and salt then hash them using the SHA-512

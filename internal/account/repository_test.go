@@ -59,6 +59,13 @@ func TestRepository(t *testing.T) {
 	account, err = repo.Get(ctx, username, updatedPassword)
 	assert.Nil(t, err)
 
+	err = repo.SetPassword(ctx, account.ID, "setted_password")
+	assert.Nil(t, err)
+	account, err = repo.Get(ctx, username, updatedPassword)
+	assert.Error(t, err)
+	account, err = repo.Get(ctx, username, "setted_password")
+	assert.Nil(t, err)
+
 	// delete
 	err = repo.Delete(ctx, account.ID)
 	assert.Nil(t, err)
