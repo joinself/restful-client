@@ -3,7 +3,9 @@ package self
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -24,7 +26,7 @@ import (
 
 // Service interface for self service.
 type Service interface {
-	Run()
+	Run() error
 	Stop()
 	Get() *selfsdk.Client
 	Poster() webhook.Poster
@@ -86,17 +88,24 @@ func NewService(c Config) Service {
 }
 
 // Run executes the background self listerners.
-func (s *service) Run() {
+func (s *service) Run() error {
 	s.logger.With(context.Background()).Info("starting self client")
-	for {
+	const maxRetries = 5
+
+	for i := 0; i < maxRetries; i++ {
 		err := s.client.Start()
 		if err == nil {
-			break
+			s.logger.With(context.Background()).Info("connection successful")
+			return nil
 		}
 
-		s.logger.With(context.Background()).Error(err.Error())
-		time.Sleep(time.Second * 5)
+		s.logger.With(context.Background()).Info("Connection failed with %s", err.Error())
+		nextRetry := time.Duration(math.Pow(2, float64(i))) * time.Second
+		s.logger.With(context.Background()).Info("Retry in %v seconds...\n", nextRetry/time.Second)
+		time.Sleep(nextRetry)
 	}
+
+	return errors.New("could not start the app")
 }
 
 func (s *service) Stop() {

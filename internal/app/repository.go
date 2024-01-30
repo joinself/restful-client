@@ -2,7 +2,9 @@ package app
 
 import (
 	"context"
+	"fmt"
 
+	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/dbcontext"
 	"github.com/joinself/restful-client/pkg/log"
@@ -20,8 +22,12 @@ type Repository interface {
 	Update(ctx context.Context, app entity.App) error
 	// Delete removes the app with given ID from the storage.
 	Delete(ctx context.Context, id string) error
-	// List all the configured apps
+	// List returns a list of all entity.App
 	List(ctx context.Context) ([]entity.App, error)
+	// SetStatus sets the given status for a given app id.
+	SetStatus(ctx context.Context, id, status string) error
+	// ListByStatus returns a list of entity.App matching the given list of status
+	ListByStatus(ctx context.Context, statuses []string) ([]entity.App, error)
 }
 
 // repository persists apps in database
@@ -67,6 +73,7 @@ func (r repository) Count(ctx context.Context) (int, error) {
 	return count, err
 }
 
+// List returns a list of all entity.App
 func (r repository) List(ctx context.Context) ([]entity.App, error) {
 	var apps []entity.App
 	err := r.db.With(ctx).
@@ -75,6 +82,34 @@ func (r repository) List(ctx context.Context) ([]entity.App, error) {
 		OrderBy("created_at DESC").
 		All(&apps)
 	return apps, err
+}
+
+// ListByStatus returns a list of entity.App matching the given list of status
+func (r repository) ListByStatus(ctx context.Context, statuses []string) (apps []entity.App, err error) {
+	if len(statuses) == 0 {
+		return
+	}
+
+	ss := []interface{}{}
+	for _, v := range statuses {
+		ss = append(ss, v)
+	}
+
+	err = r.db.With(ctx).
+		Select().
+		Where(dbx.In("status", ss...)).
+		OrderBy("id").
+		OrderBy("created_at DESC").
+		All(&apps)
+	return
+}
+
+// SetStatus sets the given status for a given app id.
+func (r repository) SetStatus(ctx context.Context, id, status string) error {
+	query := fmt.Sprintf(`UPDATE app SET status='%s' WHERE id='%s'`, status, id)
+	_, err := r.db.DB().NewQuery(query).Execute()
+	return err
+
 }
 
 func (r repository) getByID(ctx context.Context, id string) (entity.App, error) {

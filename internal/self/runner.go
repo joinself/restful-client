@@ -1,6 +1,8 @@
 package self
 
 import (
+	"context"
+
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
@@ -19,12 +21,17 @@ type Runner interface {
 	Poster(id string) (webhook.Poster, bool)
 }
 
+type appStatusSetter interface {
+	SetStatus(ctx context.Context, id, status string) error
+}
+
 type runner struct {
 	runners    map[string]Service
 	cRepo      connection.Repository
 	fRepo      fact.Repository
 	mRepo      message.Repository
 	rRepo      request.Repository
+	aRepo      appStatusSetter
 	logger     log.Logger
 	rService   request.Service
 	storageKey string
@@ -36,6 +43,7 @@ type RunnerConfig struct {
 	FactRepo       fact.Repository
 	MessageRepo    message.Repository
 	RequestRepo    request.Repository
+	AppRepo        appStatusSetter
 	Logger         log.Logger
 	RequestService request.Service
 	StorageKey     string
@@ -49,6 +57,7 @@ func NewRunner(config RunnerConfig) Runner {
 		fRepo:      config.FactRepo,
 		mRepo:      config.MessageRepo,
 		rRepo:      config.RequestRepo,
+		aRepo:      config.AppRepo,
 		logger:     config.Logger,
 		rService:   config.RequestService,
 		storageKey: config.StorageKey,
@@ -89,10 +98,16 @@ func (r *runner) Run(app entity.App) error {
 		Poster:         webhook.NewWebhook(app.Callback),
 	})
 	r.logger.Infof("trying to start %s", app.ID)
-	r.runners[app.ID].Run()
+	err = r.runners[app.ID].Run()
+	if err == nil {
+		r.logger.Infof("app %s started", app.ID)
+		return nil
+	}
 
-	r.logger.Infof("app %s started", app.ID)
-	return nil
+	// App has failed to start, let's mark it as errored and
+	// notify an admin.
+	r.logger.Infof("problem trying to start %s app, marking as crashed", app.ID)
+	return r.aRepo.SetStatus(context.Background(), app.ID, entity.APP_CRASHED_STATUS)
 }
 
 func (r *runner) Stop(id string) {
@@ -110,17 +125,12 @@ func (r *runner) setupSelfClient(app entity.App) (*selfsdk.Client, error) {
 	// TODO: recover this piece if we eventually need to.
 	if app.Env != "production" {
 		if app.Env == "development" {
-			// selfConfig.APIURL = c.SelfAPIURL
-			// selfConfig.MessagingURL = c.SelfMessagingURL
+			selfConfig.APIURL = "http://localhost:8080"
+			selfConfig.MessagingURL = "ws://localhost:8086/v2/messaging"
 		} else {
 			selfConfig.Environment = app.Env
 		}
 	}
 
 	return selfsdk.New(selfConfig)
-}
-
-// RunService executes the listeners specified on the Service.
-func RunService(service Service, logger log.Logger) {
-	service.Run()
 }

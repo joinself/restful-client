@@ -14,6 +14,7 @@ import (
 // Service encapsulates usecase logic for apps.
 type Service interface {
 	List(ctx context.Context) []entity.App
+	ListByStatus(ctx context.Context, statuses []string) ([]entity.App, error)
 	Get(ctx context.Context, id string) (App, error)
 	Create(ctx context.Context, input CreateAppRequest) (App, error)
 	Delete(ctx context.Context, id string) (App, error)
@@ -66,6 +67,11 @@ func (s service) List(ctx context.Context) []entity.App {
 		return []entity.App{}
 	}
 	return apps
+}
+
+// ListByStatus returns the apps that meet the statuses
+func (s service) ListByStatus(ctx context.Context, statuses []string) ([]entity.App, error) {
+	return s.repo.ListByStatus(ctx, statuses)
 }
 
 // Get returns the app with the specified the app ID.

@@ -24,6 +24,20 @@ func (m AppRepositoryMock) List(ctx context.Context) ([]entity.App, error) {
 	return m.Items, nil
 }
 
+func (m AppRepositoryMock) ListByStatus(ctx context.Context, statuses []string) ([]entity.App, error) {
+	return m.Items, nil
+}
+
+func (m AppRepositoryMock) SetStatus(ctx context.Context, id, status string) error {
+	for i, item := range m.Items {
+		if item.ID == id {
+			m.Items[i].Status = status
+			break
+		}
+	}
+	return nil
+}
+
 func (m AppRepositoryMock) Count(ctx context.Context) (int, error) {
 	return len(m.Items), nil
 }
