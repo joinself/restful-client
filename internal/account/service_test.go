@@ -2,7 +2,6 @@ package account
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/joinself/restful-client/pkg/log"
@@ -39,12 +38,12 @@ func TestUpdateAccountRequest_Validate(t *testing.T) {
 		model     UpdateAccountRequest
 		wantError bool
 	}{
-		{"success", UpdateAccountRequest{Username: "username", Password: "password"}, false},
+		{"success", UpdateAccountRequest{NewPassword: "username", Password: "password"}, false},
 		{"required", UpdateAccountRequest{}, true},
-		{"too long usr", UpdateAccountRequest{Username: longString, Password: "password"}, true},
-		{"too long pwd", UpdateAccountRequest{Username: "user", Password: longString}, true},
-		{"too short user", UpdateAccountRequest{Username: "", Password: "password"}, true},
-		{"too long pwd", UpdateAccountRequest{Username: "user", Password: ""}, true},
+		{"too long new pwd", UpdateAccountRequest{NewPassword: longString, Password: "password"}, true},
+		{"too long pwd", UpdateAccountRequest{NewPassword: "user", Password: longString}, true},
+		{"too short new pwd", UpdateAccountRequest{NewPassword: "", Password: "password"}, true},
+		{"too long pwd", UpdateAccountRequest{NewPassword: "user", Password: ""}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -105,47 +104,12 @@ func Test_service_CRUD(t *testing.T) {
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 2, count)
 
-	// update
-	account, err = s.Update(ctx, UpdateAccountRequest{
-		Username:  username,
-		Password:  "password",
-		Resources: []string{"appidUpdated"},
-	})
-	assert.Nil(t, err)
-	assert.Equal(t, "[\"appidUpdated\"]", account.Resources)
-	_, err = s.Update(ctx, UpdateAccountRequest{
-		Username:  username,
-		Password:  "password",
-		Resources: []string{"appid"},
-	})
-	assert.Nil(t, err)
-
-	// validation error in update
-	_, err = s.Update(ctx, UpdateAccountRequest{
-		Username:  "",
-		Password:  "password",
-		Resources: []string{"a"},
-	})
-	assert.NotNil(t, err)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 2, count)
-
-	// unexpected error in update
-	_, err = s.Update(ctx, UpdateAccountRequest{
-		Username:  "error",
-		Password:  "password",
-		Resources: []string{"a"},
-	})
-	assert.Equal(t, errors.New("sql: no rows in result set"), err)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 2, count)
-
 	// get
 	_, err = s.Get(ctx, "none", "password")
 	assert.NotNil(t, err)
 	account, err = s.Get(ctx, username, "password")
 	assert.Nil(t, err)
-	assert.Equal(t, "[\"appid\"]", account.Resources)
+	assert.Equal(t, "appid", account.Resources)
 	assert.Equal(t, username, account.UserName)
 
 	// delete

@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +20,7 @@ func TestCurrentUser(t *testing.T) {
 	rec := httptest.NewRecorder()
 	ctx := e.NewContext(req, rec)
 
-	assert.Nil(t, CurrentUser(ctx))
+	assert.Nil(t, acl.CurrentUser(ctx))
 	WithUser(ctx, buildJwt(entity.User{
 		ID:        "100",
 		Name:      "test",
@@ -27,7 +28,7 @@ func TestCurrentUser(t *testing.T) {
 		Resources: []string{"app1"},
 	}))
 
-	identity := CurrentUser(ctx)
+	identity := acl.CurrentUser(ctx)
 	assert.NotNil(t, identity)
 	assert.Equal(t, "100", identity.GetID())
 	assert.Equal(t, "test", identity.GetName())
@@ -43,15 +44,15 @@ func testHasAccessToResource(t *testing.T) {
 	rec := httptest.NewRecorder()
 	ctx := e.NewContext(req, rec)
 
-	assert.Nil(t, CurrentUser(ctx))
+	assert.Nil(t, acl.CurrentUser(ctx))
 	WithUser(ctx, buildJwt(entity.User{
 		ID:        "100",
 		Name:      "test",
 		Admin:     false,
 		Resources: []string{"app1"},
 	}))
-	assert.False(t, HasAccessToResource(ctx, "app2"))
-	assert.False(t, HasAccessToResource(ctx, "app1"))
+	assert.False(t, acl.HasAccessToResource(ctx, "app2"))
+	assert.False(t, acl.HasAccessToResource(ctx, "app1"))
 
 	WithUser(ctx, buildJwt(entity.User{
 		ID:        "100",
@@ -59,23 +60,24 @@ func testHasAccessToResource(t *testing.T) {
 		Admin:     true,
 		Resources: []string{},
 	}))
-	assert.True(t, HasAccessToResource(ctx, "app2"))
-	assert.True(t, HasAccessToResource(ctx, "app1"))
+	assert.True(t, acl.HasAccessToResource(ctx, "app2"))
+	assert.True(t, acl.HasAccessToResource(ctx, "app1"))
 }
 
 func TestHandler(t *testing.T) {
 	assert.NotNil(t, Handler("test"))
 }
 
-func buildJwt(identity Identity) *jwt.Token {
+func buildJwt(identity acl.Identity) *jwt.Token {
 	tokenExpiration := 1000
 
 	// Set custom claims
-	claims := &jwtCustomClaims{
+	claims := &acl.JWTCustomClaims{
 		identity.GetID(),
 		identity.GetName(),
 		identity.IsAdmin(),
 		identity.GetResources(),
+		identity.IsPasswordChangeRequired(),
 		jwt.RegisteredClaims{
 			Subject:   identity.GetID(),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

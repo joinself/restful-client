@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/test"
+	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/mock"
 )
@@ -27,22 +27,19 @@ func TestAPI(t *testing.T) {
 		{ID: "123", FactID: "123", Body: "body", Value: "value", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}}
 
-	authHandler := auth.MockAuthHandler()
 	runner := mock.NewRunnerMock()
 	RegisterHandlers(
-		router.Group(""),
+		router.Group("/apps"),
 		NewService(repo, atRepo, runner, logger),
 		connection.NewService(connRepo, runner, logger),
-		authHandler,
 		logger)
-	header := auth.MockAuthHeader()
+	header := acl.MockAuthHeader()
 
 	tests := []test.APITestCase{
 		{Name: "get all", Method: "GET", URL: "/apps/app1/connections/connection/facts", Body: "", Header: header, WantStatus: http.StatusOK, WantResponse: `*"total_count":1*`},
 		{Name: "get 123", Method: "GET", URL: "/apps/app1/connections/connection/facts/123", Body: "", Header: header, WantStatus: http.StatusOK, WantResponse: `*123*`},
 		{Name: "get unknown", Method: "GET", URL: "/apps/app1/connections/connection/facts/1234", Body: "", Header: header, WantStatus: http.StatusNotFound, WantResponse: ""},
 		{Name: "create ok", Method: "POST", URL: "/apps/app1/connections/connection/facts", Body: `{"fact":"test"}`, Header: header, WantStatus: http.StatusCreated, WantResponse: ""},
-		{Name: "create auth error", Method: "POST", URL: "/apps/app1/connections/connection/facts", Body: `{"body":"test"}`, Header: nil, WantStatus: http.StatusUnauthorized, WantResponse: ""},
 		{Name: "create input error", Method: "POST", URL: "/apps/app1/connections/connection/facts", Body: `"body":"test"}`, Header: header, WantStatus: http.StatusBadRequest, WantResponse: ""},
 	}
 	for _, tc := range tests {

@@ -25,6 +25,7 @@ import (
 	"github.com/joinself/restful-client/internal/notification"
 	"github.com/joinself/restful-client/internal/request"
 	"github.com/joinself/restful-client/internal/self"
+	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/dbcontext"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/labstack/echo/v4"
@@ -112,12 +113,6 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 	}))
 
-	rg := e.Group("/v1")
-
-	healthcheck.RegisterHandlers(rg, Version)
-
-	authHandler := auth.Handler(cfg.JWTSigningKey)
-
 	// Repositories
 	connectionRepo := connection.NewRepository(db, logger)
 	messageRepo := message.NewRepository(db, logger)
@@ -144,45 +139,55 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	cService := connection.NewService(connectionRepo, runner, logger)
 	aService := app.NewService(appRepo, runner, logger)
 
-	// Handlers
-	app.RegisterHandlers(rg.Group(""),
+	aclMiddleware := acl.NewMiddleware()
+	rg := e.Group("/v1")
+
+	// App children handlers
+	appsGroup := rg.Group("/apps")
+	appsGroup.Use(auth.Handler(cfg.JWTSigningKey))
+	appsGroup.Use(aclMiddleware.Process)
+	app.RegisterHandlers(appsGroup,
 		aService,
-		authHandler,
 		logger,
 	)
-	connection.RegisterHandlers(rg.Group(""),
+	connection.RegisterHandlers(appsGroup,
 		cService,
-		authHandler,
 		logger,
 	)
-	message.RegisterHandlers(rg.Group(""),
+	message.RegisterHandlers(appsGroup,
 		message.NewService(messageRepo, runner, logger),
 		cService,
-		authHandler,
 		logger,
 	)
-	fact.RegisterHandlers(rg.Group(""),
+	fact.RegisterHandlers(appsGroup,
 		fact.NewService(factRepo, attestationRepo, runner, logger),
 		cService,
-		authHandler, logger,
+		logger,
 	)
-	request.RegisterHandlers(rg.Group(""),
+	request.RegisterHandlers(appsGroup,
 		rService,
 		cService,
-		authHandler, logger,
-	)
-	auth.RegisterHandlers(rg.Group(""),
-		auth.NewService(cfg, accountRepo, logger),
 		logger,
 	)
-	account.RegisterHandlers(rg.Group(""),
-		account.NewService(accountRepo, logger),
-		authHandler,
-		logger,
-	)
-	notification.RegisterHandlers(rg.Group(""),
+	notification.RegisterHandlers(appsGroup,
 		notification.NewService(runner, logger),
-		authHandler, logger,
+		logger,
+	)
+
+	// accounts children handlers
+	accountsGroup := rg.Group("/accounts")
+	accountsGroup.Use(auth.Handler(cfg.JWTSigningKey))
+	// accountsGroup.Use(aclMiddleware.Process)
+	account.RegisterHandlers(accountsGroup,
+		account.NewService(accountRepo, logger),
+		logger,
+	)
+
+	// high level handlers
+	healthcheck.RegisterHandlers(rg, Version)
+	auth.RegisterHandlers(rg,
+		auth.NewService(cfg, accountRepo, appRepo, logger),
+		logger,
 	)
 
 	if cfg.DefaultSelfApp != nil {

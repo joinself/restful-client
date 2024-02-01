@@ -22,7 +22,7 @@ func Test_service_Authenticate(t *testing.T) {
 		User:                          "demo",
 		Password:                      "pass",
 	}
-	s := NewService(&cfg, &mock.AccountRepositoryMock{}, logger)
+	s := NewService(&cfg, &mock.AccountRepositoryMock{}, &mock.AppRepositoryMock{}, logger)
 	_, err := s.Login(context.Background(), "unknown", "bad")
 	assert.Equal(t, errors.Unauthorized(""), err)
 	resp, err := s.Login(context.Background(), "demo", "pass")
@@ -33,14 +33,14 @@ func Test_service_Authenticate(t *testing.T) {
 
 func Test_service_authenticate(t *testing.T) {
 	logger, _ := log.NewForTest()
-	s := service{"test", 100, 100, "demo", "pass", &mock.AccountRepositoryMock{}, logger}
+	s := service{"test", 100, 100, "demo", "pass", &mock.AccountRepositoryMock{}, &mock.AppRepositoryMock{}, logger}
 	assert.Nil(t, s.authenticate(context.Background(), "unknown", "bad"))
 	assert.NotNil(t, s.authenticate(context.Background(), "demo", "pass"))
 }
 
 func Test_service_GenerateJWT(t *testing.T) {
 	logger, _ := log.NewForTest()
-	s := service{"test", 100, 100, "demo", "pass", &mock.AccountRepositoryMock{}, logger}
+	s := service{"test", 100, 100, "demo", "pass", &mock.AccountRepositoryMock{}, &mock.AppRepositoryMock{}, logger}
 	token, err := s.generateJWT(entity.User{
 		ID:   "100",
 		Name: "demo",
@@ -60,7 +60,7 @@ func Test_refresh_token(t *testing.T) {
 		Password:                      "pass",
 	}
 
-	s := NewService(&cfg, &mock.AccountRepositoryMock{}, logger)
+	s := NewService(&cfg, &mock.AccountRepositoryMock{}, &mock.AppRepositoryMock{}, logger)
 	resp, err := s.Login(context.Background(), "demo", "pass")
 	assert.Nil(t, err)
 	assert.NotEmpty(t, resp.RefreshToken)

@@ -54,6 +54,16 @@ func (m *AccountRepositoryMock) Update(ctx context.Context, account entity.Accou
 	return nil
 }
 
+func (m *AccountRepositoryMock) SetPassword(ctx context.Context, id int, password string) error {
+	for i, item := range m.Items {
+		if item.ID == id {
+			m.Items[i].Password = password
+			break
+		}
+	}
+	return nil
+}
+
 func (m *AccountRepositoryMock) Delete(ctx context.Context, id int) error {
 	for i, item := range m.Items {
 		if item.ID == id {

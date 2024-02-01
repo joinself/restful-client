@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/joinself/restful-client/internal/app"
 	"github.com/joinself/restful-client/internal/config"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/errors"
+	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/log"
 )
 
@@ -19,16 +21,6 @@ type Service interface {
 	Login(ctx context.Context, username, password string) (AuthResponse, error)
 
 	Refresh(c context.Context, token string) (AuthResponse, error)
-}
-
-// Identity represents an authenticated user identity.
-type Identity interface {
-	// GetID returns the user ID.
-	GetID() string
-	// GetName returns the user name.
-	GetName() string
-	IsAdmin() bool
-	GetResources() []string
 }
 
 type AccountGetter interface {
@@ -42,11 +34,12 @@ type service struct {
 	user             string
 	password         string
 	accountRepo      AccountGetter
+	appRepo          app.Repository
 	logger           log.Logger
 }
 
 // NewService creates a new authentication service.
-func NewService(cfg *config.Config, ar AccountGetter, logger log.Logger) Service {
+func NewService(cfg *config.Config, ar AccountGetter, appRepo app.Repository, logger log.Logger) Service {
 	return service{
 		cfg.JWTSigningKey,
 		cfg.JWTExpirationTimeInHours,
@@ -54,6 +47,7 @@ func NewService(cfg *config.Config, ar AccountGetter, logger log.Logger) Service
 		cfg.User,
 		cfg.Password,
 		ar,
+		appRepo,
 		logger}
 }
 
@@ -110,36 +104,39 @@ func (s service) Refresh(ctx context.Context, token string) (AuthResponse, error
 
 // authenticate authenticates a user using username and password.
 // If username and password are correct, an identity is returned. Otherwise, nil is returned.
-func (s service) authenticate(ctx context.Context, username, password string) Identity {
+func (s service) authenticate(ctx context.Context, username, password string) acl.Identity {
 	logger := s.logger.With(ctx, "user", username)
 
 	// This is the ENVIRONMENT configured credentials.
 	if username == s.user && password == s.password {
 		logger.Infof("admin authentication successful")
 		return entity.User{
-			ID:        "0",
-			Name:      s.user,
-			Admin:     true,
-			Resources: []string{},
+			ID:                     "0",
+			Name:                   s.user,
+			Admin:                  true,
+			RequiresPasswordChange: false,
+			Resources:              []string{},
 		}
 	}
 
 	a, err := s.accountRepo.Get(ctx, username, password)
 	if err == nil {
 		logger.Infof("non-admin authentication successful")
-		return entity.User{
-			ID:        strconv.Itoa(a.ID),
-			Name:      a.UserName,
-			Admin:     false,
-			Resources: []string{"app1"},
+		u := entity.User{
+			ID:                     strconv.Itoa(a.ID),
+			Name:                   a.UserName,
+			Admin:                  false,
+			RequiresPasswordChange: (a.RequiresPasswordChange == 1),
+			Resources:              a.GetResources(),
 		}
+		return u
 	}
 
 	logger.Infof("authentication failed")
 	return nil
 }
 
-func (s service) getByID(ctx context.Context, id string) Identity {
+func (s service) getByID(ctx context.Context, id string) acl.Identity {
 	logger := s.logger.With(ctx, "id", id)
 
 	if id == s.user {
@@ -152,13 +149,14 @@ func (s service) getByID(ctx context.Context, id string) Identity {
 }
 
 // generateJWT generates a JWT that encodes an identity.
-func (s service) generateJWT(identity Identity) (string, error) {
+func (s service) generateJWT(identity acl.Identity) (string, error) {
 	// Set custom claims
-	claims := &jwtCustomClaims{
+	claims := &acl.JWTCustomClaims{
 		identity.GetID(),
 		identity.GetName(),
 		identity.IsAdmin(),
 		identity.GetResources(),
+		identity.IsPasswordChangeRequired(),
 		jwt.RegisteredClaims{
 			Subject:   identity.GetID(),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -171,7 +169,7 @@ func (s service) generateJWT(identity Identity) (string, error) {
 }
 
 // generateRefreshJWT generates a refresh JWT that encodes an identity.
-func (s service) generateRefreshJWT(identity Identity) (string, error) {
+func (s service) generateRefreshJWT(identity acl.Identity) (string, error) {
 	// Set custom claims
 	claims := &jwt.RegisteredClaims{
 		Subject:   identity.GetName(),

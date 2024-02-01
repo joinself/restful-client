@@ -2,7 +2,6 @@ package account
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -16,7 +15,7 @@ import (
 type Service interface {
 	Get(ctx context.Context, username, password string) (Account, error)
 	Create(ctx context.Context, input CreateAccountRequest) (Account, error)
-	Update(ctx context.Context, input UpdateAccountRequest) (Account, error)
+	SetPassword(ctx context.Context, username, password, newPassword string) error
 	Delete(ctx context.Context, username string) error
 	Count(ctx context.Context) (int, error)
 }
@@ -48,16 +47,15 @@ func (m CreateAccountRequest) Validate() error {
 
 // UpdateAccountRequest represents an account update request.
 type UpdateAccountRequest struct {
-	Username  string   `json:"username"`
-	Password  string   `json:"password"`
-	Resources []string `json:"resources"`
+	Password    string `json:"password"`
+	NewPassword string `json:"new_password"`
 }
 
 // Validate validates the CreateAccountRequest fields.
 func (m UpdateAccountRequest) Validate() error {
 	return validation.ValidateStruct(&m,
-		validation.Field(&m.Username, validation.Required, validation.Length(5, 128)),
 		validation.Field(&m.Password, validation.Required, validation.Length(5, 128)),
+		validation.Field(&m.NewPassword, validation.Required, validation.Length(5, 128)),
 	)
 }
 
@@ -90,19 +88,15 @@ func (s service) Create(ctx context.Context, req CreateAccountRequest) (Account,
 		return Account{}, errors.New("user already exists")
 	}
 
-	resources, err := json.Marshal(req.Resources)
-	if err != nil {
-		return Account{}, errors.New("invalid resources")
-	}
-
 	now := time.Now()
-	err = s.repo.Create(ctx, entity.Account{
+	account := entity.Account{
 		UserName:  req.Username,
 		Password:  req.Password,
-		Resources: string(resources),
 		CreatedAt: now,
 		UpdatedAt: now,
-	})
+	}
+	account.SetResources(req.Resources)
+	err = s.repo.Create(ctx, account)
 	if err != nil {
 		return Account{}, err
 	}
@@ -110,29 +104,14 @@ func (s service) Create(ctx context.Context, req CreateAccountRequest) (Account,
 	return s.Get(ctx, req.Username, req.Password)
 }
 
-// Update updates the account with the specified ID.
-func (s service) Update(ctx context.Context, req UpdateAccountRequest) (Account, error) {
-	if err := req.Validate(); err != nil {
-		return Account{}, err
-	}
-
-	account, err := s.Get(ctx, req.Username, req.Password)
+// SetPassword updates the password for the given account id.
+func (s service) SetPassword(ctx context.Context, username, password, newPassword string) error {
+	a, err := s.Get(ctx, username, password)
 	if err != nil {
-		return account, err
+		return err
 	}
 
-	resources, err := json.Marshal(req.Resources)
-	if err != nil {
-		return Account{}, errors.New("invalid resources")
-	}
-	account.UserName = req.Username
-	account.Password = req.Password
-	account.Resources = string(resources)
-
-	if err := s.repo.Update(ctx, account.Account); err != nil {
-		return account, err
-	}
-	return account, nil
+	return s.repo.SetPassword(ctx, a.ID, newPassword)
 }
 
 // Delete deletes the account with the specified ID.
