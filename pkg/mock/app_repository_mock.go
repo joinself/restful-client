@@ -28,6 +28,10 @@ func (m AppRepositoryMock) ListByStatus(ctx context.Context, statuses []string) 
 	return m.Items, nil
 }
 
+func (m AppRepositoryMock) ListByAccount(ctx context.Context, account int, statuses []string) (apps []entity.App, err error) {
+	return m.Items, nil
+}
+
 func (m AppRepositoryMock) SetStatus(ctx context.Context, id, status string) error {
 	for i, item := range m.Items {
 		if item.ID == id {

@@ -3,21 +3,18 @@ package account
 import (
 	"net/http"
 
-	"github.com/joinself/restful-client/internal/auth"
+	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/labstack/echo/v4"
 )
 
 // RegisterHandlers sets up the routing of the HTTP handlers.
-func RegisterHandlers(r *echo.Group, service Service, authHandler echo.MiddlewareFunc, logger log.Logger) {
+func RegisterHandlers(r *echo.Group, service Service, logger log.Logger) {
 	res := resource{service, logger}
 
-	// the following endpoints require a valid JWT
-	r.Use(authHandler)
-
-	r.POST("/accounts", res.create)
-	r.DELETE("/accounts/:username", res.delete)
-	r.PUT("/accounts/:username/password", res.changePassword)
+	r.POST("", res.create)
+	r.DELETE("/:username", res.delete)
+	r.PUT("/:username/password", res.changePassword)
 }
 
 type resource struct {
@@ -36,7 +33,7 @@ type resource struct {
 // @Success         200  {object}  account.Account
 // @Router          /accounts [post]
 func (r resource) create(c echo.Context) error {
-	user := auth.CurrentUser(c)
+	user := acl.CurrentUser(c)
 	if user == nil || !user.IsAdmin() {
 		return c.JSON(http.StatusNotFound, "not found")
 	}
@@ -67,7 +64,7 @@ func (r resource) create(c echo.Context) error {
 // @Success         200  {object}  account.Account
 // @Router          /accounts/{username} [delete]
 func (r resource) delete(c echo.Context) error {
-	user := auth.CurrentUser(c)
+	user := acl.CurrentUser(c)
 	if user == nil || !user.IsAdmin() {
 		return c.JSON(http.StatusNotFound, "not found")
 	}
@@ -93,7 +90,7 @@ func (r resource) delete(c echo.Context) error {
 // @Router          /accounts/{username} [delete]
 func (r resource) changePassword(c echo.Context) error {
 	ctx := c.Request().Context()
-	user := auth.CurrentUser(c)
+	user := acl.CurrentUser(c)
 	if user == nil {
 		return c.JSON(http.StatusNotFound, "not found")
 	}

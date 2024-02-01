@@ -44,6 +44,7 @@ func TestRepository(t *testing.T) {
 	// get
 	account, err := repo.Get(ctx, username, password)
 	assert.Nil(t, err)
+	assert.Equal(t, 1, account.RequiresPasswordChange)
 
 	// get unexisting
 	_, err = repo.Get(ctx, "unexisting", "test0")
@@ -65,6 +66,7 @@ func TestRepository(t *testing.T) {
 	assert.Error(t, err)
 	account, err = repo.Get(ctx, username, "setted_password")
 	assert.Nil(t, err)
+	assert.Equal(t, 0, account.RequiresPasswordChange)
 
 	// delete
 	err = repo.Delete(ctx, account.ID)

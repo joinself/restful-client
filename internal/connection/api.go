@@ -3,25 +3,21 @@ package connection
 import (
 	"net/http"
 
-	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
 	"github.com/labstack/echo/v4"
 )
 
 // RegisterHandlers sets up the routing of the HTTP handlers.
-func RegisterHandlers(r *echo.Group, service Service, authHandler echo.MiddlewareFunc, logger log.Logger) {
+func RegisterHandlers(r *echo.Group, service Service, logger log.Logger) {
 	res := resource{service, logger}
 
-	// the following endpoints require a valid JWT
-	r.Use(authHandler)
+	r.GET("/:app_id/connections/:id", res.get)
+	r.GET("/:app_id/connections", res.query)
 
-	r.GET("/apps/:app_id/connections/:id", res.get)
-	r.GET("/apps/:app_id/connections", res.query)
-
-	r.POST("/apps/:app_id/connections", res.create)
-	r.PUT("/apps/:app_id/connections/:id", res.update)
-	r.DELETE("/apps/:app_id/connections/:id", res.delete)
+	r.POST("/:app_id/connections", res.create)
+	r.PUT("/:app_id/connections/:id", res.update)
+	r.DELETE("/:app_id/connections/:id", res.delete)
 }
 
 type resource struct {
@@ -41,10 +37,6 @@ type resource struct {
 // @Success      200  {object}  connection.Connection
 // @Router       /apps/{app_id}/connections/{id} [get]
 func (r resource) get(c echo.Context) error {
-	if auth.HasAccessToResource(c, c.Param("app_id")) {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	connection, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
@@ -74,10 +66,6 @@ type response struct {
 // @Success        200  {object}  response
 // @Router         /apps/{app_id}/connections [get]
 func (r resource) query(c echo.Context) error {
-	if auth.HasAccessToResource(c, c.Param("app_id")) {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	ctx := c.Request().Context()
 	count, err := r.service.Count(ctx)
 	if err != nil {
@@ -106,10 +94,6 @@ func (r resource) query(c echo.Context) error {
 // @Success         200  {object}  connection.Connection
 // @Router          /apps/{app_id}/connections [post]
 func (r resource) create(c echo.Context) error {
-	if auth.HasAccessToResource(c, c.Param("app_id")) {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	var input CreateConnectionRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
@@ -137,10 +121,6 @@ func (r resource) create(c echo.Context) error {
 // @Success         200  {object}  connection.Connection
 // @Router          /apps/{app_id}/connections/{id} [put]
 func (r resource) update(c echo.Context) error {
-	if auth.HasAccessToResource(c, c.Param("app_id")) {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	var input UpdateConnectionRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
@@ -169,10 +149,6 @@ func (r resource) update(c echo.Context) error {
 // @Success         200  {object}  connection.Connection
 // @Router          /apps/{app_id}/connections/{id} [delete]
 func (r resource) delete(c echo.Context) error {
-	if auth.HasAccessToResource(c, c.Param("app_id")) {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	connection, err := r.service.Delete(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())

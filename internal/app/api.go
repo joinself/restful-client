@@ -3,22 +3,18 @@ package app
 import (
 	"net/http"
 
-	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
 	"github.com/labstack/echo/v4"
 )
 
 // RegisterHandlers sets up the routing of the HTTP handlers.
-func RegisterHandlers(r *echo.Group, s Service, authHandler echo.MiddlewareFunc, logger log.Logger) {
+func RegisterHandlers(r *echo.Group, s Service, logger log.Logger) {
 	res := resource{logger, s}
 
-	// the following endpoints require a valid JWT
-	r.Use(authHandler)
-
-	r.GET("/apps", res.list)
-	r.POST("/apps", res.create)
-	r.DELETE("/apps/:id", res.delete)
+	r.GET("", res.list)
+	r.POST("", res.create)
+	r.DELETE("/:id", res.delete)
 }
 
 type resource struct {
@@ -48,11 +44,6 @@ type response struct {
 // @Success        200  {object} response
 // @Router         /apps [get]
 func (r resource) list(c echo.Context) error {
-	user := auth.CurrentUser(c)
-	if user == nil || !user.IsAdmin() {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	apps := r.service.List(c.Request().Context())
 	pages := pagination.NewFromRequest(c.Request(), len(apps))
 	pages.Items = apps
@@ -71,11 +62,6 @@ func (r resource) list(c echo.Context) error {
 // @Success         200  {object}  entity.App
 // @Router          /apps [post]
 func (r resource) create(c echo.Context) error {
-	user := auth.CurrentUser(c)
-	if user == nil {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	var input CreateAppRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
@@ -103,11 +89,6 @@ func (r resource) create(c echo.Context) error {
 // @Success         200  {object}  app.App
 // @Router          /apps/{id} [delete]
 func (r resource) delete(c echo.Context) error {
-	user := auth.CurrentUser(c)
-	if user == nil || !user.IsAdmin() {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	_, err := r.service.Delete(c.Request().Context(), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())

@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/test"
+	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/mock"
 )
@@ -24,10 +24,9 @@ func TestAPI(t *testing.T) {
 		UpdatedAt: time.Now()},
 	}}
 
-	authHandler := auth.MockAuthHandler()
 	runner := mock.NewRunnerMock()
-	RegisterHandlers(router.Group(""), NewService(repo, runner, logger), authHandler, logger)
-	header := auth.MockAuthHeader()
+	RegisterHandlers(router.Group("/apps"), NewService(repo, runner, logger), logger)
+	header := acl.MockAuthHeader()
 
 	tests := []test.APITestCase{
 		{
@@ -74,15 +73,6 @@ func TestAPI(t *testing.T) {
 			WantResponse: `*"total_count":2*`,
 		},
 		{
-			Name:         "create auth error",
-			Method:       "POST",
-			URL:          "/apps/app1/connections",
-			Body:         `{"selfid":"test"}`,
-			Header:       nil,
-			WantStatus:   http.StatusUnauthorized,
-			WantResponse: "",
-		},
-		{
 			Name:         "create input error",
 			Method:       "POST",
 			URL:          "/apps/app1/connections",
@@ -110,15 +100,6 @@ func TestAPI(t *testing.T) {
 			WantResponse: `*connectionxyz*`,
 		},
 		{
-			Name:         "update auth error",
-			Method:       "PUT",
-			URL:          "/apps/app1/connections/connection1",
-			Body:         `{"name":"connectionxyz"}`,
-			Header:       nil,
-			WantStatus:   http.StatusUnauthorized,
-			WantResponse: "",
-		},
-		{
 			Name:         "update input error",
 			Method:       "PUT",
 			URL:          "/apps/app1/connections/connection1",
@@ -143,15 +124,6 @@ func TestAPI(t *testing.T) {
 			Body:         ``,
 			Header:       header,
 			WantStatus:   http.StatusNotFound,
-			WantResponse: "",
-		},
-		{
-			Name:         "delete auth error",
-			Method:       "DELETE",
-			URL:          "/apps/app1/connections/connection1",
-			Body:         ``,
-			Header:       nil,
-			WantStatus:   http.StatusUnauthorized,
 			WantResponse: "",
 		},
 	}

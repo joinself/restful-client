@@ -6,7 +6,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
@@ -32,6 +34,12 @@ func Endpoint(t *testing.T, router *echo.Echo, tc APITestCase) {
 		if req.Header.Get("Content-Type") == "" {
 			req.Header.Set("Content-Type", "application/json")
 		}
+
+		//-------
+		// token, _ := buildAdminJwt("test")
+		// req.Header.Set("Authorization", "Bearer "+token)
+		//-------
+
 		router.ServeHTTP(res, req)
 		assert.Equal(t, tc.WantStatus, res.Code, "status mismatch")
 		if tc.WantResponse != "" {
@@ -43,4 +51,34 @@ func Endpoint(t *testing.T, router *echo.Echo, tc APITestCase) {
 			}
 		}
 	})
+}
+
+type jwtCustomClaims struct {
+	ID                       string   `json:"id"`
+	Name                     string   `json:"name"`
+	Admin                    bool     `json:"admin"`
+	Resources                []string `json:"resources"`
+	IsPasswordChangeRequired bool     `json:"change_password"`
+	jwt.RegisteredClaims
+}
+
+func buildAdminJwt(key string) (string, error) {
+	tokenExpiration := 1000
+
+	// Set custom claims
+	claims := &jwtCustomClaims{
+		"0",
+		"admin",
+		true,
+		[]string{},
+		false,
+		jwt.RegisteredClaims{
+			Subject:   "0",
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(tokenExpiration))),
+		},
+	}
+
+	// Create token with claims
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(key)
 }

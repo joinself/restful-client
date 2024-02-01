@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/joinself/restful-client/internal/auth"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
@@ -12,16 +11,14 @@ import (
 )
 
 // RegisterHandlers sets up the routing of the HTTP handlers.
-func RegisterHandlers(r *echo.Group, service Service, cService connection.Service, authHandler echo.MiddlewareFunc, logger log.Logger) {
+func RegisterHandlers(r *echo.Group, service Service, cService connection.Service, logger log.Logger) {
 	res := resource{service, cService, logger}
 
-	// the following endpoints require a valid JWT
-	r.Use(authHandler)
-	r.GET("/apps/:app_id/connections/:connection_id/messages/:id", res.get)
-	r.GET("/apps/:app_id/connections/:connection_id/messages", res.query)
-	r.POST("/apps/:app_id/connections/:connection_id/messages", res.create)
-	r.PUT("/apps/:app_id/connections/:connection_id/messages/:id", res.update)
-	r.DELETE("/apps/:app_id/connections/:connection_id/messages/:id", res.delete)
+	r.GET("/:app_id/connections/:connection_id/messages/:id", res.get)
+	r.GET("/:app_id/connections/:connection_id/messages", res.query)
+	r.POST("/:app_id/connections/:connection_id/messages", res.create)
+	r.PUT("/:app_id/connections/:connection_id/messages/:id", res.update)
+	r.DELETE("/:app_id/connections/:connection_id/messages/:id", res.delete)
 }
 
 var (
@@ -48,10 +45,6 @@ type resource struct {
 // @Success      200  {object}  Message
 // @Router       /apps/{app_id}/connections/{connection_id}/messages/{jti} [get]
 func (r resource) get(c echo.Context) error {
-	if auth.HasAccessToResource(c, c.Param("app_id")) {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	message, err := r.service.Get(c.Request().Context(), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
@@ -83,10 +76,6 @@ type response struct {
 // @Success        200  {object}  response
 // @Router         /apps/{app_id}/connections/{connection_id}/messages [get]
 func (r resource) query(c echo.Context) error {
-	if auth.HasAccessToResource(c, c.Param("app_id")) {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	ctx := c.Request().Context()
 	count, err := r.service.Count(ctx)
 	if err != nil {
@@ -128,10 +117,6 @@ func (r resource) query(c echo.Context) error {
 // @Success         200  {object}  Message
 // @Router          /apps/{app_id}/connections/{connection_id}/messages [post]
 func (r resource) create(c echo.Context) error {
-	if auth.HasAccessToResource(c, c.Param("app_id")) {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	var input CreateMessageRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
@@ -167,10 +152,6 @@ func (r resource) create(c echo.Context) error {
 // @Success         200  {object}  Message
 // @Router          /apps/{app_id}/connections/{connection_id}/messages/{jti} [put]
 func (r resource) update(c echo.Context) error {
-	if auth.HasAccessToResource(c, c.Param("app_id")) {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	var input UpdateMessageRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
@@ -191,10 +172,6 @@ func (r resource) update(c echo.Context) error {
 }
 
 func (r resource) delete(c echo.Context) error {
-	if auth.HasAccessToResource(c, c.Param("app_id")) {
-		return c.JSON(http.StatusNotFound, "not found")
-	}
-
 	err := r.service.Delete(c.Request().Context(), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())

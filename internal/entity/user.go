@@ -2,10 +2,11 @@ package entity
 
 // User represents a user.
 type User struct {
-	ID        string
-	Name      string
-	Admin     bool
-	Resources []string
+	ID                     string
+	Name                   string
+	Admin                  bool
+	Resources              []string
+	RequiresPasswordChange bool
 }
 
 // GetID returns the user ID.
@@ -24,4 +25,8 @@ func (u User) IsAdmin() bool {
 
 func (u User) GetResources() []string {
 	return u.Resources
+}
+
+func (u User) IsPasswordChangeRequired() bool {
+	return u.RequiresPasswordChange
 }

@@ -84,6 +84,7 @@ func (r repository) Create(ctx context.Context, account entity.Account) error {
 	// Generate the hashed password.
 	account.Salt = string(r.generateRandomSalt(saltSize))
 	account.HashedPassword = r.hashPassword(account.Password, []byte(account.Salt))
+	account.RequiresPasswordChange = 1
 
 	return r.db.With(ctx).Model(&account).Insert()
 }
@@ -135,7 +136,7 @@ func (r repository) SetPassword(ctx context.Context, id int, password string) er
 	salt := string(r.generateRandomSalt(saltSize))
 	hashedPassword := r.hashPassword(password, []byte(salt))
 
-	sql := "UPDATE account SET hashed_password='%s', salt='%s', updated_at=DATE('now') WHERE id=%d"
+	sql := "UPDATE account SET hashed_password='%s', salt='%s', requires_password_change=0, updated_at=DATE('now') WHERE id=%d"
 	query := fmt.Sprintf(sql, hashedPassword, string(salt), id)
 	_, err := r.db.DB().NewQuery(query).Execute()
 	return err

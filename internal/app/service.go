@@ -99,6 +99,7 @@ func (s service) Create(ctx context.Context, req CreateAppRequest) (App, error) 
 		DeviceSecret: req.Secret,
 		Name:         req.Name,
 		Env:          req.Env,
+		Status:       entity.APP_CREATED_STATUS,
 		Callback:     req.Callback,
 		CreatedAt:    now,
 		UpdatedAt:    now,
