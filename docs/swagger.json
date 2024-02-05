@@ -68,7 +68,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes an existing account and sends a request for public information and avoids incoming comms from that account. You must be authenticated as an admin.",
+                "description": "Changes the password for the current user. You must be authenticated.",
                 "consumes": [
                     "application/json"
                 ],
@@ -78,7 +78,7 @@
                 "tags": [
                     "accounts"
                 ],
-                "summary": "Deletes an existing account.",
+                "summary": "Changes the password for the current user.",
                 "parameters": [
                     {
                         "type": "integer",
@@ -93,7 +93,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/account.CreateAccountRequest"
+                            "$ref": "#/definitions/account.UpdateAccountRequest"
                         }
                     }
                 ],
@@ -1066,6 +1066,9 @@
                 "password": {
                     "type": "string"
                 },
+                "requires_password_change": {
+                    "type": "integer"
+                },
                 "resources": {
                     "type": "string"
                 },
@@ -1097,6 +1100,17 @@
                 }
             }
         },
+        "account.UpdateAccountRequest": {
+            "type": "object",
+            "properties": {
+                "new_password": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
         "app.App": {
             "type": "object",
             "properties": {
@@ -1121,6 +1135,9 @@
                 },
                 "name": {
                     "description": "Name is the Self app name.",
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -1290,6 +1307,9 @@
                 },
                 "name": {
                     "description": "Name is the Self app name.",
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 },
                 "updated_at": {

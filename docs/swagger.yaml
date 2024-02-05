@@ -10,6 +10,8 @@ definitions:
         type: integer
       password:
         type: string
+      requires_password_change:
+        type: integer
       resources:
         type: string
       salt:
@@ -28,6 +30,13 @@ definitions:
           type: string
         type: array
       username:
+        type: string
+    type: object
+  account.UpdateAccountRequest:
+    properties:
+      new_password:
+        type: string
+      password:
         type: string
     type: object
   app.App:
@@ -50,6 +59,8 @@ definitions:
         type: string
       name:
         description: Name is the Self app name.
+        type: string
+      status:
         type: string
       updated_at:
         type: string
@@ -163,6 +174,8 @@ definitions:
         type: string
       name:
         description: Name is the Self app name.
+        type: string
+      status:
         type: string
       updated_at:
         type: string
@@ -415,9 +428,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Deletes an existing account and sends a request for public information
-        and avoids incoming comms from that account. You must be authenticated as
-        an admin.
+      description: Changes the password for the current user. You must be authenticated.
       parameters:
       - description: current account username
         in: path
@@ -429,7 +440,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/account.CreateAccountRequest'
+          $ref: '#/definitions/account.UpdateAccountRequest'
       produces:
       - application/json
       responses:
@@ -439,7 +450,7 @@ paths:
             $ref: '#/definitions/account.Account'
       security:
       - BearerAuth: []
-      summary: Deletes an existing account.
+      summary: Changes the password for the current user.
       tags:
       - accounts
   /apps:
