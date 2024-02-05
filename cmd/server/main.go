@@ -16,6 +16,7 @@ import (
 	"github.com/joinself/restful-client/internal/app"
 	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/auth"
+	"github.com/joinself/restful-client/internal/clean"
 	"github.com/joinself/restful-client/internal/config"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/entity"
@@ -205,6 +206,16 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	if err != nil {
 		logger.With(context.Background()).Error("Problem retrieving apps to be started")
 	}
+
+	cleaner := clean.NewRunner(clean.RunnerConfig{
+		Service: clean.NewService(clean.Config{
+			DB:     db,
+			Period: cfg.CleanupPeriod,
+			Tables: []string{"fact", "message", "request", "attestation"},
+			Logger: logger,
+		}),
+	})
+	cleaner.Run()
 
 	for _, app := range status {
 		runner.Run(app)
