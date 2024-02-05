@@ -215,7 +215,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 			Logger: logger,
 		}),
 	})
-	cleaner.Run()
+	go cleaner.Run()
 
 	for _, app := range status {
 		runner.Run(app)
