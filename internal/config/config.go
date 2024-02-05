@@ -11,6 +11,7 @@ const (
 	defaultServerPort                    = 8080
 	defaultJWTExpirationHours            = 72
 	defaultRefreshTokenExpirationInHours = 128
+	defaultCleanupPeriod                 = 15 // 15 days
 )
 
 // Self config object
@@ -58,6 +59,8 @@ type Config struct {
 	DefaultAppSecret string `env:"APP_SECRET"`
 	// DefaultAppEnv the default self app environment.
 	DefaultAppEnv string `env:"APP_ENV"`
+	// CleanupPeriod the number of days the database temporary data will be removed.
+	CleanupPeriod int `env:"CLEANUP_PERIOD"`
 }
 
 // Validate validates the application configuration.
@@ -86,6 +89,7 @@ func Load(logger log.Logger, envPath string) (*Config, error) {
 		JWTExpirationTimeInHours:      defaultJWTExpirationHours,
 		ServeDocs:                     "false",
 		ServerPort:                    defaultServerPort,
+		CleanupPeriod:                 defaultCleanupPeriod,
 	}
 
 	// load from environment variables prefixed with "APP_"
