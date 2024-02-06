@@ -426,6 +426,36 @@ paths:
     delete:
       consumes:
       - application/json
+      description: Deletes an existing account and sends a request for public information
+        and avoids incoming comms from that account. You must be authenticated as
+        an admin.
+      parameters:
+      - description: current account username
+        in: path
+        name: username
+        required: true
+        type: integer
+      - description: query params
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/account.CreateAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/account.Account'
+      security:
+      - BearerAuth: []
+      summary: Deletes an existing account.
+      tags:
+      - accounts
+    put:
+      consumes:
+      - application/json
       description: Changes the password for the current user. You must be authenticated.
       parameters:
       - description: current account username

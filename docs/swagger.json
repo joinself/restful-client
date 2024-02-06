@@ -62,7 +62,7 @@
             }
         },
         "/accounts/{username}": {
-            "delete": {
+            "put": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -94,6 +94,50 @@
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/account.UpdateAccountRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/account.Account"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing account and sends a request for public information and avoids incoming comms from that account. You must be authenticated as an admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Deletes an existing account.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "current account username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/account.CreateAccountRequest"
                         }
                     }
                 ],
