@@ -87,7 +87,7 @@ func (r resource) delete(c echo.Context) error {
 // @Param           username   path      int  true  "current account username"
 // @Param           request body UpdateAccountRequest true "query params"
 // @Success         200  {object}  account.Account
-// @Router          /accounts/{username} [delete]
+// @Router          /accounts/{username} [put]
 func (r resource) changePassword(c echo.Context) error {
 	ctx := c.Request().Context()
 	user := acl.CurrentUser(c)
