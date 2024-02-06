@@ -34,23 +34,29 @@ type resource struct {
 // @Security     BearerAuth
 // @Param        app_id   path      string  true  "App id"
 // @Param        id   path      int  true  "current connection id"
-// @Success      200  {object}  connection.Connection
+// @Success      200  {object}  ExtConnection
 // @Router       /apps/{app_id}/connections/{id} [get]
 func (r resource) get(c echo.Context) error {
-	connection, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
+	conn, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, connection)
+	return c.JSON(http.StatusOK, ExtConnection{
+		ID:        conn.SelfID,
+		AppID:     conn.AppID,
+		Name:      conn.Name,
+		CreatedAt: conn.CreatedAt,
+		UpdatedAt: conn.UpdatedAt,
+	})
 }
 
 type response struct {
-	Page       int          `json:"page"`
-	PerPage    int          `json:"per_page"`
-	PageCount  int          `json:"page_count"`
-	TotalCount int          `json:"total_count"`
-	Items      []Connection `json:"items"`
+	Page       int             `json:"page"`
+	PerPage    int             `json:"per_page"`
+	PageCount  int             `json:"page_count"`
+	TotalCount int             `json:"total_count"`
+	Items      []ExtConnection `json:"items"`
 }
 
 // ListConnections godoc
@@ -78,7 +84,18 @@ func (r resource) query(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	pages.Items = connections
+	conns := []ExtConnection{}
+	for _, conn := range connections {
+		conns = append(conns, ExtConnection{
+			ID:        conn.SelfID,
+			AppID:     conn.AppID,
+			Name:      conn.Name,
+			CreatedAt: conn.CreatedAt,
+			UpdatedAt: conn.UpdatedAt,
+		})
+	}
+
+	pages.Items = conns
 	return c.JSON(http.StatusOK, pages)
 }
 
@@ -91,7 +108,7 @@ func (r resource) query(c echo.Context) error {
 // @Security        BearerAuth
 // @Param           app_id   path      string  true  "App id"
 // @Param           request body CreateConnectionRequest true "query params"
-// @Success         200  {object}  connection.Connection
+// @Success         200  {object}  ExtConnection
 // @Router          /apps/{app_id}/connections [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateConnectionRequest
@@ -100,12 +117,18 @@ func (r resource) create(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "")
 	}
 
-	connection, err := r.service.Create(c.Request().Context(), c.Param("app_id"), input)
+	conn, err := r.service.Create(c.Request().Context(), c.Param("app_id"), input)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, connection)
+	return c.JSON(http.StatusCreated, ExtConnection{
+		ID:        conn.SelfID,
+		AppID:     conn.AppID,
+		Name:      conn.Name,
+		CreatedAt: conn.CreatedAt,
+		UpdatedAt: conn.UpdatedAt,
+	})
 }
 
 // CreateConnection godoc
@@ -118,7 +141,7 @@ func (r resource) create(c echo.Context) error {
 // @Param           app_id   path      string  true  "App id"
 // @Param           id   path      int  true  "current connection id"
 // @Param           request body UpdateConnectionRequest true "query params"
-// @Success         200  {object}  connection.Connection
+// @Success         200  {object}  ExtConnection
 // @Router          /apps/{app_id}/connections/{id} [put]
 func (r resource) update(c echo.Context) error {
 	var input UpdateConnectionRequest
@@ -127,13 +150,19 @@ func (r resource) update(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	connection, err := r.service.Update(c.Request().Context(), c.Param("app_id"), c.Param("id"), input)
+	conn, err := r.service.Update(c.Request().Context(), c.Param("app_id"), c.Param("id"), input)
 	if err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, connection)
+	return c.JSON(http.StatusOK, ExtConnection{
+		ID:        conn.SelfID,
+		AppID:     conn.AppID,
+		Name:      conn.Name,
+		CreatedAt: conn.CreatedAt,
+		UpdatedAt: conn.UpdatedAt,
+	})
 }
 
 // UpdateConnection godoc
@@ -146,13 +175,19 @@ func (r resource) update(c echo.Context) error {
 // @Param           app_id   path      string  true  "App id"
 // @Param           id   path      int  true  "current connection id"
 // @Param           request body CreateConnectionRequest true "query params"
-// @Success         200  {object}  connection.Connection
+// @Success         200  {object}  ExtConnection
 // @Router          /apps/{app_id}/connections/{id} [delete]
 func (r resource) delete(c echo.Context) error {
-	connection, err := r.service.Delete(c.Request().Context(), c.Param("app_id"), c.Param("id"))
+	conn, err := r.service.Delete(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
 		return c.JSON(http.StatusNotFound, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, connection)
+	return c.JSON(http.StatusOK, ExtConnection{
+		ID:        conn.SelfID,
+		AppID:     conn.AppID,
+		Name:      conn.Name,
+		CreatedAt: conn.CreatedAt,
+		UpdatedAt: conn.UpdatedAt,
+	})
 }

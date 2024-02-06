@@ -26,6 +26,15 @@ type FactService interface {
 	Request(*fact.FactRequest) (*fact.FactResponse, error)
 }
 
+// ExtConnection external representation of a connection
+type ExtConnection struct {
+	ID        string    `json:"id"`
+	AppID     string    `json:"app_id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 // Connection represents the data about an connection.
 type Connection struct {
 	entity.Connection

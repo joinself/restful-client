@@ -10,6 +10,8 @@ definitions:
         type: integer
       password:
         type: string
+      requires_password_change:
+        type: integer
       resources:
         type: string
       salt:
@@ -28,6 +30,13 @@ definitions:
           type: string
         type: array
       username:
+        type: string
+    type: object
+  account.UpdateAccountRequest:
+    properties:
+      new_password:
+        type: string
+      password:
         type: string
     type: object
   app.App:
@@ -50,6 +59,8 @@ definitions:
         type: string
       name:
         description: Name is the Self app name.
+        type: string
+      status:
         type: string
       updated_at:
         type: string
@@ -103,24 +114,22 @@ definitions:
       token:
         type: string
     type: object
-  connection.Connection:
+  connection.CreateConnectionRequest:
     properties:
-      appid:
+      selfid:
+        type: string
+    type: object
+  connection.ExtConnection:
+    properties:
+      app_id:
         type: string
       created_at:
         type: string
       id:
-        type: integer
+        type: string
       name:
         type: string
-      selfid:
-        type: string
       updated_at:
-        type: string
-    type: object
-  connection.CreateConnectionRequest:
-    properties:
-      selfid:
         type: string
     type: object
   connection.UpdateConnectionRequest:
@@ -132,7 +141,7 @@ definitions:
     properties:
       items:
         items:
-          $ref: '#/definitions/connection.Connection'
+          $ref: '#/definitions/connection.ExtConnection'
         type: array
       page:
         type: integer
@@ -163,6 +172,8 @@ definitions:
         type: string
       name:
         description: Name is the Self app name.
+        type: string
+      status:
         type: string
       updated_at:
         type: string
@@ -415,9 +426,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Deletes an existing account and sends a request for public information
-        and avoids incoming comms from that account. You must be authenticated as
-        an admin.
+      description: Changes the password for the current user. You must be authenticated.
       parameters:
       - description: current account username
         in: path
@@ -429,7 +438,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/account.CreateAccountRequest'
+          $ref: '#/definitions/account.UpdateAccountRequest'
       produces:
       - application/json
       responses:
@@ -439,7 +448,7 @@ paths:
             $ref: '#/definitions/account.Account'
       security:
       - BearerAuth: []
-      summary: Deletes an existing account.
+      summary: Changes the password for the current user.
       tags:
       - accounts
   /apps:
@@ -537,7 +546,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/connection.Connection'
+            $ref: '#/definitions/connection.ExtConnection'
       security:
       - BearerAuth: []
       summary: Creates a new connection.
@@ -856,7 +865,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/connection.Connection'
+            $ref: '#/definitions/connection.ExtConnection'
       security:
       - BearerAuth: []
       summary: Deletes an existing connection.
@@ -883,7 +892,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/connection.Connection'
+            $ref: '#/definitions/connection.ExtConnection'
       security:
       - BearerAuth: []
       summary: Get connection details.
@@ -916,7 +925,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/connection.Connection'
+            $ref: '#/definitions/connection.ExtConnection'
       security:
       - BearerAuth: []
       summary: Updates a connection.
