@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	e "errors"
 	"net/http"
 	"testing"
 
@@ -13,20 +14,23 @@ import (
 type mockService struct{}
 
 func (m mockService) Login(ctx context.Context, username, password string) (LoginResponse, error) {
-	if username == "test" && password == "pass" {
+	if username == "test_larger" && password == "pass_larger" {
 		return LoginResponse{AccessToken: "token-100", RefreshToken: "r-token-100"}, nil
 	}
 	return LoginResponse{"", ""}, errors.Unauthorized("")
 }
 
 func (m mockService) Refresh(ctx context.Context, token string) (LoginResponse, error) {
-	if token == "test" {
+	if token == "test_token_test_token_test_token_test_token_test_token_" {
 		return LoginResponse{"token-100", "r-token-100"}, nil
+	}
+	if token == "test_token_test_token_test_token_test_token_test_token_error" {
+		return LoginResponse{}, e.New("error message")
 	}
 	return LoginResponse{AccessToken: "", RefreshToken: ""}, errors.Unauthorized("")
 }
 
-func TestAPI(t *testing.T) {
+func TestLoginAPIEndpoint(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
@@ -59,6 +63,33 @@ func TestAPI(t *testing.T) {
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
 			WantResponse: "",
+		},
+		{
+			Name:         "invalid data",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"username":"","password":""}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: "",
+		},
+		{
+			Name:         "refresh token",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"refresh_token":"test_token_test_token_test_token_test_token_test_token_"}`,
+			Header:       nil,
+			WantStatus:   http.StatusOK,
+			WantResponse: `{"token":"token-100","refresh_token":"r-token-100"}`,
+		},
+		{
+			Name:         "refresh token errored",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"refresh_token":"test_token_test_token_test_token_test_token_test_token_error"}`,
+			Header:       nil,
+			WantStatus:   http.StatusUnauthorized,
+			WantResponse: `{"details":"You've provided a refresh_token, but it's not valid", "error":"You're unauthorized to perform this action", "status":401}`,
 		},
 	}
 	for _, tc := range tests {
