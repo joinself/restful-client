@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	e "errors"
 	"net/http"
 	"testing"
 
@@ -12,30 +13,84 @@ import (
 
 type mockService struct{}
 
-func (m mockService) Login(ctx context.Context, username, password string) (AuthResponse, error) {
-	if username == "test" && password == "pass" {
-		return AuthResponse{AccessToken: "token-100", RefreshToken: "r-token-100"}, nil
+func (m mockService) Login(ctx context.Context, username, password string) (LoginResponse, error) {
+	if username == "test_larger" && password == "pass_larger" {
+		return LoginResponse{AccessToken: "token-100", RefreshToken: "r-token-100"}, nil
 	}
-	return AuthResponse{"", ""}, errors.Unauthorized("")
+	return LoginResponse{"", ""}, errors.Unauthorized("")
 }
 
-func (m mockService) Refresh(ctx context.Context, token string) (AuthResponse, error) {
-	if token == "test" {
-		return AuthResponse{"token-100", "r-token-100"}, nil
+func (m mockService) Refresh(ctx context.Context, token string) (LoginResponse, error) {
+	if token == "test_token_test_token_test_token_test_token_test_token_" {
+		return LoginResponse{"token-100", "r-token-100"}, nil
 	}
-	return AuthResponse{AccessToken: "", RefreshToken: ""}, errors.Unauthorized("")
+	if token == "test_token_test_token_test_token_test_token_test_token_error" {
+		return LoginResponse{}, e.New("error message")
+	}
+	return LoginResponse{AccessToken: "", RefreshToken: ""}, errors.Unauthorized("")
 }
 
-func TestAPI(t *testing.T) {
+func TestLoginAPIEndpoint(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
 	RegisterHandlers(router.Group(""), mockService{}, logger)
 
 	tests := []test.APITestCase{
-		{Name: "success", Method: "POST", URL: "/login", Body: `{"username":"test","password":"pass"}`, Header: nil, WantStatus: http.StatusOK, WantResponse: `{"token":"token-100","refresh_token":"r-token-100"}`},
-		{Name: "bad credential", Method: "POST", URL: "/login", Body: `{"username":"test","password":"wrong pass"}`, Header: nil, WantStatus: http.StatusUnauthorized, WantResponse: ""},
-		{Name: "bad json", Method: "POST", URL: "/login", Body: `"username":"test","password":"wrong pass"}`, Header: nil, WantStatus: http.StatusBadRequest, WantResponse: ""},
+		{
+			Name:         "success",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"username":"test_larger","password":"pass_larger"}`,
+			Header:       nil,
+			WantStatus:   http.StatusOK,
+			WantResponse: `{"token":"token-100","refresh_token":"r-token-100"}`,
+		},
+		{
+			Name:         "bad credential",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"username":"test_larger","password":"wrong pass"}`,
+			Header:       nil,
+			WantStatus:   http.StatusUnauthorized,
+			WantResponse: "",
+		},
+		{
+			Name:         "bad json",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `"username":"test_larger","password":"wrong pass"}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: "",
+		},
+		{
+			Name:         "invalid data",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"username":"","password":""}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: "",
+		},
+		{
+			Name:         "refresh token",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"refresh_token":"test_token_test_token_test_token_test_token_test_token_"}`,
+			Header:       nil,
+			WantStatus:   http.StatusOK,
+			WantResponse: `{"token":"token-100","refresh_token":"r-token-100"}`,
+		},
+		{
+			Name:         "refresh token errored",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"refresh_token":"test_token_test_token_test_token_test_token_test_token_error"}`,
+			Header:       nil,
+			WantStatus:   http.StatusUnauthorized,
+			WantResponse: `{"details":"You've provided a refresh_token, but it's not valid", "error":"You're unauthorized to perform this action", "status":401}`,
+		},
 	}
 	for _, tc := range tests {
 		test.Endpoint(t, router, tc)

@@ -4,57 +4,63 @@ import (
 	"net/http"
 
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/response"
 	"github.com/labstack/echo/v4"
 )
-
-type AuthRequest struct {
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	RefreshToken string `json:"refresh_token"`
-}
-
-type AuthResponse struct {
-	AccessToken  string `json:"token"`
-	RefreshToken string `json:"refresh_token,omitempty"`
-}
 
 // RegisterHandlers registers handlers for different HTTP requests.
 func RegisterHandlers(rg *echo.Group, service Service, logger log.Logger) {
 	rg.POST("/login", login(service, logger))
 }
 
-// Login 	    godoc
-// @Summary     Authenticate.
-// @Description Get a temporary JWT token to interact with the api.
-// @Tags        login
-// @Accept      json
-// @Produce     json
-// @Param       request   body      AuthRequest  true  "Self ID"
-// @Success     200  {object}  AuthResponse
-// @Router      /login [post]
+// Login godoc
+// @Summary User Authentication
+// @Description Authenticates a user and returns a temporary JWT token and refresh token for API interaction.
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "Authentication request body with your username and password, or a refresh token"
+// @Success 200 {object} LoginResponse "Successfully authenticated, JWT token and Refresh JWT token are returned in response"
+// @Failure 401,400 {object} response.Error "Returns error details"
+// @Router /login [post]
 func login(service Service, logger log.Logger) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		var req AuthRequest
+		var req LoginRequest
 
 		if err := c.Bind(&req); err != nil {
 			logger.With(c.Request().Context()).Errorf("invalid request: %v", err)
-			return c.JSON(http.StatusBadRequest, "")
+			return c.JSON(http.StatusBadRequest, response.Error{
+				Status:  http.StatusBadRequest,
+				Error:   "Invalid input",
+				Details: "The provided body is not valid",
+			})
 		}
 
-		// If refresh token is present validate and return a valid auth token
+		if reqErr := req.Validate(); reqErr != nil {
+			return c.JSON(reqErr.Status, reqErr)
+		}
+
 		var err error
-		var resp AuthResponse
-		ctx := c.Request().Context()
+		var resp LoginResponse
+		var ctx = c.Request().Context()
 
 		if req.RefreshToken != "" { // Is a refresh based auth workflow.
 			resp, err = service.Refresh(ctx, req.RefreshToken)
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, err)
+				return c.JSON(http.StatusUnauthorized, response.Error{
+					Status:  http.StatusUnauthorized,
+					Error:   "You're unauthorized to perform this action",
+					Details: "You've provided a refresh_token, but it's not valid",
+				})
 			}
 		} else { // Is a basic auth workflow.
 			resp, err = service.Login(ctx, req.Username, req.Password)
 			if err != nil {
-				return c.JSON(http.StatusUnauthorized, err)
+				return c.JSON(http.StatusUnauthorized, response.Error{
+					Status:  http.StatusUnauthorized,
+					Error:   "You're unauthorized to perform this action",
+					Details: "Provided auth credentials are invalid",
+				})
 			}
 		}
 
