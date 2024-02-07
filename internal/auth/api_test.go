@@ -12,18 +12,18 @@ import (
 
 type mockService struct{}
 
-func (m mockService) Login(ctx context.Context, username, password string) (AuthResponse, error) {
+func (m mockService) Login(ctx context.Context, username, password string) (LoginResponse, error) {
 	if username == "test" && password == "pass" {
-		return AuthResponse{AccessToken: "token-100", RefreshToken: "r-token-100"}, nil
+		return LoginResponse{AccessToken: "token-100", RefreshToken: "r-token-100"}, nil
 	}
-	return AuthResponse{"", ""}, errors.Unauthorized("")
+	return LoginResponse{"", ""}, errors.Unauthorized("")
 }
 
-func (m mockService) Refresh(ctx context.Context, token string) (AuthResponse, error) {
+func (m mockService) Refresh(ctx context.Context, token string) (LoginResponse, error) {
 	if token == "test" {
-		return AuthResponse{"token-100", "r-token-100"}, nil
+		return LoginResponse{"token-100", "r-token-100"}, nil
 	}
-	return AuthResponse{AccessToken: "", RefreshToken: ""}, errors.Unauthorized("")
+	return LoginResponse{AccessToken: "", RefreshToken: ""}, errors.Unauthorized("")
 }
 
 func TestAPI(t *testing.T) {
@@ -33,9 +33,33 @@ func TestAPI(t *testing.T) {
 	RegisterHandlers(router.Group(""), mockService{}, logger)
 
 	tests := []test.APITestCase{
-		{Name: "success", Method: "POST", URL: "/login", Body: `{"username":"test","password":"pass"}`, Header: nil, WantStatus: http.StatusOK, WantResponse: `{"token":"token-100","refresh_token":"r-token-100"}`},
-		{Name: "bad credential", Method: "POST", URL: "/login", Body: `{"username":"test","password":"wrong pass"}`, Header: nil, WantStatus: http.StatusUnauthorized, WantResponse: ""},
-		{Name: "bad json", Method: "POST", URL: "/login", Body: `"username":"test","password":"wrong pass"}`, Header: nil, WantStatus: http.StatusBadRequest, WantResponse: ""},
+		{
+			Name:         "success",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"username":"test_larger","password":"pass_larger"}`,
+			Header:       nil,
+			WantStatus:   http.StatusOK,
+			WantResponse: `{"token":"token-100","refresh_token":"r-token-100"}`,
+		},
+		{
+			Name:         "bad credential",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"username":"test_larger","password":"wrong pass"}`,
+			Header:       nil,
+			WantStatus:   http.StatusUnauthorized,
+			WantResponse: "",
+		},
+		{
+			Name:         "bad json",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `"username":"test_larger","password":"wrong pass"}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: "",
+		},
 	}
 	for _, tc := range tests {
 		test.Endpoint(t, router, tc)

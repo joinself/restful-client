@@ -18,9 +18,9 @@ import (
 type Service interface {
 	// authenticate authenticates a user using username and password.
 	// It returns a JWT token if authentication succeeds. Otherwise, an error is returned.
-	Login(ctx context.Context, username, password string) (AuthResponse, error)
+	Login(ctx context.Context, username, password string) (LoginResponse, error)
 
-	Refresh(c context.Context, token string) (AuthResponse, error)
+	Refresh(c context.Context, token string) (LoginResponse, error)
 }
 
 type AccountGetter interface {
@@ -53,8 +53,8 @@ func NewService(cfg *config.Config, ar AccountGetter, appRepo app.Repository, lo
 
 // Login authenticates a user and generates a JWT token if authentication succeeds.
 // Otherwise, an error is returned.
-func (s service) Login(ctx context.Context, username, password string) (AuthResponse, error) {
-	var res AuthResponse
+func (s service) Login(ctx context.Context, username, password string) (LoginResponse, error) {
+	var res LoginResponse
 	var err error
 	identity := s.authenticate(ctx, username, password)
 	if identity == nil {
@@ -75,8 +75,8 @@ func (s service) Login(ctx context.Context, username, password string) (AuthResp
 
 // Refresh authenticates a user based on a refresh_token, if it succeeds it will send back
 // a new access token.
-func (s service) Refresh(ctx context.Context, token string) (AuthResponse, error) {
-	var res AuthResponse
+func (s service) Refresh(ctx context.Context, token string) (LoginResponse, error) {
+	var res LoginResponse
 
 	// Extract the id from the token.
 	id, err := s.getRefreshJWTSubject(token)
