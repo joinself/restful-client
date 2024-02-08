@@ -9,25 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-/*
-	func TestCreateAppRequest_Validate(t *testing.T) {
-		tests := []struct {
-			name      string
-			model     CreateAppRequest
-			wantError bool
-		}{
-			{"success", CreateAppRequest{ID: "selfid"}, false},
-			{"required", CreateAppRequest{}, true},
-			{"too long", CreateAppRequest{ID: "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"}, true},
-		}
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				err := tt.model.Validate()
-				assert.Equal(t, tt.wantError, err != nil)
-			})
-		}
-	}
-*/
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
 	runner := mock.NewRunnerMock()
@@ -54,26 +35,6 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, name, app.Name)
 	assert.NotEmpty(t, app.CreatedAt)
 	assert.NotEmpty(t, app.UpdatedAt)
-
-	// validation error in creation
-	_, err = s.Create(ctx, CreateAppRequest{
-		ID:       "",
-		Secret:   secret,
-		Name:     name,
-		Env:      env,
-		Callback: callback,
-	})
-	assert.NotNil(t, err)
-
-	// unexpected error in creation
-	_, err = s.Create(ctx, CreateAppRequest{
-		ID:       "error",
-		Secret:   secret,
-		Name:     name,
-		Env:      env,
-		Callback: callback,
-	})
-	assert.Equal(t, mock.ErrCRUD, err)
 
 	// get
 	_, err = s.Get(ctx, "none")

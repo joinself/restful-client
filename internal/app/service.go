@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/self"
 	"github.com/joinself/restful-client/pkg/log"
@@ -31,25 +30,6 @@ type App struct {
 }
 
 // CreateAppRequest represents an app creation request.
-type CreateAppRequest struct {
-	ID       string `json:"id"`
-	Secret   string `json:"secret"`
-	Name     string `json:"name"`
-	Env      string `json:"env"`
-	Callback string `json:"callback"`
-}
-
-// Validate validates the CreateAppRequest fields.
-func (m CreateAppRequest) Validate() error {
-	return validation.ValidateStruct(&m,
-		// TODO: Improve validations
-		validation.Field(&m.ID, validation.Required, validation.Length(0, 128)),
-		validation.Field(&m.Secret, validation.Required, validation.Length(0, 128)),
-		validation.Field(&m.Name, validation.Required, validation.Length(0, 50)),
-		validation.Field(&m.Env, validation.Required, validation.Length(0, 20)),
-	)
-}
-
 type service struct {
 	repo   Repository
 	runner self.Runner
@@ -85,9 +65,6 @@ func (s service) Get(ctx context.Context, id string) (App, error) {
 
 // Create creates a new app.
 func (s service) Create(ctx context.Context, req CreateAppRequest) (App, error) {
-	if err := req.Validate(); err != nil {
-		return App{}, err
-	}
 	existing, err := s.Get(ctx, req.ID)
 	if err == nil {
 		return existing, nil

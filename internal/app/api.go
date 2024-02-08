@@ -3,8 +3,11 @@ package app
 import (
 	"net/http"
 
+	"github.com/gofrs/uuid"
+	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
+	"github.com/joinself/restful-client/pkg/response"
 	"github.com/labstack/echo/v4"
 )
 
@@ -22,28 +25,26 @@ type resource struct {
 	service Service
 }
 
-type app struct {
-	ID string `json:"id"`
-}
-
-type response struct {
-	Page       int   `json:"page"`
-	PerPage    int   `json:"per_page"`
-	PageCount  int   `json:"page_count"`
-	TotalCount int   `json:"total_count"`
-	Items      []app `json:"items"`
-}
-
 // ListApps godoc
-// @Summary        List apps.
-// @Description    List restful client configured apps. You must be authenticated as an admin.
+// @Summary        Lists all configured apps.
+// @Description    Retrieves and lists all the configured apps for the restful client. You must be authenticated as an admin.
 // @Tags           apps
 // @Accept         json
 // @Produce        json
 // @Security       BearerAuth
-// @Success        200  {object} response
+// @Success        200 {object} ExtListResponse "Successful operation"
+// @Failure        404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
 // @Router         /apps [get]
 func (r resource) list(c echo.Context) error {
+	user := acl.CurrentUser(c)
+	if user == nil || !user.IsAdmin() {
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
+	}
+
 	apps := r.service.List(c.Request().Context())
 	pages := pagination.NewFromRequest(c.Request(), len(apps))
 	pages.Items = apps
@@ -53,46 +54,88 @@ func (r resource) list(c echo.Context) error {
 
 // CreateApp godoc
 // @Summary         Creates a new app.
-// @Description  	Creates a new app and sends a request for public information. You must be authenticated as an admin.
+// @Description     Creates a new app with the given parameters. You must be authenticated as an admin.
 // @Tags            app
 // @Accept          json
 // @Produce         json
 // @Security        BearerAuth
-// @Param           request body CreateAppRequest true "query params"
-// @Success         200  {object}  entity.App
+// @Param           request body CreateAppRequest true "Details of the new app to create"
+// @Success         201  {object}  ExtApp "Successfully created app details"
+// @Failure         400 {object} response.Error "Bad request - The provided body is not valid"
+// @Failure         404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
+// @Failure         500 {object} response.Error "Internal error - There was a problem with your request"
 // @Router          /apps [post]
 func (r resource) create(c echo.Context) error {
+	user := acl.CurrentUser(c)
+	if user == nil || !user.IsAdmin() {
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
+	}
+
 	var input CreateAppRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, "")
+		return c.JSON(http.StatusBadRequest, response.Error{
+			Status:  http.StatusBadRequest,
+			Error:   "Invalid input",
+			Details: "The provided body is not valid",
+		})
 	}
 
-	app, err := r.service.Create(c.Request().Context(), input)
+	if reqErr := input.Validate(); reqErr != nil {
+		return c.JSON(reqErr.Status, reqErr)
+	}
+
+	a, err := r.service.Create(c.Request().Context(), input)
 	if err != nil {
+		errorCode, _ := uuid.NewV4()
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, "")
+		return c.JSON(http.StatusInternalServerError, response.Error{
+			Status:  http.StatusInternalServerError,
+			Error:   "Internal error",
+			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
+		})
 	}
 
-	return c.JSON(http.StatusOK, app)
+	return c.JSON(http.StatusOK, ExtApp{
+		ID:     a.ID,
+		Name:   a.Name,
+		Status: a.Status,
+		Env:    a.Env,
+	})
 }
 
-// CreateApp godoc
+// DeleteApp godoc
 // @Summary         Deletes an existing app.
-// @Description  	Deletes an existing app and sends a request for public information and avoids incoming comms from that app. You must be authenticated as an admin.
+// @Description     Deletes an existing app and sends a request for public information and avoids incoming comms from that app. You must be authenticated as an admin.
 // @Tags            apps
 // @Accept          json
 // @Produce         json
 // @Security        BearerAuth
-// @Param           id   path      int  true  "current app id"
-// @Param           request body CreateAppRequest true "query params"
-// @Success         200  {object}  app.App
+// @Param           id   path      int  true  "ID of the app to delete"
+// @Success         204  {string} string  "No Content"
+// @Failure         404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
 // @Router          /apps/{id} [delete]
 func (r resource) delete(c echo.Context) error {
-	_, err := r.service.Delete(c.Request().Context(), c.Param("id"))
-	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+	user := acl.CurrentUser(c)
+	if user == nil || !user.IsAdmin() {
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
 	}
 
-	return c.JSON(http.StatusOK, "success")
+	if _, err := r.service.Delete(c.Request().Context(), c.Param("id")); err != nil {
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
+	}
+
+	return c.NoContent(http.StatusOK)
 }
