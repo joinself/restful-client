@@ -47,7 +47,6 @@ func (m mockService) SetPassword(ctx context.Context, username, password, newPas
 }
 
 func (m mockService) Delete(ctx context.Context, username string) error {
-	println(".--------> " + username)
 	if username == "errored" {
 		return errors.New("username not found")
 	}
@@ -247,116 +246,115 @@ func TestDeleteAccountAPIEndpointAsPlain(t *testing.T) {
 	}
 }
 
-/*
-	func OTestChangePasswordAPIEndpointAsAdmin(t *testing.T) {
-		var longString = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
-		var validPwd = "valid_password"
-		var validUsr = "valid_user"
+func OTestChangePasswordAPIEndpointAsAdmin(t *testing.T) {
+	var longString = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
+	var validPwd = "valid_password"
+	var validUsr = "valid_user"
 
-		logger, _ := log.NewForTest()
-		router := test.MockRouter(logger)
+	logger, _ := log.NewForTest()
+	router := test.MockRouter(logger)
 
-		rg := router.Group("/accounts")
-		rg.Use(acl.AuthAsAdminMiddleware())
-		RegisterHandlers(rg, mockService{}, logger)
+	rg := router.Group("/accounts")
+	rg.Use(acl.AuthAsAdminMiddleware())
+	RegisterHandlers(rg, mockService{}, logger)
 
-		tests := []test.APITestCase{
-			{
-				Name:         "success",
-				Method:       "PUT",
-				URL:          "/accounts/username/password",
-				Body:         `{"new_password":"new_password","password":"pass_larger","resources":[]}`,
-				Header:       nil,
-				WantStatus:   http.StatusCreated,
-				WantResponse: `{"requires_password_change":0, "resources":"", "user_name":"test_larger"}`,
-			},
-			{
-				Name:         "invalid input",
-				Method:       "PUT",
-				URL:          "/accounts/username/password",
-				Body:         `{]`,
-				Header:       nil,
-				WantStatus:   http.StatusBadRequest,
-				WantResponse: `{"details":"The provided body is not valid", "error":"Invalid input", "status":400}`,
-			},
-			{
-				Name:         "required input",
-				Method:       "PUT",
-				URL:          "/accounts/username/password",
-				Body:         `{}`,
-				Header:       nil,
-				WantStatus:   http.StatusBadRequest,
-				WantResponse: `{"details":"password: cannot be blank; username: cannot be blank.", "error":"Invalid input", "status":400}`,
-			},
-			{
-				Name:         "username too long",
-				Method:       "PUT",
-				URL:          "/accounts/username/password",
-				Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, longString, validPwd),
-				Header:       nil,
-				WantStatus:   http.StatusBadRequest,
-				WantResponse: `{"details":"username: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
-			},
-			{
-				Name:         "password too long",
-				Method:       "PUT",
-				URL:          "/accounts/username/password",
-				Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, validUsr, longString),
-				Header:       nil,
-				WantStatus:   http.StatusBadRequest,
-				WantResponse: `{"details":"password: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
-			},
-			{
-				Name:         "username too short",
-				Method:       "PUT",
-				URL:          "/accounts/username/password",
-				Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, "a", validPwd),
-				Header:       nil,
-				WantStatus:   http.StatusBadRequest,
-				WantResponse: `{"details":"username: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
-			},
-			{
-				Name:         "password too long",
-				Method:       "PUT",
-				URL:          "/accounts/username/password",
-				Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, validUsr, "a"),
-				Header:       nil,
-				WantStatus:   http.StatusBadRequest,
-				WantResponse: `{"details":"password: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
-			},
-			{
-				Name:         "username blank",
-				Method:       "PUT",
-				URL:          "/accounts/username/password",
-				Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, "", validPwd),
-				Header:       nil,
-				WantStatus:   http.StatusBadRequest,
-				WantResponse: `{"details":"username: cannot be blank.", "error":"Invalid input", "status":400}`,
-			},
-			{
-				Name:         "password blank",
-				Method:       "PUT",
-				URL:          "/accounts/username/password",
-				Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, validUsr, ""),
-				Header:       nil,
-				WantStatus:   http.StatusBadRequest,
-				WantResponse: `{"details":"password: cannot be blank.", "error":"Invalid input", "status":400}`,
-			},
-			{
-				Name:         "error on creation",
-				Method:       "PUT",
-				URL:          "/accounts/username/password",
-				Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, ErrorUsername, validPwd),
-				Header:       nil,
-				WantStatus:   http.StatusInternalServerError,
-				WantResponse: `There was a problem with your request. *`,
-			},
-		}
-		for _, tc := range tests {
-			test.Endpoint(t, router, tc)
-		}
+	tests := []test.APITestCase{
+		{
+			Name:         "success",
+			Method:       "PUT",
+			URL:          "/accounts/username/password",
+			Body:         `{"new_password":"new_password","password":"pass_larger","resources":[]}`,
+			Header:       nil,
+			WantStatus:   http.StatusCreated,
+			WantResponse: `{"requires_password_change":0, "resources":"", "user_name":"test_larger"}`,
+		},
+		{
+			Name:         "invalid input",
+			Method:       "PUT",
+			URL:          "/accounts/username/password",
+			Body:         `{]`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"The provided body is not valid", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "required input",
+			Method:       "PUT",
+			URL:          "/accounts/username/password",
+			Body:         `{}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"password: cannot be blank; username: cannot be blank.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "username too long",
+			Method:       "PUT",
+			URL:          "/accounts/username/password",
+			Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, longString, validPwd),
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"username: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "password too long",
+			Method:       "PUT",
+			URL:          "/accounts/username/password",
+			Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, validUsr, longString),
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"password: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "username too short",
+			Method:       "PUT",
+			URL:          "/accounts/username/password",
+			Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, "a", validPwd),
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"username: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "password too long",
+			Method:       "PUT",
+			URL:          "/accounts/username/password",
+			Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, validUsr, "a"),
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"password: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "username blank",
+			Method:       "PUT",
+			URL:          "/accounts/username/password",
+			Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, "", validPwd),
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"username: cannot be blank.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "password blank",
+			Method:       "PUT",
+			URL:          "/accounts/username/password",
+			Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, validUsr, ""),
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"password: cannot be blank.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "error on creation",
+			Method:       "PUT",
+			URL:          "/accounts/username/password",
+			Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, ErrorUsername, validPwd),
+			Header:       nil,
+			WantStatus:   http.StatusInternalServerError,
+			WantResponse: `There was a problem with your request. *`,
+		},
 	}
-*/
+	for _, tc := range tests {
+		test.Endpoint(t, router, tc)
+	}
+}
+
 func TestChangePasswordAPIEndpointAsPlain(t *testing.T) {
 	var validPwd = "password"
 
