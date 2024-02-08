@@ -177,7 +177,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "List restful client configured apps. You must be authenticated as an admin.",
+                "description": "Retrieves and lists all the configured apps for the restful client. You must be authenticated as an admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -187,12 +187,18 @@ const docTemplate = `{
                 "tags": [
                     "apps"
                 ],
-                "summary": "List apps.",
+                "summary": "Lists all configured apps.",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successful operation",
                         "schema": {
-                            "$ref": "#/definitions/app.response"
+                            "$ref": "#/definitions/app.ExtListResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -203,7 +209,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new app and sends a request for public information. You must be authenticated as an admin.",
+                "description": "Creates a new app with the given parameters. You must be authenticated as an admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -216,7 +222,7 @@ const docTemplate = `{
                 "summary": "Creates a new app.",
                 "parameters": [
                     {
-                        "description": "query params",
+                        "description": "Details of the new app to create",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -226,10 +232,28 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Successfully created app details",
                         "schema": {
-                            "$ref": "#/definitions/entity.App"
+                            "$ref": "#/definitions/app.ExtApp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - The provided body is not valid",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error - There was a problem with your request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -1024,26 +1048,23 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "current app id",
+                        "description": "ID of the app to delete",
                         "name": "id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "query params",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/app.CreateAppRequest"
-                        }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "204": {
+                        "description": "No Content",
                         "schema": {
-                            "$ref": "#/definitions/app.App"
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -1168,40 +1189,6 @@ const docTemplate = `{
                 }
             }
         },
-        "app.App": {
-            "type": "object",
-            "properties": {
-                "callback": {
-                    "description": "Callback is the url that will be hit when a message is received.",
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "device_secret": {
-                    "description": "DeviceSecret is the secret key for the device created at the developer portal.",
-                    "type": "string"
-                },
-                "env": {
-                    "description": "Env is self environment you want to point to, when empty, it will default to production.",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "AppID is the Self app self identifier.",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Name is the Self app name.",
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
         "app.CreateAppRequest": {
             "type": "object",
             "properties": {
@@ -1222,21 +1209,30 @@ const docTemplate = `{
                 }
             }
         },
-        "app.app": {
+        "app.ExtApp": {
             "type": "object",
             "properties": {
+                "env": {
+                    "type": "string"
+                },
                 "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
                     "type": "string"
                 }
             }
         },
-        "app.response": {
+        "app.ExtListResponse": {
             "type": "object",
             "properties": {
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/app.app"
+                        "$ref": "#/definitions/app.ExtApp"
                     }
                 },
                 "page": {
@@ -1334,40 +1330,6 @@ const docTemplate = `{
                 },
                 "total_count": {
                     "type": "integer"
-                }
-            }
-        },
-        "entity.App": {
-            "type": "object",
-            "properties": {
-                "callback": {
-                    "description": "Callback is the url that will be hit when a message is received.",
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "device_secret": {
-                    "description": "DeviceSecret is the secret key for the device created at the developer portal.",
-                    "type": "string"
-                },
-                "env": {
-                    "description": "Env is self environment you want to point to, when empty, it will default to production.",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "AppID is the Self app self identifier.",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Name is the Self app name.",
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
                 }
             }
         },
