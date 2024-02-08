@@ -1,24 +1,10 @@
 basePath: /v1/
 definitions:
-  account.Account:
+  account.ChangePasswordRequest:
     properties:
-      created_at:
+      new_password:
         type: string
-      hashed_password:
-        type: string
-      id:
-        type: integer
       password:
-        type: string
-      requires_password_change:
-        type: integer
-      resources:
-        type: string
-      salt:
-        type: string
-      updated_at:
-        type: string
-      user_name:
         type: string
     type: object
   account.CreateAccountRequest:
@@ -32,11 +18,13 @@ definitions:
       username:
         type: string
     type: object
-  account.UpdateAccountRequest:
+  account.CreateAccountResponse:
     properties:
-      new_password:
+      requires_password_change:
+        type: integer
+      resources:
         type: string
-      password:
+      user_name:
         type: string
     type: object
   app.App:
@@ -98,7 +86,7 @@ definitions:
       total_count:
         type: integer
     type: object
-  auth.AuthRequest:
+  auth.LoginRequest:
     properties:
       password:
         type: string
@@ -107,7 +95,7 @@ definitions:
       username:
         type: string
     type: object
-  auth.AuthResponse:
+  auth.LoginResponse:
     properties:
       refresh_token:
         type: string
@@ -383,6 +371,17 @@ definitions:
       uri:
         type: string
     type: object
+  response.Error:
+    properties:
+      details:
+        type: string
+      error:
+        type: string
+      path:
+        type: string
+      status:
+        type: integer
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -416,7 +415,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/account.Account'
+            $ref: '#/definitions/account.CreateAccountResponse'
       security:
       - BearerAuth: []
       summary: Creates a new account.
@@ -430,52 +429,65 @@ paths:
         and avoids incoming comms from that account. You must be authenticated as
         an admin.
       parameters:
-      - description: current account username
+      - description: Username of the account to delete
         in: path
         name: username
         required: true
-        type: integer
-      - description: query params
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/account.CreateAccountRequest'
+        type: string
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "204":
+          description: No Content
           schema:
-            $ref: '#/definitions/account.Account'
+            type: string
+        "404":
+          description: Not found - The requested resource does not exist, or you don't
+            have permissions to access it
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
       summary: Deletes an existing account.
       tags:
       - accounts
+  /accounts/{username}/password:
     put:
       consumes:
       - application/json
       description: Changes the password for the current user. You must be authenticated.
       parameters:
-      - description: current account username
+      - description: Username of the account to change the password
         in: path
         name: username
         required: true
-        type: integer
-      - description: query params
+        type: string
+      - description: Password change details
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/account.UpdateAccountRequest'
+          $ref: '#/definitions/account.ChangePasswordRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: No Content
           schema:
-            $ref: '#/definitions/account.Account'
+            type: string
+        "400":
+          description: Bad request - The provided body is not valid
+          schema:
+            $ref: '#/definitions/response.Error'
+        "404":
+          description: Not found - The requested resource does not exist, or you don't
+            have permissions to access it
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: Internal error - There was a problem with your request
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
       summary: Changes the password for the current user.
@@ -1071,24 +1083,35 @@ paths:
     post:
       consumes:
       - application/json
-      description: Get a temporary JWT token to interact with the api.
+      description: Authenticates a user and returns a temporary JWT token and refresh
+        token for API interaction.
       parameters:
-      - description: Self ID
+      - description: Authentication request body with your username and password,
+          or a refresh token
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/auth.AuthRequest'
+          $ref: '#/definitions/auth.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully authenticated, JWT token and Refresh JWT token
+            are returned in response
           schema:
-            $ref: '#/definitions/auth.AuthResponse'
-      summary: Authenticate.
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: Returns error details
+          schema:
+            $ref: '#/definitions/response.Error'
+        "401":
+          description: Returns error details
+          schema:
+            $ref: '#/definitions/response.Error'
+      summary: User Authentication
       tags:
-      - login
+      - Authentication
 schemes:
 - http
 - https

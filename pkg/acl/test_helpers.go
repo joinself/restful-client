@@ -2,7 +2,10 @@ package acl
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/joinself/restful-client/internal/entity"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 )
@@ -27,4 +30,54 @@ func MockAuthHeader() http.Header {
 	header := http.Header{}
 	header.Add("Authorization", "TEST")
 	return header
+}
+
+func AuthAsAdminMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set("user", BuildJwt(entity.User{
+				ID:        "100",
+				Name:      "admin",
+				Admin:     true,
+				Resources: []string{},
+			}))
+
+			return next(c)
+		}
+	}
+}
+
+func AuthAsPlainMiddleware(resources []string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set("user", BuildJwt(entity.User{
+				ID:        "100",
+				Name:      "john",
+				Admin:     false,
+				Resources: resources,
+			}))
+
+			return next(c)
+		}
+	}
+}
+
+func BuildJwt(identity Identity) *jwt.Token {
+	tokenExpiration := 1000
+
+	// Set custom claims
+	claims := &JWTCustomClaims{
+		identity.GetID(),
+		identity.GetName(),
+		identity.IsAdmin(),
+		identity.GetResources(),
+		identity.IsPasswordChangeRequired(),
+		jwt.RegisteredClaims{
+			Subject:   identity.GetID(),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(tokenExpiration))),
+		},
+	}
+	// Create token with claims
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 }
