@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/self-go-sdk/fact"
@@ -30,35 +29,6 @@ type Account struct {
 	entity.Account
 }
 
-// CreateAccountRequest represents an account creation request.
-type CreateAccountRequest struct {
-	Username  string   `json:"username"`
-	Password  string   `json:"password"`
-	Resources []string `json:"resources"`
-}
-
-// Validate validates the CreateAccountRequest fields.
-func (m CreateAccountRequest) Validate() error {
-	return validation.ValidateStruct(&m,
-		validation.Field(&m.Username, validation.Required, validation.Length(5, 128)),
-		validation.Field(&m.Password, validation.Required, validation.Length(5, 128)),
-	)
-}
-
-// UpdateAccountRequest represents an account update request.
-type UpdateAccountRequest struct {
-	Password    string `json:"password"`
-	NewPassword string `json:"new_password"`
-}
-
-// Validate validates the CreateAccountRequest fields.
-func (m UpdateAccountRequest) Validate() error {
-	return validation.ValidateStruct(&m,
-		validation.Field(&m.Password, validation.Required, validation.Length(5, 128)),
-		validation.Field(&m.NewPassword, validation.Required, validation.Length(5, 128)),
-	)
-}
-
 type service struct {
 	repo   Repository
 	logger log.Logger
@@ -80,9 +50,6 @@ func (s service) Get(ctx context.Context, username, password string) (Account, e
 
 // Create creates a new account.
 func (s service) Create(ctx context.Context, req CreateAccountRequest) (Account, error) {
-	if err := req.Validate(); err != nil {
-		return Account{}, err
-	}
 	_, err := s.repo.GetByUsername(ctx, req.Username)
 	if err == nil {
 		return Account{}, errors.New("user already exists")

@@ -57,57 +57,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/account.Account"
+                            "$ref": "#/definitions/account.CreateAccountResponse"
                         }
                     }
                 }
             }
         },
         "/accounts/{username}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Changes the password for the current user. You must be authenticated.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "accounts"
-                ],
-                "summary": "Changes the password for the current user.",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "current account username",
-                        "name": "username",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "query params",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/account.UpdateAccountRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/account.Account"
-                        }
-                    }
-                }
-            },
             "delete": {
                 "security": [
                     {
@@ -127,27 +83,88 @@ const docTemplate = `{
                 "summary": "Deletes an existing account.",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "current account username",
+                        "type": "string",
+                        "description": "Username of the account to delete",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{username}/password": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Changes the password for the current user. You must be authenticated.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Changes the password for the current user.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username of the account to change the password",
                         "name": "username",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "query params",
+                        "description": "Password change details",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/account.CreateAccountRequest"
+                            "$ref": "#/definitions/account.ChangePasswordRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "No Content",
                         "schema": {
-                            "$ref": "#/definitions/account.Account"
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request - The provided body is not valid",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error - There was a problem with your request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -1063,7 +1080,7 @@ const docTemplate = `{
         },
         "/login": {
             "post": {
-                "description": "Get a temporary JWT token to interact with the api.",
+                "description": "Authenticates a user and returns a temporary JWT token and refresh token for API interaction.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1071,25 +1088,37 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "login"
+                    "Authentication"
                 ],
-                "summary": "Authenticate.",
+                "summary": "User Authentication",
                 "parameters": [
                     {
-                        "description": "Self ID",
+                        "description": "Authentication request body with your username and password, or a refresh token",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.AuthRequest"
+                            "$ref": "#/definitions/auth.LoginRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully authenticated, JWT token and Refresh JWT token are returned in response",
                         "schema": {
-                            "$ref": "#/definitions/auth.AuthResponse"
+                            "$ref": "#/definitions/auth.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Returns error details",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Returns error details",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -1097,34 +1126,13 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "account.Account": {
+        "account.ChangePasswordRequest": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "new_password": {
                     "type": "string"
-                },
-                "hashed_password": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
                 },
                 "password": {
-                    "type": "string"
-                },
-                "requires_password_change": {
-                    "type": "integer"
-                },
-                "resources": {
-                    "type": "string"
-                },
-                "salt": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "user_name": {
                     "type": "string"
                 }
             }
@@ -1146,13 +1154,16 @@ const docTemplate = `{
                 }
             }
         },
-        "account.UpdateAccountRequest": {
+        "account.CreateAccountResponse": {
             "type": "object",
             "properties": {
-                "new_password": {
+                "requires_password_change": {
+                    "type": "integer"
+                },
+                "resources": {
                     "type": "string"
                 },
-                "password": {
+                "user_name": {
                     "type": "string"
                 }
             }
@@ -1242,7 +1253,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.AuthRequest": {
+        "auth.LoginRequest": {
             "type": "object",
             "properties": {
                 "password": {
@@ -1256,7 +1267,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.AuthResponse": {
+        "auth.LoginResponse": {
             "type": "object",
             "properties": {
                 "refresh_token": {
@@ -1673,6 +1684,23 @@ const docTemplate = `{
             "properties": {
                 "uri": {
                     "type": "string"
+                }
+            }
+        },
+        "response.Error": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
                 }
             }
         }

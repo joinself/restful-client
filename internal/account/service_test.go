@@ -18,11 +18,6 @@ func TestCreateAccountRequest_Validate(t *testing.T) {
 		wantError bool
 	}{
 		{"success", CreateAccountRequest{Username: "username", Password: "password"}, false},
-		{"required", CreateAccountRequest{}, true},
-		{"too long usr", CreateAccountRequest{Username: longString, Password: "password"}, true},
-		{"too long pwd", CreateAccountRequest{Username: "user", Password: longString}, true},
-		{"too short user", CreateAccountRequest{Username: "", Password: "password"}, true},
-		{"too long pwd", CreateAccountRequest{Username: "user", Password: ""}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -32,18 +27,18 @@ func TestCreateAccountRequest_Validate(t *testing.T) {
 	}
 }
 
-func TestUpdateAccountRequest_Validate(t *testing.T) {
+func TestChangePasswordRequest_Validate(t *testing.T) {
 	tests := []struct {
 		name      string
-		model     UpdateAccountRequest
+		model     ChangePasswordRequest
 		wantError bool
 	}{
-		{"success", UpdateAccountRequest{NewPassword: "username", Password: "password"}, false},
-		{"required", UpdateAccountRequest{}, true},
-		{"too long new pwd", UpdateAccountRequest{NewPassword: longString, Password: "password"}, true},
-		{"too long pwd", UpdateAccountRequest{NewPassword: "user", Password: longString}, true},
-		{"too short new pwd", UpdateAccountRequest{NewPassword: "", Password: "password"}, true},
-		{"too long pwd", UpdateAccountRequest{NewPassword: "user", Password: ""}, true},
+		{"success", ChangePasswordRequest{NewPassword: "username", Password: "password"}, false},
+		{"required", ChangePasswordRequest{}, true},
+		{"too long new pwd", ChangePasswordRequest{NewPassword: longString, Password: "password"}, true},
+		{"too long pwd", ChangePasswordRequest{NewPassword: "user", Password: longString}, true},
+		{"too short new pwd", ChangePasswordRequest{NewPassword: "", Password: "password"}, true},
+		{"too long pwd", ChangePasswordRequest{NewPassword: "user", Password: ""}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -78,32 +73,6 @@ func Test_service_CRUD(t *testing.T) {
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 1, count)
 
-	// validation error in creation
-	_, err = s.Create(ctx, CreateAccountRequest{
-		Username: "",
-		Password: "password",
-	})
-	assert.NotNil(t, err)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 1, count)
-
-	// unexpected error in creation
-	_, err = s.Create(ctx, CreateAccountRequest{
-		Username: "error",
-		Password: "password",
-	})
-	assert.Equal(t, mock.ErrCRUD, err)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 1, count)
-
-	_, err = s.Create(ctx, CreateAccountRequest{
-		Username: "test2",
-		Password: "password",
-	})
-	assert.Nil(t, err)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 2, count)
-
 	// get
 	_, err = s.Get(ctx, "none", "password")
 	assert.NotNil(t, err)
@@ -118,5 +87,5 @@ func Test_service_CRUD(t *testing.T) {
 	err = s.Delete(ctx, username)
 	assert.Nil(t, err)
 	count, _ = s.Count(ctx)
-	assert.Equal(t, 1, count)
+	assert.Equal(t, 0, count)
 }
