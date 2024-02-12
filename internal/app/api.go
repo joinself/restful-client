@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gofrs/uuid"
-	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
 	"github.com/joinself/restful-client/pkg/response"
@@ -36,15 +35,6 @@ type resource struct {
 // @Failure        404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
 // @Router         /apps [get]
 func (r resource) list(c echo.Context) error {
-	user := acl.CurrentUser(c)
-	if user == nil || !user.IsAdmin() {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
-	}
-
 	apps := r.service.List(c.Request().Context())
 	pages := pagination.NewFromRequest(c.Request(), len(apps))
 	pages.Items = apps
@@ -66,15 +56,6 @@ func (r resource) list(c echo.Context) error {
 // @Failure         500 {object} response.Error "Internal error - There was a problem with your request"
 // @Router          /apps [post]
 func (r resource) create(c echo.Context) error {
-	user := acl.CurrentUser(c)
-	if user == nil || !user.IsAdmin() {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
-	}
-
 	var input CreateAppRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
@@ -120,15 +101,6 @@ func (r resource) create(c echo.Context) error {
 // @Failure         404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
 // @Router          /apps/{id} [delete]
 func (r resource) delete(c echo.Context) error {
-	user := acl.CurrentUser(c)
-	if user == nil || !user.IsAdmin() {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
-	}
-
 	if _, err := r.service.Delete(c.Request().Context(), c.Param("id")); err != nil {
 		return c.JSON(http.StatusNotFound, response.Error{
 			Status:  http.StatusNotFound,

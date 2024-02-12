@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/joinself/restful-client/pkg/response"
 	"github.com/labstack/echo/v4"
 )
 
@@ -28,8 +29,10 @@ func (s *Middleware) Process(next echo.HandlerFunc) echo.HandlerFunc {
 			if IsAdmin(c) {
 				return next(c)
 			} else {
-				return c.JSON(http.StatusNotFound, map[string]string{
-					"message": "resource not found",
+				return c.JSON(http.StatusNotFound, response.Error{
+					Status:  http.StatusNotFound,
+					Error:   "Not found",
+					Details: "The requested resource does not exist, or you don't have permissions to access it",
 				})
 			}
 		}
