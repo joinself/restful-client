@@ -266,7 +266,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "List connections matching the specified filters.",
+                "description": "Retrieves a list of connections for a given app_id, matching the specified filters. Pagination is supported with optional page and per_page parameters.",
                 "consumes": [
                     "application/json"
                 ],
@@ -276,33 +276,39 @@ const docTemplate = `{
                 "tags": [
                     "connections"
                 ],
-                "summary": "List connections.",
+                "summary": "Retrieve a list of connections",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Unique Identifier for the App",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "page number",
+                        "description": "Page number for pagination. Default is 1.",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "number of elements per page",
+                        "description": "Number of elements per page for pagination. Default is 10.",
                         "name": "per_page",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successful retrieval of connections list",
                         "schema": {
-                            "$ref": "#/definitions/connection.response"
+                            "$ref": "#/definitions/connection.ExtListResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error occurred during the request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -313,7 +319,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new connection and sends a request for public information.",
+                "description": "This API endpoint creates a new connection by taking the application ID and request body as input. It sends a request for public information once the connection is created.",
                 "consumes": [
                     "application/json"
                 ],
@@ -323,17 +329,17 @@ const docTemplate = `{
                 "tags": [
                     "connections"
                 ],
-                "summary": "Creates a new connection.",
+                "summary": "Create a new connection",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Unique identifier of the application",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "query params",
+                        "description": "Body containing details of the connection to be created",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -343,10 +349,22 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Successfully created a new connection and returns the details of the new connection",
                         "schema": {
                             "$ref": "#/definitions/connection.ExtConnection"
+                        }
+                    },
+                    "400": {
+                        "description": "Returns when the provided input is invalid",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Returns when there is an internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -414,7 +432,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/fact.response"
+                            "$ref": "#/definitions/fact.ExtListResponse"
                         }
                     }
                 }
@@ -798,7 +816,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get connection details by selfID.",
+                "description": "Retrieves the details of a connection using the given selfID and app_id. Ensure you have sufficient permissions to access this information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -808,18 +826,18 @@ const docTemplate = `{
                 "tags": [
                     "connections"
                 ],
-                "summary": "Get connection details.",
+                "summary": "Retrieve connection details",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Unique Identifier for the App",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "current connection id",
+                        "description": "Unique Identifier for the connection",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -827,9 +845,15 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successful retrieval of connection details",
                         "schema": {
                             "$ref": "#/definitions/connection.ExtConnection"
+                        }
+                    },
+                    "404": {
+                        "description": "Unable to find the requested resource or lack of permissions to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -840,7 +864,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Updates the properties of an existing connection..",
+                "description": "This endpoint updates the properties of an existing connection using the provided app_id, connection id, and the request body.",
                 "consumes": [
                     "application/json"
                 ],
@@ -850,24 +874,24 @@ const docTemplate = `{
                 "tags": [
                     "connections"
                 ],
-                "summary": "Updates a connection.",
+                "summary": "Update a specific connection",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Unique Identifier for the Application",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "current connection id",
+                        "type": "string",
+                        "description": "Unique Identifier for the Connection to be updated",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "query params",
+                        "description": "Body containing updated details of the connection",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -878,9 +902,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully updated the connection and returns the updated connection details",
                         "schema": {
                             "$ref": "#/definitions/connection.ExtConnection"
+                        }
+                    },
+                    "400": {
+                        "description": "Returns when the provided input is invalid",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "There was a problem with your request. Please try again",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -891,7 +927,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes an existing connection and sends a request for public information and avoids incoming comms from that connection.",
+                "description": "This endpoint deletes an existing connection using the provided app_id and connection id. After deletion, it sends a request for public information and stops incoming communications from that connection.",
                 "consumes": [
                     "application/json"
                 ],
@@ -901,37 +937,34 @@ const docTemplate = `{
                 "tags": [
                     "connections"
                 ],
-                "summary": "Deletes an existing connection.",
+                "summary": "Delete a specific connection",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Unique Identifier for the Application",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "current connection id",
+                        "type": "string",
+                        "description": "Unique Identifier for the Connection to be deleted",
                         "name": "id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "query params",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/connection.CreateConnectionRequest"
-                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully deleted the connection and returns the deleted connection details",
                         "schema": {
                             "$ref": "#/definitions/connection.ExtConnection"
+                        }
+                    },
+                    "404": {
+                        "description": "The requested resource could not be found or you don't have permission to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -1302,15 +1335,7 @@ const docTemplate = `{
                 }
             }
         },
-        "connection.UpdateConnectionRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "connection.response": {
+        "connection.ExtListResponse": {
             "type": "object",
             "properties": {
                 "items": {
@@ -1330,6 +1355,14 @@ const docTemplate = `{
                 },
                 "total_count": {
                     "type": "integer"
+                }
+            }
+        },
+        "connection.UpdateConnectionRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -1389,6 +1422,29 @@ const docTemplate = `{
                 }
             }
         },
+        "fact.ExtListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/fact.Fact"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "page_count": {
+                    "type": "integer"
+                },
+                "per_page": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "fact.Fact": {
             "type": "object",
             "properties": {
@@ -1436,29 +1492,6 @@ const docTemplate = `{
                 },
                 "uri": {
                     "type": "string"
-                }
-            }
-        },
-        "fact.response": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/fact.Fact"
-                    }
-                },
-                "page": {
-                    "type": "integer"
-                },
-                "page_count": {
-                    "type": "integer"
-                },
-                "per_page": {
-                    "type": "integer"
-                },
-                "total_count": {
-                    "type": "integer"
                 }
             }
         },
