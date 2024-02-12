@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/pkg/response"
 	"github.com/labstack/echo/v4"
 )
 
@@ -52,8 +53,10 @@ func CurrentUser(c echo.Context) Identity {
 func HasAccessToResource(c echo.Context, resource string) bool {
 	u := CurrentUser(c)
 	if u == nil {
-		c.JSON(http.StatusNotFound, map[string]string{
-			"message": "resource not found (A",
+		c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
 		})
 		return false
 	}
@@ -63,7 +66,12 @@ func HasAccessToResource(c echo.Context, resource string) bool {
 	}
 
 	if u.IsPasswordChangeRequired() {
-		c.JSON(http.StatusLocked, "you're required to change your password")
+		c.JSON(http.StatusLocked, response.Error{
+			Status:  http.StatusLocked,
+			Error:   "You're required to change your password",
+			Details: "Please change your password before consuming the api.",
+		})
+
 		return false
 	}
 
@@ -73,7 +81,11 @@ func HasAccessToResource(c echo.Context, resource string) bool {
 		}
 	}
 
-	c.JSON(http.StatusNotFound, "resource not found")
+	c.JSON(http.StatusNotFound, response.Error{
+		Status:  http.StatusNotFound,
+		Error:   "Not found",
+		Details: "The requested resource does not exist, or you don't have permissions to access it",
+	})
 	return false
 }
 

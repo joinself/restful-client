@@ -15,7 +15,7 @@ type Repository interface {
 	// Get returns the connection with the specified connection ID.
 	Get(ctx context.Context, appID, selfID string) (entity.Connection, error)
 	// Count returns the number of connections.
-	Count(ctx context.Context) (int, error)
+	Count(ctx context.Context, appID string) (int, error)
 	// Query returns the list of connections with the given offset and limit.
 	Query(ctx context.Context, appid string, offset, limit int) ([]entity.Connection, error)
 	// Create saves a new connection in the storage.
@@ -75,9 +75,12 @@ func (r repository) Delete(ctx context.Context, id int) error {
 }
 
 // Count returns the number of the connection records in the database.
-func (r repository) Count(ctx context.Context) (int, error) {
+func (r repository) Count(ctx context.Context, appID string) (int, error) {
 	var count int
-	err := r.db.With(ctx).Select("COUNT(*)").From("connection").Row(&count)
+	err := r.db.With(ctx).Select("COUNT(*)").
+		From("connection").
+		Where(&dbx.HashExp{"appid": appID}).
+		Row(&count)
 	return count, err
 }
 

@@ -22,13 +22,13 @@ func TestRepository(t *testing.T) {
 
 	ctx := context.Background()
 
-	// initial count
-	count, err := repo.Count(ctx)
-	assert.Nil(t, err)
-
 	id, _ := uuid.NewV4()
 	connectionID := "selfID" + id.String()
 	appID := "appID" + id.String()
+
+	// initial count
+	count, err := repo.Count(ctx, appID)
+	assert.Nil(t, err)
 
 	// create
 	err = repo.Create(ctx, entity.Connection{
@@ -40,7 +40,7 @@ func TestRepository(t *testing.T) {
 		UpdatedAt: time.Now(),
 	})
 	assert.Nil(t, err)
-	count2, _ := repo.Count(ctx)
+	count2, _ := repo.Count(ctx, appID)
 	assert.Equal(t, 1, count2-count)
 
 	// get
