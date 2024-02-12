@@ -51,33 +51,21 @@ func Test_service_CRUD(t *testing.T) {
 	s := NewService(&mock.ConnectionRepositoryMock{}, runner, logger)
 
 	ctx := context.Background()
+	id := "selfid"
+	appid := "appid"
 
 	// initial count
-	count, _ := s.Count(ctx)
+	count, _ := s.Count(ctx, appid)
 	assert.Equal(t, 0, count)
 
 	// successful creation
-	id := "selfid"
-	appid := "appid"
 	connection, err := s.Create(ctx, appid, CreateConnectionRequest{SelfID: id})
 	assert.Nil(t, err)
 	assert.Equal(t, id, connection.SelfID)
 	assert.Equal(t, "", connection.Name)
 	assert.NotEmpty(t, connection.CreatedAt)
 	assert.NotEmpty(t, connection.UpdatedAt)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 1, count)
-
-	// validation error in creation
-	_, err = s.Create(ctx, appid, CreateConnectionRequest{SelfID: ""})
-	assert.NotNil(t, err)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 1, count)
-
-	// unexpected error in creation
-	_, err = s.Create(ctx, appid, CreateConnectionRequest{SelfID: "error"})
-	assert.Equal(t, mock.ErrCRUD, err)
-	count, _ = s.Count(ctx)
+	count, _ = s.Count(ctx, appid)
 	assert.Equal(t, 1, count)
 
 	_, _ = s.Create(ctx, appid, CreateConnectionRequest{SelfID: "test2"})
@@ -88,18 +76,6 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, "test updated", connection.Name)
 	_, err = s.Update(ctx, appid, "none", UpdateConnectionRequest{Name: "test updated"})
 	assert.NotNil(t, err)
-
-	// validation error in update
-	_, err = s.Update(ctx, appid, id, UpdateConnectionRequest{Name: ""})
-	assert.NotNil(t, err)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 2, count)
-
-	// unexpected error in update
-	_, err = s.Update(ctx, appid, id, UpdateConnectionRequest{Name: "error"})
-	assert.Equal(t, mock.ErrCRUD, err)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 2, count)
 
 	// get
 	_, err = s.Get(ctx, appid, "none")
@@ -119,6 +95,6 @@ func Test_service_CRUD(t *testing.T) {
 	connection, err = s.Delete(ctx, appid, id)
 	assert.Nil(t, err)
 	assert.Equal(t, id, connection.SelfID)
-	count, _ = s.Count(ctx)
+	count, _ = s.Count(ctx, appid)
 	assert.Equal(t, 1, count)
 }

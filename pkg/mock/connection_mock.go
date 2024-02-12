@@ -23,7 +23,7 @@ func (m ConnectionRepositoryMock) Get(ctx context.Context, appid, selfid string)
 	return entity.Connection{}, sql.ErrNoRows
 }
 
-func (m ConnectionRepositoryMock) Count(ctx context.Context) (int, error) {
+func (m ConnectionRepositoryMock) Count(ctx context.Context, appID string) (int, error) {
 	return len(m.Items), nil
 }
 
