@@ -79,5 +79,8 @@ func HasAccessToResource(c echo.Context, resource string) bool {
 
 func IsAdmin(c echo.Context) bool {
 	u := CurrentUser(c)
+	if u == nil {
+		return false
+	}
 	return u.IsAdmin()
 }
