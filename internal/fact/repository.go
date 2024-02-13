@@ -13,7 +13,7 @@ import (
 // Repository encapsulates the logic to access facts from the data source.
 type Repository interface {
 	// Get returns the fact with the specified fact ID.
-	Get(ctx context.Context, id string) (entity.Fact, error)
+	Get(ctx context.Context, connectionID int, id string) (entity.Fact, error)
 	// Count returns the number of facts.
 	Count(ctx context.Context, conn int, source, fact string) (int, error)
 	// Query returns the list of facts with the given offset and limit.
@@ -23,9 +23,9 @@ type Repository interface {
 	// Update updates the fact with given ID in the storage.
 	Update(ctx context.Context, fact entity.Fact) error
 	// Delete removes the fact with given ID from the storage.
-	Delete(ctx context.Context, id string) error
+	Delete(ctx context.Context, connID int, id string) error
 	// SetStatus updates the fact identified by the given id with the given status.
-	SetStatus(ctx context.Context, id string, status string) error
+	SetStatus(ctx context.Context, connID int, id string, status string) error
 	// FindByRequestID returns the fact with the specified request ID.
 	FindByRequestID(ctx context.Context, connectionID *int, requestID string) ([]entity.Fact, error)
 }
@@ -42,9 +42,9 @@ func NewRepository(db *dbcontext.DB, logger log.Logger) Repository {
 }
 
 // Get reads the fact with the specified ID from the database.
-func (r repository) Get(ctx context.Context, id string) (entity.Fact, error) {
+func (r repository) Get(ctx context.Context, connectionID int, id string) (entity.Fact, error) {
 	var fact entity.Fact
-	err := r.db.With(ctx).Select().Model(id, &fact)
+	err := r.db.With(ctx).Select().Where(&dbx.HashExp{"id": id, "connection_id": connectionID}).Model(id, &fact)
 	return fact, err
 }
 
@@ -60,8 +60,8 @@ func (r repository) Update(ctx context.Context, fact entity.Fact) error {
 }
 
 // Delete deletes an fact with the specified ID from the database.
-func (r repository) Delete(ctx context.Context, id string) error {
-	fact, err := r.Get(ctx, id)
+func (r repository) Delete(ctx context.Context, connID int, id string) error {
+	fact, err := r.Get(ctx, connID, id)
 	if err != nil {
 		return err
 	}
@@ -106,8 +106,8 @@ func (r repository) Query(ctx context.Context, conn int, source, fact string, of
 	return facts, err
 }
 
-func (r repository) SetStatus(ctx context.Context, id string, status string) error {
-	fact, err := r.Get(ctx, id)
+func (r repository) SetStatus(ctx context.Context, connID int, id string, status string) error {
+	fact, err := r.Get(ctx, connID, id)
 	if err != nil {
 		return err
 	}

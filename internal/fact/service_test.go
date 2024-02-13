@@ -85,21 +85,4 @@ func Test_service_CRUD(t *testing.T) {
 		}},
 	})
 	assert.Nil(t, err)
-
-	// validation error in creation
-	err = s.Create(ctx, "app", "connection", 1, CreateFactRequest{
-		Facts: []FactToIssue{{
-			Value: "test",
-		}},
-	})
-	assert.NotNil(t, err)
-
-	// unexpected error in creation
-	err = s.Create(ctx, "app", "connection", 1, CreateFactRequest{
-		Facts: []FactToIssue{{
-			Key:   "",
-			Value: "test",
-		}},
-	})
-	assert.Error(t, err)
 }

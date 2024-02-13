@@ -51,10 +51,10 @@ func TestRepository(t *testing.T) {
 	assert.Equal(t, 1, count2-count)
 
 	// get
-	fact, err := repo.Get(ctx, "test1")
+	fact, err := repo.Get(ctx, connection, "test1")
 	assert.Nil(t, err)
 	assert.Equal(t, "fact1", fact.Body)
-	_, err = repo.Get(ctx, "test0")
+	_, err = repo.Get(ctx, connection, "test0")
 	assert.Equal(t, sql.ErrNoRows, err)
 
 	// update
@@ -68,7 +68,7 @@ func TestRepository(t *testing.T) {
 		UpdatedAt:    time.Now(),
 	})
 	assert.Nil(t, err)
-	fact, _ = repo.Get(ctx, "test1")
+	fact, _ = repo.Get(ctx, connection, "test1")
 	assert.Equal(t, "fact1 updated", fact.Body)
 
 	// query
@@ -78,10 +78,10 @@ func TestRepository(t *testing.T) {
 	assert.Equal(t, count2, len(facts))
 
 	// delete
-	err = repo.Delete(ctx, "test1")
+	err = repo.Delete(ctx, connection, "test1")
 	assert.Nil(t, err)
-	_, err = repo.Get(ctx, "test1")
+	_, err = repo.Get(ctx, connection, "test1")
 	assert.Equal(t, sql.ErrNoRows, err)
-	err = repo.Delete(ctx, "test1")
+	err = repo.Delete(ctx, connection, "test1")
 	assert.Equal(t, sql.ErrNoRows, err)
 }

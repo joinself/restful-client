@@ -302,7 +302,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/connection.response"
+                            "$ref": "#/definitions/connection.ExtListResponse"
                         }
                     }
                 }
@@ -359,7 +359,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "List facts matching the specified filters.",
+                "description": "This endpoint retrieves a list of facts using the provided app_id, connection_id, and other optional filters. The results can be paginated using page and per_page parameters.",
                 "consumes": [
                     "application/json"
                 ],
@@ -369,52 +369,64 @@ const docTemplate = `{
                 "tags": [
                     "facts"
                 ],
-                "summary": "List facts.",
+                "summary": "Retrieve facts based on filters",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Unique Identifier for the Application",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Connection id",
+                        "description": "Unique Identifier for the Connection",
                         "name": "connection_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "page number",
+                        "description": "Page number for the results pagination",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "number of elements per page",
+                        "description": "Number of results per page",
                         "name": "per_page",
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "source",
+                        "type": "string",
+                        "description": "Filter by source of the fact",
                         "name": "source",
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "fact",
+                        "type": "string",
+                        "description": "Filter by fact",
                         "name": "fact",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully retrieved the list of facts",
                         "schema": {
-                            "$ref": "#/definitions/fact.response"
+                            "$ref": "#/definitions/fact.ExtListResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "The requested resource could not be found or you don't have permission to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "There was a problem with your request. Please try again",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -425,7 +437,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Issues a fact to one of your connections.",
+                "description": "This endpoint issues a new fact to a specific connection using the provided app_id, connection_id and the request body.",
                 "consumes": [
                     "application/json"
                 ],
@@ -435,24 +447,24 @@ const docTemplate = `{
                 "tags": [
                     "facts"
                 ],
-                "summary": "Issues a fact.",
+                "summary": "Issue a new fact to a connection",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Unique Identifier for the Application",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Connection id",
+                        "description": "Unique Identifier for the Connection",
                         "name": "connection_id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "query params",
+                        "description": "Body containing the details of the fact to be issued",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -462,8 +474,29 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK"
+                    "201": {
+                        "description": "Fact successfully issued",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input - the provided body is not valid",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found - the requested resource does not exist, or you don't have permissions to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal error - there was a problem with your request. Please try again",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
                     }
                 }
             }
@@ -475,7 +508,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get fact details by fact request id.",
+                "description": "This endpoint retrieves the details of a specific fact using the provided app_id, connection_id and fact request id.",
                 "consumes": [
                     "application/json"
                 ],
@@ -485,25 +518,25 @@ const docTemplate = `{
                 "tags": [
                     "facts"
                 ],
-                "summary": "Get fact details.",
+                "summary": "Retrieve specific fact details",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Unique Identifier for the Application",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Connection id",
+                        "description": "Unique Identifier for the Connection",
                         "name": "connection_id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "Fact request id",
+                        "type": "string",
+                        "description": "Unique Identifier for the Fact Request",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -511,9 +544,70 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully retrieved the fact details",
                         "schema": {
-                            "$ref": "#/definitions/fact.Fact"
+                            "$ref": "#/definitions/fact.ExtFact"
+                        }
+                    },
+                    "404": {
+                        "description": "The requested fact could not be found or you don't have permission to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing fact for a specific connection identified by app_id, connection_id and the id of the fact to be deleted.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "facts"
+                ],
+                "summary": "Deletes a fact",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique Identifier for the Application",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique Identifier for the Connection",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique Identifier for the Fact to be deleted",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Fact successfully deleted",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "The requested resource does not exist, or you don't have permissions to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -1302,15 +1396,7 @@ const docTemplate = `{
                 }
             }
         },
-        "connection.UpdateConnectionRequest": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "connection.response": {
+        "connection.ExtListResponse": {
             "type": "object",
             "properties": {
                 "items": {
@@ -1333,22 +1419,10 @@ const docTemplate = `{
                 }
             }
         },
-        "entity.Attestation": {
+        "connection.UpdateConnectionRequest": {
             "type": "object",
             "properties": {
-                "body": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "value": {
+                "name": {
                     "type": "string"
                 }
             }
@@ -1389,63 +1463,36 @@ const docTemplate = `{
                 }
             }
         },
-        "fact.Fact": {
+        "fact.ExtFact": {
             "type": "object",
             "properties": {
-                "attestations": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/entity.Attestation"
-                    }
-                },
-                "body": {
-                    "type": "string"
-                },
-                "cid": {
-                    "type": "string"
-                },
                 "created_at": {
-                    "type": "string"
-                },
-                "fact": {
-                    "type": "string"
-                },
-                "iat": {
-                    "type": "string"
-                },
-                "id": {
                     "type": "string"
                 },
                 "iss": {
                     "type": "string"
                 },
-                "jti": {
-                    "type": "string"
-                },
-                "request_id": {
+                "key": {
                     "type": "string"
                 },
                 "source": {
                     "type": "string"
                 },
-                "status": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "uri": {
-                    "type": "string"
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
-        "fact.response": {
+        "fact.ExtListResponse": {
             "type": "object",
             "properties": {
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/fact.Fact"
+                        "$ref": "#/definitions/fact.ExtFact"
                     }
                 },
                 "page": {

@@ -3,9 +3,11 @@ package fact
 import (
 	"net/http"
 
+	"github.com/gofrs/uuid"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
+	"github.com/joinself/restful-client/pkg/response"
 	"github.com/labstack/echo/v4"
 )
 
@@ -27,59 +29,69 @@ type resource struct {
 	logger   log.Logger
 }
 
-// GetConnection godoc
-// @Summary      Get fact details.
-// @Description  Get fact details by fact request id.
-// @Tags         facts
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        app_id   path      string  true  "App id"
-// @Param        connection_id   path      string  true  "Connection id"
-// @Param        id   path      int  true  "Fact request id"
-// @Success      200  {object}  Fact
-// @Router       /apps/{app_id}/connections/{connection_id}/facts/{id} [get]
+// GetFact godoc
+// @Summary Retrieve specific fact details
+// @Description This endpoint retrieves the details of a specific fact using the provided app_id, connection_id and fact request id.
+// @Tags facts
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param app_id path string true "Unique Identifier for the Application"
+// @Param connection_id path string true "Unique Identifier for the Connection"
+// @Param id path string true "Unique Identifier for the Fact Request"
+// @Success 200 {object} ExtFact "Successfully retrieved the fact details"
+// @Failure 404 {object} response.Error "The requested fact could not be found or you don't have permission to access it"
+// @Router /apps/{app_id}/connections/{connection_id}/facts/{id} [get]
 func (r resource) get(c echo.Context) error {
-	// FIXME: This should take into account the given app_id so its clear it
-	// has access to this resources
-	fact, err := r.service.Get(c.Request().Context(), c.Param("id"))
+	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
 	}
 
-	return c.JSON(http.StatusOK, fact)
+	f, err := r.service.Get(c.Request().Context(), conn.ID, c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
+	}
+
+	return c.JSON(http.StatusOK, NewExtFact(f))
 }
 
-type response struct {
-	Page       int    `json:"page"`
-	PerPage    int    `json:"per_page"`
-	PageCount  int    `json:"page_count"`
-	TotalCount int    `json:"total_count"`
-	Items      []Fact `json:"items"`
-}
-
-// ListConnections godoc
-// @Summary        List facts.
-// @Description    List facts matching the specified filters.
-// @Tags           facts
-// @Accept         json
-// @Produce        json
-// @Security       BearerAuth
-// @Param          app_id   path      string  true  "App id"
-// @Param          connection_id   path      string  true  "Connection id"
-// @Param          page query int false "page number"
-// @Param          per_page query int false "number of elements per page"
-// @Param          source query int false "source"
-// @Param          fact query int false "fact"
-// @Success        200  {object}  response
-// @Router         /apps/{app_id}/connections/{connection_id}/facts [get]
+// ListFacts godoc
+// @Summary Retrieve facts based on filters
+// @Description This endpoint retrieves a list of facts using the provided app_id, connection_id, and other optional filters. The results can be paginated using page and per_page parameters.
+// @Tags facts
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param app_id path string true "Unique Identifier for the Application"
+// @Param connection_id path string true "Unique Identifier for the Connection"
+// @Param page query int false "Page number for the results pagination"
+// @Param per_page query int false "Number of results per page"
+// @Param source query string false "Filter by source of the fact"
+// @Param fact query string false "Filter by fact"
+// @Success 200 {object} ExtListResponse "Successfully retrieved the list of facts"
+// @Failure 404 {object} response.Error "The requested resource could not be found or you don't have permission to access it"
+// @Failure 500 {object} response.Error "There was a problem with your request. Please try again"
+// @Router /apps/{app_id}/connections/{connection_id}/facts [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	// Get the connection id
 	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
 	}
 
 	cid := conn.ID
@@ -88,87 +100,158 @@ func (r resource) query(c echo.Context) error {
 
 	count, err := r.service.Count(ctx, cid, sid, fid)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+		errorCode, _ := uuid.NewV4()
+		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
+		return c.JSON(http.StatusInternalServerError, response.Error{
+			Status:  http.StatusInternalServerError,
+			Error:   "Internal error",
+			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
+		})
 	}
 	pages := pagination.NewFromRequest(c.Request(), count)
 	facts, err := r.service.Query(ctx, cid, sid, fid, pages.Offset(), pages.Limit())
 	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+		errorCode, _ := uuid.NewV4()
+		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
+		return c.JSON(http.StatusInternalServerError, response.Error{
+			Status:  http.StatusInternalServerError,
+			Error:   "Internal error",
+			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
+		})
 	}
-	pages.Items = facts
+	items := []ExtFact{}
+	for _, f := range facts {
+		items = append(items, NewExtFact(f))
+	}
+	pages.Items = items
 	return c.JSON(http.StatusOK, pages)
 }
 
-// WARNING: Do not use for code purposes, this is only used to generate
-// the documentation for the openapi, which seems to be broken for nested
-// structs.
-type CreateFactRequestDoc struct {
-	Facts []struct {
-		Key    string `json:"key"`
-		Value  string `json:"value"`
-		Source string `json:"source"`
-		Group  *struct {
-			Name string `json:"name"`
-			Icon string `json:"icon"`
-		} `json:"group,omitempty"`
-		Type string `json:"type,omitempty"`
-	} `json:"facts"`
-}
-
-// CreateConnection godoc
-// @Summary         Issues a fact.
-// @Description  	Issues a fact to one of your connections.
-// @Tags            facts
-// @Accept          json
-// @Produce         json
-// @Security        BearerAuth
-// @Param           app_id   path      string  true  "App id"
-// @Param           connection_id  path string  true  "Connection id"
-// @Param           request body CreateFactRequestDoc true "query params"
-// @Success         200
-// @Router          /apps/{app_id}/connections/{connection_id}/facts [post]
+// IssueFact godoc
+// @Summary Issue a new fact to a connection
+// @Description This endpoint issues a new fact to a specific connection using the provided app_id, connection_id and the request body.
+// @Tags facts
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param app_id path string true "Unique Identifier for the Application"
+// @Param connection_id path string true "Unique Identifier for the Connection"
+// @Param request body CreateFactRequestDoc true "Body containing the details of the fact to be issued"
+// @Success 201 {string} string "Fact successfully issued"
+// @Failure 400 {object} response.Error "Invalid input - the provided body is not valid"
+// @Failure 404 {object} response.Error "Not found - the requested resource does not exist, or you don't have permissions to access it"
+// @Failure 500 {object} response.Error "Internal error - there was a problem with your request. Please try again"
+// @Router /apps/{app_id}/connections/{connection_id}/facts [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateFactRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, "")
+		return c.JSON(http.StatusBadRequest, response.Error{
+			Status:  http.StatusBadRequest,
+			Error:   "Invalid input",
+			Details: "The provided body is not valid",
+		})
+	}
+
+	if reqErr := input.Validate(); reqErr != nil {
+		return c.JSON(reqErr.Status, reqErr)
 	}
 
 	ctx := c.Request().Context()
 	// Get the connection id
 	conn, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
 	}
 
 	err = r.service.Create(ctx, c.Param("app_id"), c.Param("connection_id"), conn.ID, input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		errorCode, _ := uuid.NewV4()
+		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
+		return c.JSON(http.StatusInternalServerError, response.Error{
+			Status:  http.StatusInternalServerError,
+			Error:   "Internal error",
+			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
+		})
 	}
 
-	return c.JSON(http.StatusCreated, ``)
+	return c.NoContent(http.StatusAccepted)
 }
 
+// TODO : Consider removing this endpoint
 func (r resource) update(c echo.Context) error {
 	var input UpdateFactRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, "")
+		return c.JSON(http.StatusBadRequest, response.Error{
+			Status:  http.StatusBadRequest,
+			Error:   "Invalid input",
+			Details: "The provided body is not valid",
+		})
 	}
 
-	fact, err := r.service.Update(c.Request().Context(), c.Param("id"), input)
+	if reqErr := input.Validate(); reqErr != nil {
+		return c.JSON(reqErr.Status, reqErr)
+	}
+
+	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
+	}
+
+	fact, err := r.service.Update(c.Request().Context(), conn.ID, c.Param("id"), input)
+	if err != nil {
+		errorCode, _ := uuid.NewV4()
+		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
+		return c.JSON(http.StatusInternalServerError, response.Error{
+			Status:  http.StatusInternalServerError,
+			Error:   "Internal error",
+			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
+		})
 	}
 
 	return c.JSON(http.StatusOK, fact)
 }
 
+// DeleteFact godoc
+// @Summary Deletes a fact
+// @Description Deletes an existing fact for a specific connection identified by app_id, connection_id and the id of the fact to be deleted.
+// @Tags facts
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param app_id path string true "Unique Identifier for the Application"
+// @Param connection_id path string true "Unique Identifier for the Connection"
+// @Param id path string true "Unique Identifier for the Fact to be deleted"
+// @Success 204 {string} string "Fact successfully deleted"
+// @Failure 404 {object} response.Error "The requested resource does not exist, or you don't have permissions to access it"
+// @Router /apps/{app_id}/connections/{connection_id}/facts/{id} [delete]
 func (r resource) delete(c echo.Context) error {
-	fact, err := r.service.Delete(c.Request().Context(), c.Param("id"))
+	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
 	}
 
-	return c.JSON(http.StatusOK, fact)
+	err = r.service.Delete(c.Request().Context(), conn.ID, c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
@@ -14,12 +13,12 @@ import (
 
 // Service encapsulates usecase logic for facts.
 type Service interface {
-	Get(ctx context.Context, id string) (Fact, error)
+	Get(ctx context.Context, connectionID int, id string) (Fact, error)
 	Query(ctx context.Context, conn int, source, fact string, offset, limit int) ([]Fact, error)
 	Count(ctx context.Context, conn int, source, fact string) (int, error)
 	Create(ctx context.Context, appID, selfID string, connection int, input CreateFactRequest) error
-	Update(ctx context.Context, id string, input UpdateFactRequest) (Fact, error)
-	Delete(ctx context.Context, id string) (Fact, error)
+	Update(ctx context.Context, connID int, id string, input UpdateFactRequest) (Fact, error)
+	Delete(ctx context.Context, connID int, id string) error
 }
 
 // RequesterService service to manage sending and receiving fact requests
@@ -41,38 +40,6 @@ type FactToIssue struct {
 	Type   string          `json:"type,omitempty"`
 }
 
-// CreateFactRequest represents an fact creation request.
-type CreateFactRequest struct {
-	Facts []FactToIssue `json:"facts"`
-}
-
-// Validate validates the CreateFactRequest fields.
-func (m CreateFactRequest) Validate() error {
-	for _, f := range m.Facts {
-		err := validation.ValidateStruct(&f,
-			validation.Field(&f.Key, validation.Required, validation.Length(0, 128)),
-			validation.Field(&f.Value, validation.Required, validation.Length(0, 128)),
-			//validation.Field(&f.Source, validation.Required, validation.Length(0, 128)),
-		)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// UpdateFactRequest represents an fact update request.
-type UpdateFactRequest struct {
-	Body string `json:"body"`
-}
-
-// Validate validates the CreateFactRequest fields.
-func (m UpdateFactRequest) Validate() error {
-	return validation.ValidateStruct(&m,
-		validation.Field(&m.Body, validation.Required, validation.Length(0, 128)),
-	)
-}
-
 type service struct {
 	repo   Repository
 	atRepo attestation.Repository
@@ -86,8 +53,8 @@ func NewService(repo Repository, atRepo attestation.Repository, runner support.S
 }
 
 // Get returns the fact with the specified the fact ID.
-func (s service) Get(ctx context.Context, id string) (Fact, error) {
-	fact, err := s.repo.Get(ctx, id)
+func (s service) Get(ctx context.Context, connectionID int, id string) (Fact, error) {
+	fact, err := s.repo.Get(ctx, connectionID, id)
 	if err != nil {
 		return Fact{}, err
 	}
@@ -106,10 +73,6 @@ func (s service) Get(ctx context.Context, id string) (Fact, error) {
 
 // Create creates a new fact.
 func (s service) Create(ctx context.Context, appID, selfID string, connection int, req CreateFactRequest) error {
-	if err := req.Validate(); err != nil {
-		return err
-	}
-
 	// Issue the fact and send it to the user
 	s.issueFact(req, appID, selfID)
 
@@ -117,12 +80,8 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 }
 
 // Update updates the fact with the specified ID.
-func (s service) Update(ctx context.Context, id string, req UpdateFactRequest) (Fact, error) {
-	if err := req.Validate(); err != nil {
-		return Fact{}, err
-	}
-
-	fact, err := s.Get(ctx, id)
+func (s service) Update(ctx context.Context, connID int, id string, req UpdateFactRequest) (Fact, error) {
+	fact, err := s.Get(ctx, connID, id)
 	if err != nil {
 		return fact, err
 	}
@@ -136,15 +95,11 @@ func (s service) Update(ctx context.Context, id string, req UpdateFactRequest) (
 }
 
 // Delete deletes the fact with the specified ID.
-func (s service) Delete(ctx context.Context, id string) (Fact, error) {
-	fact, err := s.Get(ctx, id)
-	if err != nil {
-		return Fact{}, err
+func (s service) Delete(ctx context.Context, connID int, id string) error {
+	if err := s.repo.Delete(ctx, connID, id); err != nil {
+		return err
 	}
-	if err = s.repo.Delete(ctx, id); err != nil {
-		return Fact{}, err
-	}
-	return fact, nil
+	return nil
 }
 
 // Count returns the number of facts.
