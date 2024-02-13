@@ -11,7 +11,7 @@ type FactRepositoryMock struct {
 	Items []entity.Fact
 }
 
-func (m FactRepositoryMock) Get(ctx context.Context, id string) (entity.Fact, error) {
+func (m FactRepositoryMock) Get(ctx context.Context, connID int, id string) (entity.Fact, error) {
 	for _, item := range m.Items {
 		if item.ID == id {
 			return item, nil
@@ -49,7 +49,7 @@ func (m *FactRepositoryMock) Update(ctx context.Context, fact entity.Fact) error
 	return nil
 }
 
-func (m *FactRepositoryMock) Delete(ctx context.Context, id string) error {
+func (m *FactRepositoryMock) Delete(ctx context.Context, connID int, id string) error {
 	for i, item := range m.Items {
 		if item.ID == id {
 			m.Items[i] = m.Items[len(m.Items)-1]
@@ -60,7 +60,7 @@ func (m *FactRepositoryMock) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (m *FactRepositoryMock) SetStatus(ctx context.Context, id string, status string) error {
+func (m *FactRepositoryMock) SetStatus(ctx context.Context, connID int, id string, status string) error {
 	return nil
 }
 

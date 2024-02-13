@@ -100,12 +100,7 @@ definitions:
       updated_at:
         type: string
     type: object
-  connection.UpdateConnectionRequest:
-    properties:
-      name:
-        type: string
-    type: object
-  connection.response:
+  connection.ExtListResponse:
     properties:
       items:
         items:
@@ -120,17 +115,9 @@ definitions:
       total_count:
         type: integer
     type: object
-  entity.Attestation:
+  connection.UpdateConnectionRequest:
     properties:
-      body:
-        type: string
-      created_at:
-        type: string
-      id:
-        type: string
-      updated_at:
-        type: string
-      value:
+      name:
         type: string
     type: object
   fact.CreateFactRequestDoc:
@@ -156,44 +143,26 @@ definitions:
           type: object
         type: array
     type: object
-  fact.Fact:
+  fact.ExtFact:
     properties:
-      attestations:
-        items:
-          $ref: '#/definitions/entity.Attestation'
-        type: array
-      body:
-        type: string
-      cid:
-        type: string
       created_at:
-        type: string
-      fact:
-        type: string
-      iat:
-        type: string
-      id:
         type: string
       iss:
         type: string
-      jti:
-        type: string
-      request_id:
+      key:
         type: string
       source:
         type: string
-      status:
-        type: string
-      updated_at:
-        type: string
-      uri:
-        type: string
+      values:
+        items:
+          type: string
+        type: array
     type: object
-  fact.response:
+  fact.ExtListResponse:
     properties:
       items:
         items:
-          $ref: '#/definitions/fact.Fact'
+          $ref: '#/definitions/fact.ExtFact'
         type: array
       page:
         type: integer
@@ -532,7 +501,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/connection.response'
+            $ref: '#/definitions/connection.ExtListResponse'
       security:
       - BearerAuth: []
       summary: List connections.
@@ -570,62 +539,74 @@ paths:
     get:
       consumes:
       - application/json
-      description: List facts matching the specified filters.
+      description: This endpoint retrieves a list of facts using the provided app_id,
+        connection_id, and other optional filters. The results can be paginated using
+        page and per_page parameters.
       parameters:
-      - description: App id
+      - description: Unique Identifier for the Application
         in: path
         name: app_id
         required: true
         type: string
-      - description: Connection id
+      - description: Unique Identifier for the Connection
         in: path
         name: connection_id
         required: true
         type: string
-      - description: page number
+      - description: Page number for the results pagination
         in: query
         name: page
         type: integer
-      - description: number of elements per page
+      - description: Number of results per page
         in: query
         name: per_page
         type: integer
-      - description: source
+      - description: Filter by source of the fact
         in: query
         name: source
-        type: integer
-      - description: fact
+        type: string
+      - description: Filter by fact
         in: query
         name: fact
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully retrieved the list of facts
           schema:
-            $ref: '#/definitions/fact.response'
+            $ref: '#/definitions/fact.ExtListResponse'
+        "404":
+          description: The requested resource could not be found or you don't have
+            permission to access it
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: There was a problem with your request. Please try again
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: List facts.
+      summary: Retrieve facts based on filters
       tags:
       - facts
     post:
       consumes:
       - application/json
-      description: Issues a fact to one of your connections.
+      description: This endpoint issues a new fact to a specific connection using
+        the provided app_id, connection_id and the request body.
       parameters:
-      - description: App id
+      - description: Unique Identifier for the Application
         in: path
         name: app_id
         required: true
         type: string
-      - description: Connection id
+      - description: Unique Identifier for the Connection
         in: path
         name: connection_id
         required: true
         type: string
-      - description: query params
+      - description: Body containing the details of the fact to be issued
         in: body
         name: request
         required: true
@@ -634,44 +615,104 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Fact successfully issued
+          schema:
+            type: string
+        "400":
+          description: Invalid input - the provided body is not valid
+          schema:
+            $ref: '#/definitions/response.Error'
+        "404":
+          description: Not found - the requested resource does not exist, or you don't
+            have permissions to access it
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: Internal error - there was a problem with your request. Please
+            try again
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Issues a fact.
+      summary: Issue a new fact to a connection
       tags:
       - facts
   /apps/{app_id}/connections/{connection_id}/facts/{id}:
-    get:
+    delete:
       consumes:
       - application/json
-      description: Get fact details by fact request id.
+      description: Deletes an existing fact for a specific connection identified by
+        app_id, connection_id and the id of the fact to be deleted.
       parameters:
-      - description: App id
+      - description: Unique Identifier for the Application
         in: path
         name: app_id
         required: true
         type: string
-      - description: Connection id
+      - description: Unique Identifier for the Connection
         in: path
         name: connection_id
         required: true
         type: string
-      - description: Fact request id
+      - description: Unique Identifier for the Fact to be deleted
         in: path
         name: id
         required: true
-        type: integer
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Fact successfully deleted
+          schema:
+            type: string
+        "404":
+          description: The requested resource does not exist, or you don't have permissions
+            to access it
+          schema:
+            $ref: '#/definitions/response.Error'
+      security:
+      - BearerAuth: []
+      summary: Deletes a fact
+      tags:
+      - facts
+    get:
+      consumes:
+      - application/json
+      description: This endpoint retrieves the details of a specific fact using the
+        provided app_id, connection_id and fact request id.
+      parameters:
+      - description: Unique Identifier for the Application
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Unique Identifier for the Connection
+        in: path
+        name: connection_id
+        required: true
+        type: string
+      - description: Unique Identifier for the Fact Request
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully retrieved the fact details
           schema:
-            $ref: '#/definitions/fact.Fact'
+            $ref: '#/definitions/fact.ExtFact'
+        "404":
+          description: The requested fact could not be found or you don't have permission
+            to access it
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Get fact details.
+      summary: Retrieve specific fact details
       tags:
       - facts
   /apps/{app_id}/connections/{connection_id}/messages:
