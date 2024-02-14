@@ -14,9 +14,9 @@ import (
 // Repository encapsulates the logic to access messages from the data source.
 type Repository interface {
 	// Get returns the message with the specified message ID.
-	Get(ctx context.Context, id string) (entity.Message, error)
+	Get(ctx context.Context, connectionID int, id string) (entity.Message, error)
 	// Count returns the number of messages.
-	Count(ctx context.Context) (int, error)
+	Count(ctx context.Context, connectionID, messagesSince int) (int, error)
 	// Query returns the list of messages with the given offset and limit.
 	Query(ctx context.Context, connection int, messagesSince int, offset, limit int) ([]entity.Message, error)
 	// Create saves a new message in the storage.
@@ -24,7 +24,7 @@ type Repository interface {
 	// Update updates the message with given ID in the storage.
 	Update(ctx context.Context, message entity.Message) error
 	// Delete removes the message with given ID from the storage.
-	Delete(ctx context.Context, id string) error
+	Delete(ctx context.Context, connectionID int, id string) error
 }
 
 // repository persists messages in database
@@ -39,13 +39,13 @@ func NewRepository(db *dbcontext.DB, logger log.Logger) Repository {
 }
 
 // Get reads the message with the specified ID from the database.
-func (r repository) Get(ctx context.Context, jti string) (entity.Message, error) {
+func (r repository) Get(ctx context.Context, connectionID int, jti string) (entity.Message, error) {
 	var message entity.Message
 
 	err := r.db.With(ctx).
 		Select().
 		From("message").
-		Where(dbx.HashExp{"jti": jti}).
+		Where(&dbx.HashExp{"jti": jti, "connection_id": connectionID}).
 		One(&message)
 
 	if &message == nil {
@@ -67,8 +67,8 @@ func (r repository) Update(ctx context.Context, message entity.Message) error {
 }
 
 // Delete deletes an message with the specified ID from the database.
-func (r repository) Delete(ctx context.Context, jti string) error {
-	message, err := r.Get(ctx, jti)
+func (r repository) Delete(ctx context.Context, connectionID int, jti string) error {
+	message, err := r.Get(ctx, connectionID, jti)
 	if err != nil {
 		return err
 	}
@@ -76,9 +76,18 @@ func (r repository) Delete(ctx context.Context, jti string) error {
 }
 
 // Count returns the number of the message records in the database.
-func (r repository) Count(ctx context.Context) (int, error) {
+func (r repository) Count(ctx context.Context, connectionID, messagesSince int) (int, error) {
 	var count int
-	err := r.db.With(ctx).Select("COUNT(*)").From("message").Row(&count)
+	exp := dbx.NewExp("connection_id={:id}", dbx.Params{"id": connectionID})
+	if messagesSince > 0 {
+		exp = dbx.And(dbx.HashExp{"connection_id": connectionID}, dbx.NewExp(fmt.Sprintf("id>%d", messagesSince)))
+	}
+
+	err := r.db.With(ctx).
+		Select("COUNT(*)").
+		From("message").
+		Where(exp).
+		Row(&count)
 	return count, err
 }
 

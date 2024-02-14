@@ -4,9 +4,11 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gofrs/uuid"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
+	"github.com/joinself/restful-client/pkg/response"
 	"github.com/labstack/echo/v4"
 )
 
@@ -34,52 +36,66 @@ type resource struct {
 
 // GetMessage    godoc
 // @Summary      Gets a message.
-// @Description  Get message details
+// @Description  Retrieves details of a specific message identified by its JTI, within the context of a specific app and connection. Requires Bearer authentication.
 // @Tags         messages
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        app_id   path      string  true  "App id"
-// @Param        connection_id   path      string  true  "Connection id"
-// @Param        jti   path      string  true  "Message JTI"
-// @Success      200  {object}  Message
+// @Param        app_id   path      string  true  "Application ID"
+// @Param        connection_id   path      string  true  "Connection ID"
+// @Param        jti   path      string  true  "Message JTI (JWT ID)"
+// @Success      200  {object}  Message "Successful retrieval of message details"
+// @Failure      404  {object}  response.Error "Resource not found or unauthorized access"
 // @Router       /apps/{app_id}/connections/{connection_id}/messages/{jti} [get]
 func (r resource) get(c echo.Context) error {
-	message, err := r.service.Get(c.Request().Context(), c.Param("id"))
+	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
+	}
+
+	message, err := r.service.Get(c.Request().Context(), conn.ID, c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
 	}
 
 	return c.JSON(http.StatusOK, message)
 }
 
-type response struct {
-	Page       int       `json:"page"`
-	PerPage    int       `json:"per_page"`
-	PageCount  int       `json:"page_count"`
-	TotalCount int       `json:"total_count"`
-	Items      []Message `json:"items"`
-}
-
 // ListMessages    godoc
 // @Summary        List conversation messages.
-// @Description    List conversation messages with a specific connection.
+// @Description    Retrieves all messages for a specific connection within an app. Supports pagination and can filter messages since a specific message ID.
 // @Tags           messages
 // @Accept         json
 // @Produce        json
 // @Security       BearerAuth
-// @Param          messages_since query int false "return elements since a message id"
-// @Param          page query int false "page number"
-// @Param          per_page query int false "number of elements per page"
-// @Param          app_id   path      string  true  "App id"
+// @Param          messages_since query int false "Return elements since a message ID"
+// @Param          page query int false "Page number for results pagination"
+// @Param          per_page query int false "Number of results per page for pagination"
+// @Param          app_id   path      string  true  "Application ID"
 // @Param          connection_id path string  true  "Connection ID"
-// @Success        200  {object}  response
+// @Success        200  {object}  ExtListResponse "Successfully retrieved list of messages"
+// @Failure        404  {object}  response.Error "Resource not found or unauthorized access"
+// @Failure        500  {object}  response.Error "Internal server error"
 // @Router         /apps/{app_id}/connections/{connection_id}/messages [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
-	count, err := r.service.Count(ctx)
+
+	// Get the connection id
+	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
 	}
 
 	messagesSince, err := strconv.Atoi(c.Request().URL.Query().Get(LastMessage))
@@ -87,95 +103,179 @@ func (r resource) query(c echo.Context) error {
 		messagesSince = 0
 	}
 
-	// Get the connection id
-	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	// Get the total of entries.
+	count, err := r.service.Count(ctx, conn.ID, messagesSince)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+		errorCode, _ := uuid.NewV4()
+		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
+		return c.JSON(http.StatusInternalServerError, response.Error{
+			Status:  http.StatusInternalServerError,
+			Error:   "Internal error",
+			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
+		})
 	}
 
 	// Get the messages
 	pages := pagination.NewFromRequest(c.Request(), count)
-	messages, err := r.service.Query(ctx, connection.ID, messagesSince, pages.Offset(), pages.Limit())
+	messages, err := r.service.Query(ctx, conn.ID, messagesSince, pages.Offset(), pages.Limit())
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		errorCode, _ := uuid.NewV4()
+		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
+		return c.JSON(http.StatusInternalServerError, response.Error{
+			Status:  http.StatusInternalServerError,
+			Error:   "Internal error",
+			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
+		})
 	}
 
 	pages.Items = messages
 	return c.JSON(http.StatusOK, pages)
 }
 
-// SendMessage      godoc
-// @Summary         Sends a message.
-// @Description  	Sends a message to the specified connection.
-// @Tags            messages
-// @Accept          json
-// @Produce         json
-// @Security        BearerAuth
-// @Param           app_id   path      string  true  "App id"
-// @Param           connection_id   path      string  true  "Connection id"
-// @Param           request body CreateMessageRequest true "message request"
-// @Success         200  {object}  Message
-// @Router          /apps/{app_id}/connections/{connection_id}/messages [post]
+// SendMessage    godoc
+// @Summary       Sends a message.
+// @Description   Sends a message to a specific connection within an app. Requires Bearer authentication.
+// @Tags          messages
+// @Accept        json
+// @Produce       json
+// @Security      BearerAuth
+// @Param         app_id   path      string  true  "Application ID"
+// @Param         connection_id   path      string  true  "Connection ID"
+// @Param         request body CreateMessageRequest true "Request to create a message"
+// @Success       202  {object}  Message "Successfully sent message"
+// @Failure       400  {object}  response.Error "Invalid input"
+// @Failure       404  {object}  response.Error "Resource not found or unauthorized access"
+// @Failure       500  {object}  response.Error "Internal server error"
+// @Router        /apps/{app_id}/connections/{connection_id}/messages [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateMessageRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, "")
+		return c.JSON(http.StatusBadRequest, response.Error{
+			Status:  http.StatusBadRequest,
+			Error:   "Invalid input",
+			Details: "The provided body is not valid",
+		})
+	}
+
+	if reqErr := input.Validate(); reqErr != nil {
+		return c.JSON(reqErr.Status, reqErr)
 	}
 
 	// Get the connection id
 	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, "connection not found")
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
 	}
 
 	// Create the message
 	message, err := r.service.Create(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), connection.ID, input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		errorCode, _ := uuid.NewV4()
+		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
+		return c.JSON(http.StatusInternalServerError, response.Error{
+			Status:  http.StatusInternalServerError,
+			Error:   "Internal error",
+			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
+		})
 	}
 
-	return c.JSON(http.StatusCreated, message)
+	return c.JSON(http.StatusAccepted, message)
 }
 
-// SendMessage      godoc
-// @Summary         Edits a message.
-// @Description  	Sends an edited message to the specified connection.
-// @Tags            messages
-// @Accept          json
-// @Produce         json
-// @Security        BearerAuth
-// @Param           app_id   path      string  true  "App id"
-// @Param           connection_id   path      string  true  "Connection id"
-// @Param           jti   path      string  true  "Message jti"
-// @Param           request body UpdateMessageRequest true "message request"
-// @Success         200  {object}  Message
-// @Router          /apps/{app_id}/connections/{connection_id}/messages/{jti} [put]
+// EditMessage    godoc
+// @Summary       Edits a message.
+// @Description   Updates an existing message in a specific connection within an app. Requires Bearer authentication.
+// @Tags          messages
+// @Accept        json
+// @Produce       json
+// @Security      BearerAuth
+// @Param         app_id   path      string  true  "Application ID"
+// @Param         connection_id   path      string  true  "Connection ID"
+// @Param         jti   path      string  true  "Message ID (jti)"
+// @Param         request body UpdateMessageRequest true "Request to update a message"
+// @Success       200  {object}  Message "Successfully updated message"
+// @Failure       400  {object}  response.Error "Invalid input"
+// @Failure       404  {object}  response.Error "Resource not found or unauthorized access"
+// @Failure       500  {object}  response.Error "Internal server error"
+// @Router        /apps/{app_id}/connections/{connection_id}/messages/{jti} [put]
 func (r resource) update(c echo.Context) error {
 	var input UpdateMessageRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, "")
+		return c.JSON(http.StatusBadRequest, response.Error{
+			Status:  http.StatusBadRequest,
+			Error:   "Invalid input",
+			Details: "The provided body is not valid",
+		})
+	}
+
+	if reqErr := input.Validate(); reqErr != nil {
+		return c.JSON(reqErr.Status, reqErr)
+	}
+
+	// Get the connection id
+	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	if err != nil {
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
 	}
 
 	message, err := r.service.Update(
 		c.Request().Context(),
 		c.Param("app_id"),
+		connection.ID,
 		c.Param("connection_id"),
 		c.Param("id"),
 		input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		errorCode, _ := uuid.NewV4()
+		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
+		return c.JSON(http.StatusInternalServerError, response.Error{
+			Status:  http.StatusInternalServerError,
+			Error:   "Internal error",
+			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
+		})
 	}
 
 	return c.JSON(http.StatusOK, message)
 }
 
+// DeleteMessage    godoc
+// @Summary         Deletes a message.
+// @Description     Deletes a specific message from a specific connection within an app.
+// @Tags            messages
+// @Security        BearerAuth
+// @Param           app_id   path   string  true  "Application ID"
+// @Param           connection_id   path   string  true  "Connection ID"
+// @Param           id   path   string  true  "Message ID"
+// @Success         204  {object}  nil "Successfully deleted message, no content returned"
+// @Failure         404  {object}  response.Error "Resource not found or unauthorized access"
+// @Router          /apps/{app_id}/connections/{connection_id}/messages/{id} [delete]
 func (r resource) delete(c echo.Context) error {
-	err := r.service.Delete(c.Request().Context(), c.Param("id"))
+	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
+	}
+	err = r.service.Delete(c.Request().Context(), conn.ID, c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
 	}
 
-	return c.JSON(http.StatusOK, "")
+	return c.NoContent(http.StatusNoContent)
 }

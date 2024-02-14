@@ -12,7 +12,7 @@ type MessageRepositoryMock struct {
 	Items []entity.Message
 }
 
-func (m MessageRepositoryMock) Get(ctx context.Context, id string) (entity.Message, error) {
+func (m MessageRepositoryMock) Get(ctx context.Context, connectionID int, id string) (entity.Message, error) {
 	for _, item := range m.Items {
 		if item.JTI == id {
 			return item, nil
@@ -21,7 +21,7 @@ func (m MessageRepositoryMock) Get(ctx context.Context, id string) (entity.Messa
 	return entity.Message{}, sql.ErrNoRows
 }
 
-func (m MessageRepositoryMock) Count(ctx context.Context) (int, error) {
+func (m MessageRepositoryMock) Count(ctx context.Context, connection, messagesSince int) (int, error) {
 	return len(m.Items), nil
 }
 
@@ -50,7 +50,7 @@ func (m *MessageRepositoryMock) Update(ctx context.Context, message entity.Messa
 	return nil
 }
 
-func (m *MessageRepositoryMock) Delete(ctx context.Context, id string) error {
+func (m *MessageRepositoryMock) Delete(ctx context.Context, connectioniD int, id string) error {
 	for i, item := range m.Items {
 		if item.JTI == id {
 			m.Items[i] = m.Items[len(m.Items)-1]

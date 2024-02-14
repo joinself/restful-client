@@ -178,6 +178,21 @@ definitions:
       body:
         type: string
     type: object
+  message.ExtListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/message.Message'
+        type: array
+      page:
+        type: integer
+      page_count:
+        type: integer
+      per_page:
+        type: integer
+      total_count:
+        type: integer
+    type: object
   message.Message:
     properties:
       body:
@@ -201,21 +216,6 @@ definitions:
     properties:
       body:
         type: string
-    type: object
-  message.response:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/message.Message'
-        type: array
-      page:
-        type: integer
-      page_count:
-        type: integer
-      per_page:
-        type: integer
-      total_count:
-        type: integer
     type: object
   notification.SystemNotificationData:
     properties:
@@ -719,21 +719,22 @@ paths:
     get:
       consumes:
       - application/json
-      description: List conversation messages with a specific connection.
+      description: Retrieves all messages for a specific connection within an app.
+        Supports pagination and can filter messages since a specific message ID.
       parameters:
-      - description: return elements since a message id
+      - description: Return elements since a message ID
         in: query
         name: messages_since
         type: integer
-      - description: page number
+      - description: Page number for results pagination
         in: query
         name: page
         type: integer
-      - description: number of elements per page
+      - description: Number of results per page for pagination
         in: query
         name: per_page
         type: integer
-      - description: App id
+      - description: Application ID
         in: path
         name: app_id
         required: true
@@ -747,9 +748,17 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully retrieved list of messages
           schema:
-            $ref: '#/definitions/message.response'
+            $ref: '#/definitions/message.ExtListResponse'
+        "404":
+          description: Resource not found or unauthorized access
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
       summary: List conversation messages.
@@ -758,19 +767,20 @@ paths:
     post:
       consumes:
       - application/json
-      description: Sends a message to the specified connection.
+      description: Sends a message to a specific connection within an app. Requires
+        Bearer authentication.
       parameters:
-      - description: App id
+      - description: Application ID
         in: path
         name: app_id
         required: true
         type: string
-      - description: Connection id
+      - description: Connection ID
         in: path
         name: connection_id
         required: true
         type: string
-      - description: message request
+      - description: Request to create a message
         in: body
         name: request
         required: true
@@ -779,32 +789,77 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "202":
+          description: Successfully sent message
           schema:
             $ref: '#/definitions/message.Message'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/response.Error'
+        "404":
+          description: Resource not found or unauthorized access
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
       summary: Sends a message.
+      tags:
+      - messages
+  /apps/{app_id}/connections/{connection_id}/messages/{id}:
+    delete:
+      description: Deletes a specific message from a specific connection within an
+        app.
+      parameters:
+      - description: Application ID
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Connection ID
+        in: path
+        name: connection_id
+        required: true
+        type: string
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Successfully deleted message, no content returned
+        "404":
+          description: Resource not found or unauthorized access
+          schema:
+            $ref: '#/definitions/response.Error'
+      security:
+      - BearerAuth: []
+      summary: Deletes a message.
       tags:
       - messages
   /apps/{app_id}/connections/{connection_id}/messages/{jti}:
     get:
       consumes:
       - application/json
-      description: Get message details
+      description: Retrieves details of a specific message identified by its JTI,
+        within the context of a specific app and connection. Requires Bearer authentication.
       parameters:
-      - description: App id
+      - description: Application ID
         in: path
         name: app_id
         required: true
         type: string
-      - description: Connection id
+      - description: Connection ID
         in: path
         name: connection_id
         required: true
         type: string
-      - description: Message JTI
+      - description: Message JTI (JWT ID)
         in: path
         name: jti
         required: true
@@ -813,9 +868,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successful retrieval of message details
           schema:
             $ref: '#/definitions/message.Message'
+        "404":
+          description: Resource not found or unauthorized access
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
       summary: Gets a message.
@@ -824,24 +883,25 @@ paths:
     put:
       consumes:
       - application/json
-      description: Sends an edited message to the specified connection.
+      description: Updates an existing message in a specific connection within an
+        app. Requires Bearer authentication.
       parameters:
-      - description: App id
+      - description: Application ID
         in: path
         name: app_id
         required: true
         type: string
-      - description: Connection id
+      - description: Connection ID
         in: path
         name: connection_id
         required: true
         type: string
-      - description: Message jti
+      - description: Message ID (jti)
         in: path
         name: jti
         required: true
         type: string
-      - description: message request
+      - description: Request to update a message
         in: body
         name: request
         required: true
@@ -851,9 +911,21 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully updated message
           schema:
             $ref: '#/definitions/message.Message'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/response.Error'
+        "404":
+          description: Resource not found or unauthorized access
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
       summary: Edits a message.
