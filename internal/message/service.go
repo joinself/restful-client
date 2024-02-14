@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
@@ -14,12 +13,12 @@ import (
 
 // Service encapsulates usecase logic for messages.
 type Service interface {
-	Get(ctx context.Context, jti string) (Message, error)
+	Get(ctx context.Context, connectionID int, jti string) (Message, error)
 	Query(ctx context.Context, connection int, messagesSince int, offset, limit int) ([]Message, error)
-	Count(ctx context.Context) (int, error)
+	Count(ctx context.Context, connectionID, messagesSince int) (int, error)
 	Create(ctx context.Context, appID, connectionID string, connection int, input CreateMessageRequest) (Message, error)
-	Update(ctx context.Context, appID, connectionID string, jti string, req UpdateMessageRequest) (Message, error)
-	Delete(ctx context.Context, jti string) error
+	Update(ctx context.Context, appID string, connectionID int, selfID string, jti string, req UpdateMessageRequest) (Message, error)
+	Delete(ctx context.Context, connectionID int, jti string) error
 }
 
 // Message represents the data about an message.
@@ -28,29 +27,6 @@ type Message struct {
 }
 
 // CreateMessageRequest represents an message creation request.
-type CreateMessageRequest struct {
-	Body string `json:"body"`
-}
-
-// Validate validates the CreateMessageRequest fields.
-func (m CreateMessageRequest) Validate() error {
-	return validation.ValidateStruct(&m,
-		validation.Field(&m.Body, validation.Required, validation.Length(0, 128)),
-	)
-}
-
-// UpdateMessageRequest represents an message update request.
-type UpdateMessageRequest struct {
-	Body string `json:"body"`
-}
-
-// Validate validates the CreateMessageRequest fields.
-func (m UpdateMessageRequest) Validate() error {
-	return validation.ValidateStruct(&m,
-		validation.Field(&m.Body, validation.Required, validation.Length(0, 128)),
-	)
-}
-
 type service struct {
 	repo   Repository
 	runner support.SelfClientGetter
@@ -63,8 +39,8 @@ func NewService(repo Repository, runner support.SelfClientGetter, logger log.Log
 }
 
 // Get returns the message with the specified the message ID.
-func (s service) Get(ctx context.Context, jti string) (Message, error) {
-	message, err := s.repo.Get(ctx, jti)
+func (s service) Get(ctx context.Context, connectionID int, jti string) (Message, error) {
+	message, err := s.repo.Get(ctx, connectionID, jti)
 	if err != nil {
 		return Message{}, err
 	}
@@ -72,10 +48,7 @@ func (s service) Get(ctx context.Context, jti string) (Message, error) {
 }
 
 // Create creates a new message.
-func (s service) Create(ctx context.Context, appID, connectionID string, connection int, req CreateMessageRequest) (Message, error) {
-	if err := req.Validate(); err != nil {
-		return Message{}, err
-	}
+func (s service) Create(ctx context.Context, appID, selfID string, connection int, req CreateMessageRequest) (Message, error) {
 	now := time.Now()
 
 	cid := uuid.New().String()
@@ -94,7 +67,7 @@ func (s service) Create(ctx context.Context, appID, connectionID string, connect
 	}
 
 	// Send the message to the connection.
-	m, err := s.sendMessage(appID, connectionID, req.Body)
+	m, err := s.sendMessage(appID, selfID, req.Body)
 	if err != nil {
 		return Message{}, err
 	}
@@ -107,16 +80,12 @@ func (s service) Create(ctx context.Context, appID, connectionID string, connect
 		return Message{}, err
 	}
 
-	return s.Get(ctx, msg.JTI)
+	return s.Get(ctx, connection, msg.JTI)
 }
 
 // Update updates the message with the specified ID.
-func (s service) Update(ctx context.Context, appID, connectionID, jti string, req UpdateMessageRequest) (Message, error) {
-	if err := req.Validate(); err != nil {
-		return Message{}, err
-	}
-
-	message, err := s.Get(ctx, jti)
+func (s service) Update(ctx context.Context, appID string, connectionID int, selfID string, jti string, req UpdateMessageRequest) (Message, error) {
+	message, err := s.Get(ctx, connectionID, jti)
 	if err != nil {
 		return message, err
 	}
@@ -127,19 +96,19 @@ func (s service) Update(ctx context.Context, appID, connectionID, jti string, re
 		return message, err
 	}
 
-	s.updateMessage(appID, connectionID, message.JTI, req.Body)
+	s.updateMessage(appID, selfID, message.JTI, req.Body)
 
 	return message, nil
 }
 
 // Delete deletes the message with the specified ID.
-func (s service) Delete(ctx context.Context, jti string) error {
-	return s.repo.Delete(ctx, jti)
+func (s service) Delete(ctx context.Context, connectionID int, jti string) error {
+	return s.repo.Delete(ctx, connectionID, jti)
 }
 
 // Count returns the number of messages.
-func (s service) Count(ctx context.Context) (int, error) {
-	return s.repo.Count(ctx)
+func (s service) Count(ctx context.Context, connectionID, messagesSince int) (int, error) {
+	return s.repo.Count(ctx, connectionID, messagesSince)
 }
 
 // Query returns the messages with the specified offset and limit.

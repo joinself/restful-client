@@ -24,7 +24,7 @@ func TestRepository(t *testing.T) {
 	connection := rand.Intn(99999999)
 
 	// initial count
-	count, err := repo.Count(ctx)
+	count, err := repo.Count(ctx, connection, 0)
 	assert.Nil(t, err)
 
 	// create a new connection
@@ -42,14 +42,14 @@ func TestRepository(t *testing.T) {
 	}
 	err = repo.Create(ctx, &msg)
 	assert.Nil(t, err)
-	count2, _ := repo.Count(ctx)
+	count2, _ := repo.Count(ctx, connection, 0)
 	assert.Equal(t, 1, count2-count)
 
 	// get
-	message, err := repo.Get(ctx, msg.JTI)
+	message, err := repo.Get(ctx, connection, msg.JTI)
 	assert.Nil(t, err)
 	assert.Equal(t, "message1", message.Body)
-	_, err = repo.Get(ctx, "0")
+	_, err = repo.Get(ctx, connection, "0")
 	assert.Equal(t, sql.ErrNoRows, err)
 
 	// update
@@ -63,7 +63,7 @@ func TestRepository(t *testing.T) {
 		UpdatedAt:    time.Now(),
 	})
 	assert.Nil(t, err)
-	message, _ = repo.Get(ctx, msg.JTI)
+	message, _ = repo.Get(ctx, connection, msg.JTI)
 	assert.Equal(t, "message1 updated", message.Body)
 
 	// query
@@ -72,10 +72,10 @@ func TestRepository(t *testing.T) {
 	assert.Equal(t, count2, len(messages))
 
 	// delete
-	err = repo.Delete(ctx, msg.JTI)
+	err = repo.Delete(ctx, connection, msg.JTI)
 	assert.Nil(t, err)
-	_, err = repo.Get(ctx, msg.JTI)
+	_, err = repo.Get(ctx, connection, msg.JTI)
 	assert.Equal(t, sql.ErrNoRows, err)
-	err = repo.Delete(ctx, msg.JTI)
+	err = repo.Delete(ctx, connection, msg.JTI)
 	assert.Equal(t, sql.ErrNoRows, err)
 }

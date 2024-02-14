@@ -620,7 +620,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "List conversation messages with a specific connection.",
+                "description": "Retrieves all messages for a specific connection within an app. Supports pagination and can filter messages since a specific message ID.",
                 "consumes": [
                     "application/json"
                 ],
@@ -634,25 +634,25 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "return elements since a message id",
+                        "description": "Return elements since a message ID",
                         "name": "messages_since",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "page number",
+                        "description": "Page number for results pagination",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "number of elements per page",
+                        "description": "Number of results per page for pagination",
                         "name": "per_page",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Application ID",
                         "name": "app_id",
                         "in": "path",
                         "required": true
@@ -667,9 +667,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully retrieved list of messages",
                         "schema": {
-                            "$ref": "#/definitions/message.response"
+                            "$ref": "#/definitions/message.ExtListResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found or unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -680,7 +692,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Sends a message to the specified connection.",
+                "description": "Sends a message to a specific connection within an app. Requires Bearer authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -694,20 +706,20 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Application ID",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Connection id",
+                        "description": "Connection ID",
                         "name": "connection_id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "message request",
+                        "description": "Request to create a message",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -717,10 +729,76 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "202": {
+                        "description": "Successfully sent message",
                         "schema": {
                             "$ref": "#/definitions/message.Message"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found or unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{app_id}/connections/{connection_id}/messages/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a specific message from a specific connection within an app.",
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Deletes a message.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Application ID",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Message ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted message, no content returned"
+                    },
+                    "404": {
+                        "description": "Resource not found or unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -733,7 +811,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get message details",
+                "description": "Retrieves details of a specific message identified by its JTI, within the context of a specific app and connection. Requires Bearer authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -747,21 +825,21 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Application ID",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Connection id",
+                        "description": "Connection ID",
                         "name": "connection_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Message JTI",
+                        "description": "Message JTI (JWT ID)",
                         "name": "jti",
                         "in": "path",
                         "required": true
@@ -769,9 +847,15 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successful retrieval of message details",
                         "schema": {
                             "$ref": "#/definitions/message.Message"
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found or unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -782,7 +866,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Sends an edited message to the specified connection.",
+                "description": "Updates an existing message in a specific connection within an app. Requires Bearer authentication.",
                 "consumes": [
                     "application/json"
                 ],
@@ -796,27 +880,27 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Application ID",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Connection id",
+                        "description": "Connection ID",
                         "name": "connection_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Message jti",
+                        "description": "Message ID (jti)",
                         "name": "jti",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "message request",
+                        "description": "Request to update a message",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -827,9 +911,27 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully updated message",
                         "schema": {
                             "$ref": "#/definitions/message.Message"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found or unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -1517,6 +1619,29 @@ const docTemplate = `{
                 }
             }
         },
+        "message.ExtListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/message.Message"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "page_count": {
+                    "type": "integer"
+                },
+                "per_page": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "message.Message": {
             "type": "object",
             "properties": {
@@ -1551,29 +1676,6 @@ const docTemplate = `{
             "properties": {
                 "body": {
                     "type": "string"
-                }
-            }
-        },
-        "message.response": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/message.Message"
-                    }
-                },
-                "page": {
-                    "type": "integer"
-                },
-                "page_count": {
-                    "type": "integer"
-                },
-                "per_page": {
-                    "type": "integer"
-                },
-                "total_count": {
-                    "type": "integer"
                 }
             }
         },

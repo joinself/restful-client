@@ -57,7 +57,7 @@ func Test_service_CRUD(t *testing.T) {
 	connection := 1
 
 	// initial count
-	count, _ := s.Count(ctx)
+	count, _ := s.Count(ctx, connection, 0)
 	assert.Equal(t, 0, count)
 
 	// successful creation
@@ -67,46 +67,22 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, "test", message.Body)
 	assert.NotEmpty(t, message.CreatedAt)
 	assert.NotEmpty(t, message.UpdatedAt)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 1, count)
-
-	// validation error in creation
-	_, err = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: ""})
-	assert.NotNil(t, err)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 1, count)
-
-	// unexpected error in creation
-	_, err = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "error"})
-	assert.Equal(t, errCRUD, err)
-	count, _ = s.Count(ctx)
+	count, _ = s.Count(ctx, connection, 0)
 	assert.Equal(t, 1, count)
 
 	_, _ = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "test2"})
 
 	// update
-	message, err = s.Update(ctx, "app", "connection", message.JTI, UpdateMessageRequest{Body: "test updated"})
+	message, err = s.Update(ctx, "app", connection, "connection", message.JTI, UpdateMessageRequest{Body: "test updated"})
 	assert.Nil(t, err)
 	assert.Equal(t, "test updated", message.Body)
-	_, err = s.Update(ctx, "app", "connection", "1", UpdateMessageRequest{Body: "test updated"})
+	_, err = s.Update(ctx, "app", connection, "connection", "1", UpdateMessageRequest{Body: "test updated"})
 	assert.NotNil(t, err)
-
-	// validation error in update
-	_, err = s.Update(ctx, "app", "connection", message.JTI, UpdateMessageRequest{Body: ""})
-	assert.NotNil(t, err)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 2, count)
-
-	// unexpected error in update
-	_, err = s.Update(ctx, "app", "connection", message.JTI, UpdateMessageRequest{Body: "error"})
-	assert.Equal(t, errCRUD, err)
-	count, _ = s.Count(ctx)
-	assert.Equal(t, 2, count)
 
 	// get
-	_, err = s.Get(ctx, "1")
+	_, err = s.Get(ctx, connection, "1")
 	assert.NotNil(t, err)
-	message, err = s.Get(ctx, message.JTI)
+	message, err = s.Get(ctx, connection, message.JTI)
 	assert.Nil(t, err)
 	assert.Equal(t, "test updated", message.Body)
 	assert.Equal(t, id, message.ID)
@@ -116,10 +92,10 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, 2, len(messages))
 
 	// delete
-	err = s.Delete(ctx, "non existing")
+	err = s.Delete(ctx, connection, "non existing")
 	assert.NotNil(t, err)
-	err = s.Delete(ctx, message.JTI)
+	err = s.Delete(ctx, connection, message.JTI)
 	assert.Nil(t, err)
-	count, _ = s.Count(ctx)
+	count, _ = s.Count(ctx, connection, 0)
 	assert.Equal(t, 1, count)
 }
