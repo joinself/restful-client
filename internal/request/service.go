@@ -8,7 +8,6 @@ import (
 
 	b64 "encoding/base64"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/entity"
@@ -50,29 +49,6 @@ type Request struct {
 	Resources []RequestResource `json:"resources,omitempty"`
 	CreatedAt time.Time         `json:"created_at"`
 	UpdatedAt time.Time         `json:"updated_at"`
-}
-
-type FactRequest struct {
-	Sources []string `json:"sources,omitempty"`
-	Name    string   `json:"name"`
-}
-
-// CreateRequest represents an request creation request.
-type CreateRequest struct {
-	Type        string        `json:"type"`
-	Facts       []FactRequest `json:"facts"`
-	Description string        `json:"description"`
-	Callback    string        `json:"callback"`
-	SelfID      string        `json:"connection_self_id"`
-	OutOfBand   bool          `json:"out_of_band,omitempty"`
-}
-
-// Validate validates the CreateRequest fields.
-func (m CreateRequest) Validate() error {
-	return validation.ValidateStruct(&m,
-		validation.Field(&m.Type, validation.Required, validation.Length(0, 128)),
-		validation.Field(&m.Type, validation.In("auth", "fact")),
-	)
 }
 
 type service struct {
@@ -134,9 +110,6 @@ func (s service) Get(ctx context.Context, appID, id string) (Request, error) {
 
 // Create creates a new request.
 func (s service) Create(ctx context.Context, appID string, connection *entity.Connection, req CreateRequest) (Request, error) {
-	if err := req.Validate(); err != nil {
-		return Request{}, err
-	}
 	id := entity.GenerateID()
 	now := time.Now()
 

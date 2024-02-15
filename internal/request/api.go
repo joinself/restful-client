@@ -3,9 +3,11 @@ package request
 import (
 	"net/http"
 
+	"github.com/gofrs/uuid"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/response"
 	"github.com/labstack/echo/v4"
 )
 
@@ -37,7 +39,12 @@ type resource struct {
 func (r resource) get(c echo.Context) error {
 	request, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, err.Error())
+		return c.JSON(http.StatusNotFound, response.Error{
+			Status:  http.StatusNotFound,
+			Error:   "Not found",
+			Details: "The requested resource does not exist, or you don't have permissions to access it",
+		})
+
 	}
 
 	return c.JSON(http.StatusOK, request)
@@ -58,7 +65,15 @@ func (r resource) create(c echo.Context) error {
 	var input CreateRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, "")
+		return c.JSON(http.StatusBadRequest, response.Error{
+			Status:  http.StatusBadRequest,
+			Error:   "Invalid input",
+			Details: "The provided body is not valid",
+		})
+	}
+
+	if reqErr := input.Validate(); reqErr != nil {
+		return c.JSON(reqErr.Status, reqErr)
 	}
 
 	// Get the connection id
@@ -73,8 +88,14 @@ func (r resource) create(c echo.Context) error {
 
 	request, err := r.service.Create(c.Request().Context(), c.Param("app_id"), &co, input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		errorCode, _ := uuid.NewV4()
+		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
+		return c.JSON(http.StatusInternalServerError, response.Error{
+			Status:  http.StatusInternalServerError,
+			Error:   "Internal error",
+			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
+		})
 	}
 
-	return c.JSON(http.StatusCreated, request)
+	return c.JSON(http.StatusAccepted, request)
 }
