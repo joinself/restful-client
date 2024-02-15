@@ -3,7 +3,6 @@ package account
 import (
 	"net/http"
 
-	"github.com/gofrs/uuid"
 	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/response"
@@ -37,21 +36,13 @@ type resource struct {
 func (r resource) create(c echo.Context) error {
 	user := acl.CurrentUser(c)
 	if user == nil || !user.IsAdmin() {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	var input CreateAccountRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, response.Error{
-			Status:  http.StatusBadRequest,
-			Error:   "Invalid input",
-			Details: "The provided body is not valid",
-		})
+		return c.JSON(response.DefaultBadRequestError())
 	}
 
 	if reqErr := input.Validate(); reqErr != nil {
@@ -61,13 +52,7 @@ func (r resource) create(c echo.Context) error {
 
 	account, err := r.service.Create(c.Request().Context(), input)
 	if err != nil {
-		errorCode, _ := uuid.NewV4()
-		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
-		return c.JSON(http.StatusInternalServerError, response.Error{
-			Status:  http.StatusInternalServerError,
-			Error:   "Internal error",
-			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
-		})
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
 	return c.JSON(http.StatusCreated, CreateAccountResponse{
@@ -91,20 +76,12 @@ func (r resource) create(c echo.Context) error {
 func (r resource) delete(c echo.Context) error {
 	user := acl.CurrentUser(c)
 	if user == nil || !user.IsAdmin() {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	err := r.service.Delete(c.Request().Context(), c.Param("username"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -128,30 +105,18 @@ func (r resource) changePassword(c echo.Context) error {
 	ctx := c.Request().Context()
 	user := acl.CurrentUser(c)
 	if user == nil {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	if user.GetName() != c.Param("username") {
 		r.logger.With(ctx).Info("update username not matching")
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	var i ChangePasswordRequest
 	if err := c.Bind(&i); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, response.Error{
-			Status:  http.StatusBadRequest,
-			Error:   "Invalid input",
-			Details: "The provided body is not valid",
-		})
+		return c.JSON(response.DefaultBadRequestError())
 	}
 
 	if reqErr := i.Validate(); reqErr != nil {
@@ -161,13 +126,7 @@ func (r resource) changePassword(c echo.Context) error {
 
 	err := r.service.SetPassword(ctx, c.Param("username"), i.Password, i.NewPassword)
 	if err != nil {
-		errorCode, _ := uuid.NewV4()
-		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
-		return c.JSON(http.StatusInternalServerError, response.Error{
-			Status:  http.StatusInternalServerError,
-			Error:   "Internal error",
-			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
-		})
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
 	return c.NoContent(http.StatusOK)
