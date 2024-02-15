@@ -29,11 +29,7 @@ func login(service Service, logger log.Logger) echo.HandlerFunc {
 
 		if err := c.Bind(&req); err != nil {
 			logger.With(c.Request().Context()).Errorf("invalid request: %v", err)
-			return c.JSON(http.StatusBadRequest, response.Error{
-				Status:  http.StatusBadRequest,
-				Error:   "Invalid input",
-				Details: "The provided body is not valid",
-			})
+			return c.JSON(response.DefaultBadRequestError())
 		}
 
 		if reqErr := req.Validate(); reqErr != nil {

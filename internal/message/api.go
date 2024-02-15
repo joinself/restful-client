@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gofrs/uuid"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
@@ -50,20 +49,12 @@ type resource struct {
 func (r resource) get(c echo.Context) error {
 	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	message, err := r.service.Get(c.Request().Context(), conn.ID, c.Param("id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	return c.JSON(http.StatusOK, message)
@@ -91,11 +82,7 @@ func (r resource) query(c echo.Context) error {
 	// Get the connection id
 	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	messagesSince, err := strconv.Atoi(c.Request().URL.Query().Get(LastMessage))
@@ -106,26 +93,14 @@ func (r resource) query(c echo.Context) error {
 	// Get the total of entries.
 	count, err := r.service.Count(ctx, conn.ID, messagesSince)
 	if err != nil {
-		errorCode, _ := uuid.NewV4()
-		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
-		return c.JSON(http.StatusInternalServerError, response.Error{
-			Status:  http.StatusInternalServerError,
-			Error:   "Internal error",
-			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
-		})
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
 	// Get the messages
 	pages := pagination.NewFromRequest(c.Request(), count)
 	messages, err := r.service.Query(ctx, conn.ID, messagesSince, pages.Offset(), pages.Limit())
 	if err != nil {
-		errorCode, _ := uuid.NewV4()
-		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
-		return c.JSON(http.StatusInternalServerError, response.Error{
-			Status:  http.StatusInternalServerError,
-			Error:   "Internal error",
-			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
-		})
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
 	pages.Items = messages
@@ -151,11 +126,7 @@ func (r resource) create(c echo.Context) error {
 	var input CreateMessageRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, response.Error{
-			Status:  http.StatusBadRequest,
-			Error:   "Invalid input",
-			Details: "The provided body is not valid",
-		})
+		return c.JSON(response.DefaultBadRequestError())
 	}
 
 	if reqErr := input.Validate(); reqErr != nil {
@@ -165,23 +136,13 @@ func (r resource) create(c echo.Context) error {
 	// Get the connection id
 	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	// Create the message
 	message, err := r.service.Create(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), connection.ID, input)
 	if err != nil {
-		errorCode, _ := uuid.NewV4()
-		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
-		return c.JSON(http.StatusInternalServerError, response.Error{
-			Status:  http.StatusInternalServerError,
-			Error:   "Internal error",
-			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
-		})
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
 	return c.JSON(http.StatusAccepted, message)
@@ -207,11 +168,7 @@ func (r resource) update(c echo.Context) error {
 	var input UpdateMessageRequest
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, response.Error{
-			Status:  http.StatusBadRequest,
-			Error:   "Invalid input",
-			Details: "The provided body is not valid",
-		})
+		return c.JSON(response.DefaultBadRequestError())
 	}
 
 	if reqErr := input.Validate(); reqErr != nil {
@@ -221,11 +178,7 @@ func (r resource) update(c echo.Context) error {
 	// Get the connection id
 	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	message, err := r.service.Update(
@@ -236,13 +189,7 @@ func (r resource) update(c echo.Context) error {
 		c.Param("id"),
 		input)
 	if err != nil {
-		errorCode, _ := uuid.NewV4()
-		r.logger.With(c.Request().Context()).Info("[%s] %s", errorCode, err.Error())
-		return c.JSON(http.StatusInternalServerError, response.Error{
-			Status:  http.StatusInternalServerError,
-			Error:   "Internal error",
-			Details: "There was a problem with your request. Error code [" + errorCode.String() + "]",
-		})
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, message)
@@ -262,19 +209,11 @@ func (r resource) update(c echo.Context) error {
 func (r resource) delete(c echo.Context) error {
 	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 	err = r.service.Delete(c.Request().Context(), conn.ID, c.Param("id"))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, response.Error{
-			Status:  http.StatusNotFound,
-			Error:   "Not found",
-			Details: "The requested resource does not exist, or you don't have permissions to access it",
-		})
+		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	return c.NoContent(http.StatusNoContent)

@@ -1,10 +1,10 @@
 package notification
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/response"
 	"github.com/labstack/echo/v4"
 )
 
@@ -36,7 +36,7 @@ func (r resource) create(c echo.Context) error {
 	var input SystemNotificationData
 	if err := c.Bind(&input); err != nil {
 		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(http.StatusBadRequest, errors.New("invalid input"))
+		return c.JSON(response.DefaultBadRequestError())
 	}
 
 	err := r.service.Send(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), input)
