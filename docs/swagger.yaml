@@ -480,18 +480,20 @@ paths:
     get:
       consumes:
       - application/json
-      description: List connections matching the specified filters.
+      description: Retrieves a list of connections for a given app_id, matching the
+        specified filters. Pagination is supported with optional page and per_page
+        parameters.
       parameters:
-      - description: App id
+      - description: Unique Identifier for the App
         in: path
         name: app_id
         required: true
         type: string
-      - description: page number
+      - description: Page number for pagination. Default is 1.
         in: query
         name: page
         type: integer
-      - description: number of elements per page
+      - description: Number of elements per page for pagination. Default is 10.
         in: query
         name: per_page
         type: integer
@@ -499,25 +501,31 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successful retrieval of connections list
           schema:
             $ref: '#/definitions/connection.ExtListResponse'
+        "500":
+          description: Internal server error occurred during the request
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: List connections.
+      summary: Retrieve a list of connections
       tags:
       - connections
     post:
       consumes:
       - application/json
-      description: Creates a new connection and sends a request for public information.
+      description: This API endpoint creates a new connection by taking the application
+        ID and request body as input. It sends a request for public information once
+        the connection is created.
       parameters:
-      - description: App id
+      - description: Unique identifier of the application
         in: path
         name: app_id
         required: true
         type: string
-      - description: query params
+      - description: Body containing details of the connection to be created
         in: body
         name: request
         required: true
@@ -526,13 +534,22 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Successfully created a new connection and returns the details
+            of the new connection
           schema:
             $ref: '#/definitions/connection.ExtConnection'
+        "400":
+          description: Returns when the provided input is invalid
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: Returns when there is an internal server error
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Creates a new connection.
+      summary: Create a new connection
       tags:
       - connections
   /apps/{app_id}/connections/{connection_id}/facts:
@@ -967,48 +984,50 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Deletes an existing connection and sends a request for public information
-        and avoids incoming comms from that connection.
+      description: This endpoint deletes an existing connection using the provided
+        app_id and connection id. After deletion, it sends a request for public information
+        and stops incoming communications from that connection.
       parameters:
-      - description: App id
+      - description: Unique Identifier for the Application
         in: path
         name: app_id
         required: true
         type: string
-      - description: current connection id
+      - description: Unique Identifier for the Connection to be deleted
         in: path
         name: id
         required: true
-        type: integer
-      - description: query params
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/connection.CreateConnectionRequest'
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully deleted the connection and returns the deleted
+            connection details
           schema:
             $ref: '#/definitions/connection.ExtConnection'
+        "404":
+          description: The requested resource could not be found or you don't have
+            permission to access it
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Deletes an existing connection.
+      summary: Delete a specific connection
       tags:
       - connections
     get:
       consumes:
       - application/json
-      description: Get connection details by selfID.
+      description: Retrieves the details of a connection using the given selfID and
+        app_id. Ensure you have sufficient permissions to access this information.
       parameters:
-      - description: App id
+      - description: Unique Identifier for the App
         in: path
         name: app_id
         required: true
         type: string
-      - description: current connection id
+      - description: Unique Identifier for the connection
         in: path
         name: id
         required: true
@@ -1017,30 +1036,36 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successful retrieval of connection details
           schema:
             $ref: '#/definitions/connection.ExtConnection'
+        "404":
+          description: Unable to find the requested resource or lack of permissions
+            to access it
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Get connection details.
+      summary: Retrieve connection details
       tags:
       - connections
     put:
       consumes:
       - application/json
-      description: Updates the properties of an existing connection..
+      description: This endpoint updates the properties of an existing connection
+        using the provided app_id, connection id, and the request body.
       parameters:
-      - description: App id
+      - description: Unique Identifier for the Application
         in: path
         name: app_id
         required: true
         type: string
-      - description: current connection id
+      - description: Unique Identifier for the Connection to be updated
         in: path
         name: id
         required: true
-        type: integer
-      - description: query params
+        type: string
+      - description: Body containing updated details of the connection
         in: body
         name: request
         required: true
@@ -1050,12 +1075,21 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully updated the connection and returns the updated
+            connection details
           schema:
             $ref: '#/definitions/connection.ExtConnection'
+        "400":
+          description: Returns when the provided input is invalid
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: There was a problem with your request. Please try again
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Updates a connection.
+      summary: Update a specific connection
       tags:
       - connections
   /apps/{app_id}/requests:

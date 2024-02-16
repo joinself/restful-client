@@ -27,15 +27,16 @@ type resource struct {
 }
 
 // GetConnection godoc
-// @Summary      Get connection details.
-// @Description  Get connection details by selfID.
+// @Summary      Retrieve connection details
+// @Description  Retrieves the details of a connection using the given selfID and app_id. Ensure you have sufficient permissions to access this information.
 // @Tags         connections
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        app_id   path      string  true  "App id"
-// @Param        id   path      int  true  "current connection id"
-// @Success      200  {object}  ExtConnection
+// @Param        app_id   path   string  true  "Unique Identifier for the App"
+// @Param        id   path  int  true  "Unique Identifier for the connection"
+// @Success      200  {object}  ExtConnection  "Successful retrieval of connection details"
+// @Failure      404  {object}  response.Error "Unable to find the requested resource or lack of permissions to access it"
 // @Router       /apps/{app_id}/connections/{id} [get]
 func (r resource) get(c echo.Context) error {
 	conn, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
@@ -53,16 +54,17 @@ func (r resource) get(c echo.Context) error {
 }
 
 // ListConnections godoc
-// @Summary        List connections.
-// @Description    List connections matching the specified filters.
+// @Summary        Retrieve a list of connections
+// @Description    Retrieves a list of connections for a given app_id, matching the specified filters. Pagination is supported with optional page and per_page parameters.
 // @Tags           connections
 // @Accept         json
 // @Produce        json
 // @Security       BearerAuth
-// @Param          app_id   path      string  true  "App id"
-// @Param          page query int false "page number"
-// @Param          per_page query int false "number of elements per page"
-// @Success        200  {object}  ExtListResponse
+// @Param          app_id   path   string  true  "Unique Identifier for the App"
+// @Param          page query int false "Page number for pagination. Default is 1."
+// @Param          per_page query int false "Number of elements per page for pagination. Default is 10."
+// @Success        200  {object}  ExtListResponse  "Successful retrieval of connections list"
+// @Failure        500  {object}  response.Error "Internal server error occurred during the request"
 // @Router         /apps/{app_id}/connections [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
@@ -96,16 +98,18 @@ func (r resource) query(c echo.Context) error {
 }
 
 // CreateConnection godoc
-// @Summary         Creates a new connection.
-// @Description  	Creates a new connection and sends a request for public information.
-// @Tags            connections
-// @Accept          json
-// @Produce         json
-// @Security        BearerAuth
-// @Param           app_id   path      string  true  "App id"
-// @Param           request body CreateConnectionRequest true "query params"
-// @Success         200  {object}  ExtConnection
-// @Router          /apps/{app_id}/connections [post]
+// @Summary Create a new connection
+// @Description This API endpoint creates a new connection by taking the application ID and request body as input. It sends a request for public information once the connection is created.
+// @Tags connections
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param app_id path string true "Unique identifier of the application"
+// @Param request body CreateConnectionRequest true "Body containing details of the connection to be created"
+// @Success 201 {object} ExtConnection "Successfully created a new connection and returns the details of the new connection"
+// @Failure 400 {object} response.Error "Returns when the provided input is invalid"
+// @Failure 500 {object} response.Error "Returns when there is an internal server error"
+// @Router /apps/{app_id}/connections [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateConnectionRequest
 	if err := c.Bind(&input); err != nil {
@@ -131,18 +135,20 @@ func (r resource) create(c echo.Context) error {
 	})
 }
 
-// CreateConnection godoc
-// @Summary         Updates a connection.
-// @Description  	Updates the properties of an existing connection..
-// @Tags            connections
-// @Accept          json
-// @Produce         json
-// @Security        BearerAuth
-// @Param           app_id   path      string  true  "App id"
-// @Param           id   path      int  true  "current connection id"
-// @Param           request body UpdateConnectionRequest true "query params"
-// @Success         200  {object}  ExtConnection
-// @Router          /apps/{app_id}/connections/{id} [put]
+// UpdateConnection godoc
+// @Summary Update a specific connection
+// @Description This endpoint updates the properties of an existing connection using the provided app_id, connection id, and the request body.
+// @Tags connections
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param app_id path string true "Unique Identifier for the Application"
+// @Param id path string true "Unique Identifier for the Connection to be updated"
+// @Param request body UpdateConnectionRequest true "Body containing updated details of the connection"
+// @Success 200 {object} ExtConnection "Successfully updated the connection and returns the updated connection details"
+// @Failure 400 {object} response.Error "Returns when the provided input is invalid"
+// @Failure 500 {object} response.Error "There was a problem with your request. Please try again"
+// @Router /apps/{app_id}/connections/{id} [put]
 func (r resource) update(c echo.Context) error {
 	var input UpdateConnectionRequest
 	if err := c.Bind(&input); err != nil {
@@ -168,18 +174,18 @@ func (r resource) update(c echo.Context) error {
 	})
 }
 
-// UpdateConnection godoc
-// @Summary         Deletes an existing connection.
-// @Description  	Deletes an existing connection and sends a request for public information and avoids incoming comms from that connection.
-// @Tags            connections
-// @Accept          json
-// @Produce         json
-// @Security        BearerAuth
-// @Param           app_id   path      string  true  "App id"
-// @Param           id   path      int  true  "current connection id"
-// @Param           request body CreateConnectionRequest true "query params"
-// @Success         200  {object}  ExtConnection
-// @Router          /apps/{app_id}/connections/{id} [delete]
+// DeleteConnection godoc
+// @Summary Delete a specific connection
+// @Description This endpoint deletes an existing connection using the provided app_id and connection id. After deletion, it sends a request for public information and stops incoming communications from that connection.
+// @Tags connections
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param app_id path string true "Unique Identifier for the Application"
+// @Param id path string true "Unique Identifier for the Connection to be deleted"
+// @Success 200 {object} ExtConnection "Successfully deleted the connection and returns the deleted connection details"
+// @Failure 404 {object} response.Error "The requested resource could not be found or you don't have permission to access it"
+// @Router /apps/{app_id}/connections/{id} [delete]
 func (r resource) delete(c echo.Context) error {
 	conn, err := r.service.Delete(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
