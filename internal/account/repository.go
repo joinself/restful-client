@@ -142,7 +142,6 @@ func (r repository) isValidPassword(a entity.Account, password string) bool {
 
 // SetPassword updates the password for the given account id.
 func (r repository) SetPassword(ctx context.Context, id int, password string) error {
-	println("oxoxoxoxox")
 	salt, err := r.generateSafeRandomSalt(saltSize)
 	if err != nil {
 		return err
@@ -152,9 +151,6 @@ func (r repository) SetPassword(ctx context.Context, id int, password string) er
 
 	sql := "UPDATE account SET hashed_password='%s', salt='%s', requires_password_change=0, updated_at=DATE('now') WHERE id=%d"
 	query := fmt.Sprintf(sql, hashedPassword, string(salt), id)
-	println(".....AAA")
-	println(query)
-	println(".....AAA")
 	_, err = r.db.DB().NewQuery(query).Execute()
 	return err
 }
