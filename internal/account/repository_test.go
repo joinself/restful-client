@@ -14,6 +14,10 @@ import (
 )
 
 func TestRepository(t *testing.T) {
+	println("ooooo")
+	println("ooooo")
+	println("ooooo")
+	println("ooooo")
 	logger, _ := log.NewForTest()
 	db := test.DB(t)
 	test.ResetTables(t, db, "fact", "request", "message")
@@ -60,6 +64,10 @@ func TestRepository(t *testing.T) {
 	account, err = repo.Get(ctx, username, updatedPassword)
 	assert.Nil(t, err)
 
+	println("------->")
+	println("------->")
+	println("------->")
+	println("------->")
 	err = repo.SetPassword(ctx, account.ID, "setted_password")
 	assert.Nil(t, err)
 	account, err = repo.Get(ctx, username, updatedPassword)

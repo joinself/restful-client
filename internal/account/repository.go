@@ -1,6 +1,7 @@
 package account
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha512"
@@ -82,7 +83,11 @@ func (r repository) GetByUsername(ctx context.Context, userName string) (entity.
 // It returns the ID of the newly inserted account record.
 func (r repository) Create(ctx context.Context, account entity.Account) error {
 	// Generate the hashed password.
-	account.Salt = string(r.generateRandomSalt(saltSize))
+	salt, err := r.generateSafeRandomSalt(saltSize)
+	if err != nil {
+		return err
+	}
+	account.Salt = string(salt)
 	account.HashedPassword = r.hashPassword(account.Password, []byte(account.Salt))
 	account.RequiresPasswordChange = 1
 
@@ -96,7 +101,11 @@ func (r repository) Update(ctx context.Context, account entity.Account) error {
 	}
 
 	// Generate the hashed password.
-	account.Salt = string(r.generateRandomSalt(saltSize))
+	salt, err := r.generateSafeRandomSalt(saltSize)
+	if err != nil {
+		return err
+	}
+	account.Salt = string(salt)
 	account.HashedPassword = r.hashPassword(account.Password, []byte(account.Salt))
 	account.UpdatedAt = time.Now()
 
@@ -133,12 +142,20 @@ func (r repository) isValidPassword(a entity.Account, password string) bool {
 
 // SetPassword updates the password for the given account id.
 func (r repository) SetPassword(ctx context.Context, id int, password string) error {
-	salt := string(r.generateRandomSalt(saltSize))
-	hashedPassword := r.hashPassword(password, []byte(salt))
+	println("oxoxoxoxox")
+	salt, err := r.generateSafeRandomSalt(saltSize)
+	if err != nil {
+		return err
+	}
+
+	hashedPassword := r.hashPassword(password, salt)
 
 	sql := "UPDATE account SET hashed_password='%s', salt='%s', requires_password_change=0, updated_at=DATE('now') WHERE id=%d"
 	query := fmt.Sprintf(sql, hashedPassword, string(salt), id)
-	_, err := r.db.DB().NewQuery(query).Execute()
+	println(".....AAA")
+	println(query)
+	println(".....AAA")
+	_, err = r.db.DB().NewQuery(query).Execute()
 	return err
 }
 
@@ -169,15 +186,20 @@ func (r repository) hashPassword(password string, salt []byte) string {
 
 // Generate 16 bytes randomly and securely using the
 // Cryptographically secure pseudorandom number generator (CSPRNG)
-// in the crypto.rand package
-func (r repository) generateRandomSalt(saltSize int) []byte {
+// in the crypto.rand package. It will enforce the returned string
+// to not contain any "'" string on it.
+func (r repository) generateSafeRandomSalt(saltSize int) ([]byte, error) {
 	var salt = make([]byte, saltSize)
 
-	_, err := rand.Read(salt[:])
+	for i := 0; i < 10; i++ {
+		if _, err := rand.Read(salt[:]); err != nil {
+			continue
+		}
 
-	if err != nil {
-		panic(err)
+		if !bytes.Contains(salt, []byte("'")) {
+			return salt, nil
+		}
 	}
 
-	return salt
+	return salt, errors.New("could not generate a random salt")
 }
