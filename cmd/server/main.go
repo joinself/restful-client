@@ -109,11 +109,6 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		Format: "method=${method}, uri=${uri}, status=${status}\n",
 	}))
 
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
-	}))
-
 	// Repositories
 	connectionRepo := connection.NewRepository(db, logger)
 	messageRepo := message.NewRepository(db, logger)
