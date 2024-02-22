@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/joinself/restful-client/internal/entity"
@@ -46,6 +47,15 @@ func (s service) List(ctx context.Context) []entity.App {
 	if err != nil {
 		return []entity.App{}
 	}
+
+	if os.Getenv("RESTFUL_CLIENT_APP_ID") != "" {
+		apps = append(apps, entity.App{
+			ID:   os.Getenv("RESTFUL_CLIENT_APP_ID"),
+			Name: "Default",
+			Env:  os.Getenv("RESTFUL_CLIENT_APP_ENV"),
+		})
+	}
+
 	return apps
 }
 
