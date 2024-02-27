@@ -3,11 +3,13 @@ package log
 
 import (
 	"context"
+	"net/http"
+	"os"
+
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
-	"net/http"
 )
 
 // Logger is a logger that supports log levels, context and structured logging.
@@ -43,7 +45,13 @@ const (
 
 // New creates a new logger using the default configuration.
 func New() Logger {
-	l, _ := zap.NewProduction()
+	var l *zap.Logger
+	switch os.Getenv("LOG_LEVEL") {
+	case "debug":
+		l, _ = zap.NewDevelopment()
+	default:
+		l, _ = zap.NewProduction()
+	}
 	return NewWithZap(l)
 }
 
