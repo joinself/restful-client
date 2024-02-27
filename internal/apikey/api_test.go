@@ -1,4 +1,4 @@
-package connection
+package apikey
 
 import (
 	"context"
@@ -15,29 +15,29 @@ import (
 
 type mockService struct{}
 
-func (m mockService) Get(ctx context.Context, appid, selfid string) (Connection, error) {
-	if selfid == "not_found_id" {
-		return Connection{}, errors.New("expected not found")
+func (m mockService) Get(ctx context.Context, appid string, id int) (ApiKey, error) {
+	if id == 0 {
+		return ApiKey{}, errors.New("expected not found")
 	}
-	return Connection{
-		entity.Connection{
-			SelfID: "selfid",
-			AppID:  appid,
-			Name:   "name",
+	return ApiKey{
+		entity.Apikey{
+			ID:    1,
+			AppID: appid,
+			Name:  "name",
 		},
 	}, nil
 }
 
-func (m mockService) Query(ctx context.Context, appid string, offset, limit int) ([]Connection, error) {
-	conns := []Connection{}
+func (m mockService) Query(ctx context.Context, appid string, offset, limit int) ([]ApiKey, error) {
+	conns := []ApiKey{}
 	if appid == "query_error" {
-		return []Connection{}, errors.New("expected_error_query")
+		return []ApiKey{}, errors.New("expected_error_query")
 	}
-	conns = append(conns, Connection{
-		entity.Connection{
-			SelfID: "selfid",
-			AppID:  appid,
-			Name:   "name",
+	conns = append(conns, ApiKey{
+		entity.Apikey{
+			ID:    1,
+			AppID: appid,
+			Name:  "name",
 		},
 	})
 	return conns, nil
@@ -50,28 +50,28 @@ func (m mockService) Count(ctx context.Context, appid string) (int, error) {
 	return 1, nil
 }
 
-func (m mockService) Create(ctx context.Context, appid string, input CreateConnectionRequest) (Connection, error) {
-	if input.SelfID == "controlled_error" {
-		return Connection{}, errors.New("controlled error")
+func (m mockService) Create(ctx context.Context, appid string, input CreateApiKeyRequest, user acl.Identity) (ApiKey, error) {
+	if input.Name == "error" {
+		return ApiKey{}, errors.New("controlled error")
 	}
-	return Connection{}, nil
+	return ApiKey{}, nil
 }
 
-func (m mockService) Update(ctx context.Context, appid, selfid string, input UpdateConnectionRequest) (Connection, error) {
-	if input.Name == "controlled_error" {
-		return Connection{}, errors.New("controlled error")
+func (m mockService) Update(ctx context.Context, appid string, id int, input UpdateApiKeyRequest) (ApiKey, error) {
+	if input.Name == "0" {
+		return ApiKey{}, errors.New("controlled error")
 	}
-	return Connection{}, nil
+	return ApiKey{}, nil
 }
 
-func (m mockService) Delete(ctx context.Context, appid, selfid string) (Connection, error) {
-	if selfid == "controlled_error" {
-		return Connection{}, errors.New("controlled error")
+func (m mockService) Delete(ctx context.Context, appid string, id int) (ApiKey, error) {
+	if id == 0 {
+		return ApiKey{}, errors.New("controlled error")
 	}
-	return Connection{}, nil
+	return ApiKey{}, nil
 }
 
-func TestListConnectionsAPIEndpointAsAdmin(t *testing.T) {
+func TestListApiKeysAPIEndpointAsAdmin(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
@@ -84,16 +84,16 @@ func TestListConnectionsAPIEndpointAsAdmin(t *testing.T) {
 		{
 			Name:         "success",
 			Method:       "GET",
-			URL:          "/apps/app_id/connections",
+			URL:          "/apps/app_id/apikeys",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusOK,
-			WantResponse: `{"items":[{"app_id":"app_id", "created_at":"0001-01-01T00:00:00Z", "id":"selfid", "name":"name", "updated_at":"0001-01-01T00:00:00Z"}], "page":1, "page_count":1, "per_page":100, "total_count":1}`,
+			WantResponse: `{"items":[{"app_id":"app_id", "created_at":"0001-01-01T00:00:00Z", "id":1, "name":"name", "token":"", "updated_at":"0001-01-01T00:00:00Z"}], "page":1, "page_count":1, "per_page":100, "total_count":1}`,
 		},
 		{
 			Name:         "internal error on count",
 			Method:       "GET",
-			URL:          "/apps/count_error/connections",
+			URL:          "/apps/count_error/apikeys",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusInternalServerError,
@@ -102,7 +102,7 @@ func TestListConnectionsAPIEndpointAsAdmin(t *testing.T) {
 		{
 			Name:         "internal error on query",
 			Method:       "GET",
-			URL:          "/apps/query_error/connections",
+			URL:          "/apps/query_error/apikeys",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusInternalServerError,
@@ -111,7 +111,7 @@ func TestListConnectionsAPIEndpointAsAdmin(t *testing.T) {
 		{
 			Name:         "internal error on query",
 			Method:       "GET",
-			URL:          "/apps/query_error/connections",
+			URL:          "/apps/query_error/apikeys",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusInternalServerError,
@@ -123,7 +123,7 @@ func TestListConnectionsAPIEndpointAsAdmin(t *testing.T) {
 	}
 }
 
-func TestListConnectionsAPIEndpointAsPlain(t *testing.T) {
+func TestListApiKeysAPIEndpointAsPlain(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
@@ -136,7 +136,7 @@ func TestListConnectionsAPIEndpointAsPlain(t *testing.T) {
 		{
 			Name:         "not found",
 			Method:       "GET",
-			URL:          "/apps/app_id/connections",
+			URL:          "/apps/app_id/apikeys",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusNotFound,
@@ -148,12 +148,12 @@ func TestListConnectionsAPIEndpointAsPlain(t *testing.T) {
 	}
 }
 
-func TestGetConnectionAPIEndpointAsPlainWithPermissions(t *testing.T) {
+func TestGetApiKeyAPIEndpointAsPlainWithPermissions(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
 	rg := router.Group("/apps")
-	rg.Use(acl.AuthAsPlainMiddleware([]string{"GET /apps/app_id/connections/conn_id"}))
+	rg.Use(acl.AuthAsPlainMiddleware([]string{"GET /apps/app_id/apikeys/1"}))
 	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, logger)
 
@@ -161,16 +161,16 @@ func TestGetConnectionAPIEndpointAsPlainWithPermissions(t *testing.T) {
 		{
 			Name:         "success",
 			Method:       "GET",
-			URL:          "/apps/app_id/connections/conn_id",
+			URL:          "/apps/app_id/apikeys/1",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusOK,
-			WantResponse: `{"app_id":"app_id", "created_at":"0001-01-01T00:00:00Z", "id":"selfid", "name":"name", "updated_at":"0001-01-01T00:00:00Z"}`,
+			WantResponse: `{"app_id":"app_id", "created_at":"0001-01-01T00:00:00Z", "id":1, "name":"name", "token":"", "updated_at":"0001-01-01T00:00:00Z"}`,
 		},
 		{
 			Name:         "success",
 			Method:       "GET",
-			URL:          "/apps/app_id/connections/not_found_id",
+			URL:          "/apps/app_id/apikeys/0",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusNotFound,
@@ -182,7 +182,7 @@ func TestGetConnectionAPIEndpointAsPlainWithPermissions(t *testing.T) {
 	}
 }
 
-func TestGetConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
+func TestGetApiKeyAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
@@ -195,7 +195,7 @@ func TestGetConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 		{
 			Name:         "success",
 			Method:       "GET",
-			URL:          "/apps/app_id/connections/conn_id",
+			URL:          "/apps/app_id/apikeys/1",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusNotFound,
@@ -207,7 +207,7 @@ func TestGetConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 	}
 }
 
-func TestCreateConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
+func TestCreateApiKeyAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
@@ -220,7 +220,7 @@ func TestCreateConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 		{
 			Name:         "not found",
 			Method:       "POST",
-			URL:          "/apps/app_id/connections",
+			URL:          "/apps/app_id/apikeys",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusNotFound,
@@ -232,7 +232,7 @@ func TestCreateConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 	}
 }
 
-func TestCreateConnectionAPIEndpoint(t *testing.T) {
+func TestCreateApiKeyAPIEndpoint(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
@@ -245,16 +245,16 @@ func TestCreateConnectionAPIEndpoint(t *testing.T) {
 		{
 			Name:         "success",
 			Method:       "POST",
-			URL:          "/apps/app_id/connections",
-			Body:         `{"selfid":"selfid"}`,
+			URL:          "/apps/app_id/apikeys",
+			Body:         `{"name":"non-blank-name", "scope":"FULL"}`,
 			Header:       nil,
 			WantStatus:   http.StatusCreated,
-			WantResponse: `{"app_id":"", "created_at":"0001-01-01T00:00:00Z", "id":"", "name":"", "updated_at":"0001-01-01T00:00:00Z"}`,
+			WantResponse: `{"app_id":"", "created_at":"0001-01-01T00:00:00Z", "id":0, "name":"", "token":"", "updated_at":"0001-01-01T00:00:00Z"}`,
 		},
 		{
 			Name:         "invalid input",
 			Method:       "POST",
-			URL:          "/apps/app_id/connections",
+			URL:          "/apps/app_id/apikeys",
 			Body:         `{]`,
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
@@ -263,17 +263,17 @@ func TestCreateConnectionAPIEndpoint(t *testing.T) {
 		{
 			Name:         "validation error",
 			Method:       "POST",
-			URL:          "/apps/app_id/connections",
+			URL:          "/apps/app_id/apikeys",
 			Body:         `{}`,
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: `{"details":"selfid: cannot be blank.", "error":"Invalid input", "status":400}`,
+			WantResponse: `{"details":"name: cannot be blank; scope: cannot be blank.", "error":"Invalid input", "status":400}`,
 		},
 		{
 			Name:         "creation error",
 			Method:       "POST",
-			URL:          "/apps/app_id/connections",
-			Body:         `{"selfid":"controlled_error"}`,
+			URL:          "/apps/app_id/apikeys",
+			Body:         `{"name":"error", "scope":"FULL"}`,
 			Header:       nil,
 			WantStatus:   http.StatusInternalServerError,
 			WantResponse: `There was a problem with your request. *`,
@@ -284,7 +284,7 @@ func TestCreateConnectionAPIEndpoint(t *testing.T) {
 	}
 }
 
-func TestUpdateConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
+func TestUpdateApiKeyAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
@@ -297,7 +297,7 @@ func TestUpdateConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 		{
 			Name:         "not found",
 			Method:       "PUT",
-			URL:          "/apps/app_id/connections/conn_id",
+			URL:          "/apps/app_id/apikeys/1",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusNotFound,
@@ -309,7 +309,7 @@ func TestUpdateConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 	}
 }
 
-func TestUpdateConnectionAPIEndpoint(t *testing.T) {
+func TestUpdateApiKeyAPIEndpoint(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
@@ -322,16 +322,16 @@ func TestUpdateConnectionAPIEndpoint(t *testing.T) {
 		{
 			Name:         "success",
 			Method:       "PUT",
-			URL:          "/apps/app_id/connections/conn_id",
+			URL:          "/apps/app_id/apikeys/1",
 			Body:         `{"name":"new_name"}`,
 			Header:       nil,
 			WantStatus:   http.StatusOK,
-			WantResponse: `{"app_id":"", "created_at":"0001-01-01T00:00:00Z", "id":"", "name":"", "updated_at":"0001-01-01T00:00:00Z"}`,
+			WantResponse: `{"app_id":"", "created_at":"0001-01-01T00:00:00Z", "id":0, "name":"", "token":"", "updated_at":"0001-01-01T00:00:00Z"}`,
 		},
 		{
 			Name:         "invalid input",
 			Method:       "PUT",
-			URL:          "/apps/app_id/connections/conn_id",
+			URL:          "/apps/app_id/apikeys/1",
 			Body:         `{]`,
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
@@ -340,7 +340,7 @@ func TestUpdateConnectionAPIEndpoint(t *testing.T) {
 		{
 			Name:         "validation error",
 			Method:       "PUT",
-			URL:          "/apps/app_id/connections/conn_id",
+			URL:          "/apps/app_id/apikeys/1",
 			Body:         `{"name":""}`,
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
@@ -349,8 +349,8 @@ func TestUpdateConnectionAPIEndpoint(t *testing.T) {
 		{
 			Name:         "modification error",
 			Method:       "PUT",
-			URL:          "/apps/app_id/connections/conn_id",
-			Body:         `{"name":"controlled_error"}`,
+			URL:          "/apps/app_id/apikeys/1",
+			Body:         `{"name":"0"}`,
 			Header:       nil,
 			WantStatus:   http.StatusInternalServerError,
 			WantResponse: `There was a problem with your request. *`,
@@ -361,7 +361,7 @@ func TestUpdateConnectionAPIEndpoint(t *testing.T) {
 	}
 }
 
-func TestDeleteConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
+func TestDeleteApiKeyAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
@@ -374,7 +374,7 @@ func TestDeleteConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 		{
 			Name:         "not found",
 			Method:       "DELETE",
-			URL:          "/apps/app_id/connections/conn_id",
+			URL:          "/apps/app_id/apikeys/1",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusNotFound,
@@ -386,7 +386,7 @@ func TestDeleteConnectionAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 	}
 }
 
-func TestDeleteConnectionAPIEndpoint(t *testing.T) {
+func TestDeleteApiKeyAPIEndpoint(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
@@ -399,17 +399,17 @@ func TestDeleteConnectionAPIEndpoint(t *testing.T) {
 		{
 			Name:         "success",
 			Method:       "DELETE",
-			URL:          "/apps/app_id/connections/conn_id",
+			URL:          "/apps/app_id/apikeys/1",
 			Body:         `{"name":"new_name"}`,
 			Header:       nil,
 			WantStatus:   http.StatusOK,
-			WantResponse: `{"app_id":"", "created_at":"0001-01-01T00:00:00Z", "id":"", "name":"", "updated_at":"0001-01-01T00:00:00Z"}`,
+			WantResponse: `{"app_id":"", "created_at":"0001-01-01T00:00:00Z", "id":0, "name":"", "token":"", "updated_at":"0001-01-01T00:00:00Z"}`,
 		},
 		{
 			Name:         "modification error",
 			Method:       "DELETE",
-			URL:          "/apps/app_id/connections/controlled_error",
-			Body:         `{"name":"controlled_error"}`,
+			URL:          "/apps/app_id/apikeys/0",
+			Body:         `{"name":"0"}`,
 			Header:       nil,
 			WantStatus:   http.StatusNotFound,
 			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,

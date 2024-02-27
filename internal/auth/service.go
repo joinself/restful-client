@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"strconv"
-	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/joinself/restful-client/internal/app"
@@ -150,35 +149,12 @@ func (s service) getByID(ctx context.Context, id string) acl.Identity {
 
 // generateJWT generates a JWT that encodes an identity.
 func (s service) generateJWT(identity acl.Identity) (string, error) {
-	// Set custom claims
-	claims := &acl.JWTCustomClaims{
-		identity.GetID(),
-		identity.GetName(),
-		identity.IsAdmin(),
-		identity.GetResources(),
-		identity.IsPasswordChangeRequired(),
-		jwt.RegisteredClaims{
-			Subject:   identity.GetID(),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(s.tokenExpiration))),
-		},
-	}
-
-	// Create token with claims
-	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(s.signingKey))
+	return acl.GenerateJWTToken(identity, 0, s.signingKey, s.tokenExpiration)
 }
 
 // generateRefreshJWT generates a refresh JWT that encodes an identity.
 func (s service) generateRefreshJWT(identity acl.Identity) (string, error) {
-	// Set custom claims
-	claims := &jwt.RegisteredClaims{
-		Subject:   identity.GetName(),
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(s.rTokenExpiration))),
-	}
-
-	// Create token with claims
-	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(s.signingKey))
+	return acl.GenerateRefreshToken(identity, s.signingKey, s.rTokenExpiration)
 }
 
 func (s service) getRefreshJWTSubject(tokenString string) (string, error) {

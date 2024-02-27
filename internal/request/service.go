@@ -61,7 +61,7 @@ type service struct {
 
 // NewService creates a new request service.
 func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repository, logger log.Logger) Service {
-	return service{
+	return &service{
 		repo:   repo,
 		fRepo:  fRepo,
 		atRepo: atRepo,
@@ -69,7 +69,7 @@ func NewService(repo Repository, fRepo fact.Repository, atRepo attestation.Repos
 	}
 }
 
-func (s service) SetRunner(runner support.SelfClientGetter) {
+func (s *service) SetRunner(runner support.SelfClientGetter) {
 	s.runner = runner
 }
 

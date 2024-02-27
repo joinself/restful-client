@@ -10,6 +10,7 @@ import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/test"
 	"github.com/joinself/restful-client/pkg/acl"
+	"github.com/joinself/restful-client/pkg/filter"
 	"github.com/joinself/restful-client/pkg/log"
 )
 
@@ -124,8 +125,8 @@ func TestGetMessageAPIEndpointAsPlainWithPermissions(t *testing.T) {
 	router := test.MockRouter(logger)
 
 	rg := router.Group("/apps")
-	rg.Use(acl.AuthAsPlainMiddleware([]string{"app_id"}))
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.AuthAsPlainMiddleware([]string{"GET /apps/app_id/*"}))
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -168,7 +169,7 @@ func TestGetMessageAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -193,7 +194,7 @@ func TestListMessagesAPIEndpointAsAdmin(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -245,7 +246,7 @@ func TestListMessagesAPIEndpointAsPlain(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -270,7 +271,7 @@ func TestCreateMessageAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -295,7 +296,7 @@ func TestCreateMessageAPIEndpoint(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -356,7 +357,7 @@ func TestDeleteMessageAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -381,7 +382,7 @@ func TestUpdateMessageAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -406,7 +407,7 @@ func TestUpdateMessageAPIEndpoint(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -466,7 +467,7 @@ func TestDeleteMessageAPIEndpoint(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
