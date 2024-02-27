@@ -7,6 +7,7 @@ import (
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/mock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const longString = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
@@ -78,7 +79,9 @@ func Test_service_CRUD(t *testing.T) {
 	assert.NotNil(t, err)
 	account, err = s.Get(ctx, username, "password")
 	assert.Nil(t, err)
-	assert.Equal(t, "appid", account.Resources)
+	rr := account.GetResources()
+	require.Equal(t, len(rr), 1)
+	assert.Equal(t, "appid", rr[0])
 	assert.Equal(t, username, account.UserName)
 
 	// delete

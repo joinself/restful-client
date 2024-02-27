@@ -77,6 +77,7 @@ func buildJwt(identity acl.Identity) *jwt.Token {
 		identity.GetName(),
 		identity.IsAdmin(),
 		identity.GetResources(),
+		0,
 		identity.IsPasswordChangeRequired(),
 		jwt.RegisteredClaims{
 			Subject:   identity.GetID(),

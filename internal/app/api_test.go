@@ -10,6 +10,7 @@ import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/test"
 	"github.com/joinself/restful-client/pkg/acl"
+	"github.com/joinself/restful-client/pkg/filter"
 	"github.com/joinself/restful-client/pkg/log"
 )
 
@@ -55,7 +56,7 @@ func TestListAppsAPIEndpointAsAdmin(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -80,7 +81,7 @@ func TestListAppsAPIEndpointAsPlain(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -108,7 +109,7 @@ func TestCreateAppAPIEndpointAsAdmin(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -160,7 +161,7 @@ func TestCreateAppAPIEndpointAsPlain(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -185,7 +186,7 @@ func TestDeleteAppAPIEndpointAsAdmin(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -218,7 +219,7 @@ func TestDeleteAppAPIEndpointAsPlain(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware().Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{

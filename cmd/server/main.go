@@ -13,6 +13,7 @@ import (
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/joinself/restful-client/internal/account"
+	"github.com/joinself/restful-client/internal/apikey"
 	"github.com/joinself/restful-client/internal/app"
 	"github.com/joinself/restful-client/internal/attestation"
 	"github.com/joinself/restful-client/internal/auth"
@@ -28,6 +29,7 @@ import (
 	"github.com/joinself/restful-client/internal/self"
 	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/dbcontext"
+	"github.com/joinself/restful-client/pkg/filter"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -109,6 +111,8 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		Format: "method=${method}, uri=${uri}, status=${status}\n",
 	}))
 
+	tokenChecker := filter.NewChecker()
+
 	// Repositories
 	connectionRepo := connection.NewRepository(db, logger)
 	messageRepo := message.NewRepository(db, logger)
@@ -117,6 +121,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	attestationRepo := attestation.NewRepository(db, logger)
 	accountRepo := account.NewRepository(db, logger)
 	appRepo := app.NewRepository(db, logger)
+	apikeyRepo := apikey.NewRepository(db, tokenChecker, logger)
 
 	// Services
 	rService := request.NewService(requestRepo, factRepo, attestationRepo, logger)
@@ -135,7 +140,9 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	cService := connection.NewService(connectionRepo, runner, logger)
 	aService := app.NewService(appRepo, runner, logger)
 
-	aclMiddleware := acl.NewMiddleware()
+	// TODO: preload all deleted pi keys
+	apikeyRepo.PreloadDeleted(context.Background())
+	aclMiddleware := acl.NewMiddleware(tokenChecker)
 	rg := e.Group("/v1")
 
 	// App children handlers
@@ -167,6 +174,10 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	)
 	notification.RegisterHandlers(appsGroup,
 		notification.NewService(runner, logger),
+		logger,
+	)
+	apikey.RegisterHandlers(appsGroup,
+		apikey.NewService(cfg, apikeyRepo, logger),
 		logger,
 	)
 
