@@ -73,7 +73,7 @@ func Test_service_CRUD(t *testing.T) {
 	_, _ = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "test2"})
 
 	// update
-	message, err = s.Update(ctx, "app", connection, "connection", message.JTI, UpdateMessageRequest{Body: "test updated"})
+	message, err = s.Update(ctx, "app", connection, "connection", message.ID, UpdateMessageRequest{Body: "test updated"})
 	assert.Nil(t, err)
 	assert.Equal(t, "test updated", message.Body)
 	_, err = s.Update(ctx, "app", connection, "connection", "1", UpdateMessageRequest{Body: "test updated"})
@@ -82,7 +82,7 @@ func Test_service_CRUD(t *testing.T) {
 	// get
 	_, err = s.Get(ctx, connection, "1")
 	assert.NotNil(t, err)
-	message, err = s.Get(ctx, connection, message.JTI)
+	message, err = s.Get(ctx, connection, message.ID)
 	assert.Nil(t, err)
 	assert.Equal(t, "test updated", message.Body)
 	assert.Equal(t, id, message.ID)
@@ -94,7 +94,7 @@ func Test_service_CRUD(t *testing.T) {
 	// delete
 	err = s.Delete(ctx, connection, "non existing")
 	assert.NotNil(t, err)
-	err = s.Delete(ctx, connection, message.JTI)
+	err = s.Delete(ctx, connection, message.ID)
 	assert.Nil(t, err)
 	count, _ = s.Count(ctx, connection, 0)
 	assert.Equal(t, 1, count)
