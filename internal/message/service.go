@@ -23,7 +23,27 @@ type Service interface {
 
 // Message represents the data about an message.
 type Message struct {
-	entity.Message
+	ID           string    `json:"id"`
+	ConnectionID string    `json:"connection_id"`
+	CID          string    `json:"cid"`
+	RID          string    `json:"rid"`
+	Body         string    `json:"body"`
+	IAT          time.Time `json:"iat"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+func newMessageFromEntity(m entity.Message) Message {
+	return Message{
+		ID:           m.JTI,
+		ConnectionID: m.ISS,
+		CID:          m.CID,
+		RID:          m.RID,
+		Body:         m.Body,
+		IAT:          m.IAT,
+		CreatedAt:    m.CreatedAt,
+		UpdatedAt:    m.UpdatedAt,
+	}
 }
 
 // CreateMessageRequest represents an message creation request.
@@ -44,7 +64,7 @@ func (s service) Get(ctx context.Context, connectionID int, jti string) (Message
 	if err != nil {
 		return Message{}, err
 	}
-	return Message{message}, nil
+	return newMessageFromEntity(message), nil
 }
 
 // Create creates a new message.
@@ -85,20 +105,21 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 
 // Update updates the message with the specified ID.
 func (s service) Update(ctx context.Context, appID string, connectionID int, selfID string, jti string, req UpdateMessageRequest) (Message, error) {
-	message, err := s.Get(ctx, connectionID, jti)
+	message, err := s.repo.Get(ctx, connectionID, jti)
 	if err != nil {
-		return message, err
+		return Message{}, err
 	}
+
 	message.Body = req.Body
 	message.UpdatedAt = time.Now()
 
-	if err := s.repo.Update(ctx, message.Message); err != nil {
-		return message, err
+	if err := s.repo.Update(ctx, message); err != nil {
+		return newMessageFromEntity(message), err
 	}
 
 	s.updateMessage(appID, selfID, message.JTI, req.Body)
 
-	return message, nil
+	return newMessageFromEntity(message), nil
 }
 
 // Delete deletes the message with the specified ID.
@@ -119,7 +140,7 @@ func (s service) Query(ctx context.Context, connection int, messagesSince int, o
 	}
 	result := []Message{}
 	for _, item := range items {
-		result = append(result, Message{item})
+		result = append(result, newMessageFromEntity(item))
 	}
 	return result, nil
 }

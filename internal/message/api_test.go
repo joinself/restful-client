@@ -22,11 +22,9 @@ func (m mockService) Get(ctx context.Context, connectionID int, jti string) (Mes
 	}
 
 	return Message{
-		Message: entity.Message{
-			Body: "body",
-			ISS:  "iss",
-			CID:  "cid",
-		},
+		Body:         "body",
+		ConnectionID: "iss",
+		CID:          "cid",
 	}, nil
 }
 
@@ -137,7 +135,7 @@ func TestGetMessageAPIEndpointAsPlainWithPermissions(t *testing.T) {
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusOK,
-			WantResponse: `{"body":"body", "cid":"cid", "created_at":"0001-01-01T00:00:00Z", "iat":"0001-01-01T00:00:00Z", "iss":"iss", "jti":"", "rid":"", "updated_at":"0001-01-01T00:00:00Z"}`,
+			WantResponse: `{"body":"body", "cid":"cid", "created_at":"0001-01-01T00:00:00Z", "iat":"0001-01-01T00:00:00Z", "connection_id":"iss", "id":"", "rid":"", "updated_at":"0001-01-01T00:00:00Z"}`,
 		},
 		{
 			Name:         "connection not found",
