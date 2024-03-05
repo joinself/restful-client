@@ -4,7 +4,9 @@ PACKAGES := $(shell go list ./... | grep -v /vendor/)
 LDFLAGS := -ldflags "-X main.Version=${VERSION}"
 
 APP_DSN = "sqlite3://${RESTFUL_CLIENT_STORAGE_DIR}/client.db"
+APP_DSN_TEST = "sqlite3://${RESTFUL_CLIENT_STORAGE_DIR}/client-test.db"
 MIGRATE := migrate -path=./migrations/ -database "$(APP_DSN)"
+MIGRATE_TEST := migrate -path=./migrations/ -database "$(APP_DSN_TEST)"
 
 PID_FILE := './.pid'
 FSWATCH_FILE := './fswatch.cfg'
@@ -66,7 +68,7 @@ version: ## display the version of the API server
 testdata: ## populate the database with test data
 	make migrate-reset
 	@echo "Populating test data..."
-	@sqlite3 APP_DSN < /testdata/testdata.sql
+	@sqlite3 APP_DSN_TEST < /testdata/testdata.sql
 
 .PHONY: lint
 lint: ## run golint on all Go package
@@ -101,6 +103,19 @@ migrate-reset: ## reset database and re-run all migrations
 	@$(MIGRATE) drop
 	@echo "Running all database migrations..."
 	@$(MIGRATE) up
+
+.PHONY: migrate-test
+migrate: ## run all new database migrations
+	@echo "Running all new database migrations..."
+	@echo " -> $(MIGRATE_TEST) up"
+	@$(MIGRATE_TEST) up
+
+.PHONY: migrate-test-reset
+migrate-reset: ## reset database and re-run all migrations
+	@echo "Resetting test database..."
+	@$(MIGRATE_TEST) drop
+	@echo "Running all test database migrations..."
+	@$(MIGRATE_TEST) up
 
 .PHONY: gen-openapi
 gen-openapi: ## generates openapi documentation under /docs folder
