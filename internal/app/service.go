@@ -109,7 +109,7 @@ func (s service) Delete(ctx context.Context, id string) (App, error) {
 		return App{}, err
 	}
 
-	// Start the runner.
+	// Stop the runner.
 	s.runner.Stop(id)
 
 	if err = s.repo.Delete(ctx, app.ID); err != nil {
