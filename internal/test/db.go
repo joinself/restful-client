@@ -36,7 +36,7 @@ func DB(t *testing.T) *dbcontext.DB {
 		t.FailNow()
 	}
 
-	dbc, err := dbx.MustOpen("sqlite3", filepath.Join(cfg.StorageDir, "client.db"))
+	dbc, err := dbx.MustOpen("sqlite3", filepath.Join(cfg.StorageDir, "client-test.db"))
 	if err != nil {
 		t.Error(err)
 		t.FailNow()

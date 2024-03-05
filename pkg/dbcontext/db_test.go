@@ -112,7 +112,7 @@ func TestDB_TransactionHandler(t *testing.T) {
 func runDBTest(t *testing.T, f func(db *dbx.DB)) {
 	storageDir := os.Getenv("RESTFUL_CLIENT_STORAGE_DIR") + "/"
 	println("storageDir: ", storageDir)
-	db, err := dbx.MustOpen("sqlite3", filepath.Join(storageDir, "client.db"))
+	db, err := dbx.MustOpen("sqlite3", filepath.Join(storageDir, "client-test.db"))
 	if err != nil {
 		t.Error(err)
 		t.FailNow()

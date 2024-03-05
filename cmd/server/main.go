@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"testing"
 	"time"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
@@ -61,7 +62,12 @@ func main() {
 		os.Exit(-1)
 	}
 
-	db, err := dbx.MustOpen("sqlite3", filepath.Join(cfg.StorageDir, "client.db"))
+	dbName := "client.db"
+	if testing.Testing() {
+		dbName = "client-test.db"
+	}
+
+	db, err := dbx.MustOpen("sqlite3", filepath.Join(cfg.StorageDir, dbName))
 	if err != nil {
 		logger.Error(err)
 		os.Exit(-1)
