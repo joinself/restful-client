@@ -2,6 +2,7 @@ package self
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -140,6 +141,7 @@ func (s *service) processIncomingMessage(m *messaging.Message) {
 		s.logger.With(context.Background(), "self").Infof("failed to decode message payload: %s", err.Error())
 		return
 	}
+	println(" ----> " + payload["typ"].(string))
 
 	switch payload["typ"].(string) {
 	case "chat.message":
@@ -151,7 +153,46 @@ func (s *service) processIncomingMessage(m *messaging.Message) {
 	case "identities.facts.query.resp":
 		_ = s.processFactsQueryResp(m.Payload, payload)
 
+	case "identities.facts.issue":
+		_ = s.processIssuedFacts(m.Payload, payload)
 	}
+}
+
+func (s *service) processIssuedFacts(body []byte, payload map[string]interface{}) error {
+	type transactionFact struct {
+		Key   string `json:"key"`
+		Value string `json:"value"`
+	}
+	type transactionFacts struct {
+		Facts []transactionFact `json:"facts"`
+	}
+	println(".........")
+	println(".........")
+	println(".........")
+	// iss := payload["iss"].(string)
+	// println(iss)
+	// TODO: you must verify the signature of this fact before processing it
+	for _, a := range payload["attestations"].([]interface{}) {
+		p1 := a.(map[string]interface{})["payload"].(string)
+		p, err := base64.RawURLEncoding.DecodeString(p1)
+		if err != nil {
+			panic(err)
+		}
+
+		var x transactionFacts
+		err = json.Unmarshal(p, &x)
+		if err != nil {
+			panic(err)
+		}
+		for _, f := range x.Facts {
+			println(f.Value)
+		}
+	}
+	println(".........")
+	println(".........")
+	println(".........")
+
+	return nil
 }
 
 func (s *service) processFactsQueryResp(body []byte, payload map[string]interface{}) error {
