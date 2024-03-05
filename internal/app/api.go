@@ -3,6 +3,7 @@ package app
 import (
 	"net/http"
 
+	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/pagination"
 	"github.com/joinself/restful-client/pkg/response"
@@ -88,8 +89,13 @@ func (r resource) create(c echo.Context) error {
 // @Param           id   path      int  true  "ID of the app to delete"
 // @Success         204  {string} string  "No Content"
 // @Failure         404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
-// @Router          /apps/{id} [delete]
+// @Router          /apps/{app_id} [delete]
 func (r resource) delete(c echo.Context) error {
+	user := acl.CurrentUser(c)
+	if user == nil || !user.IsAdmin() {
+		return c.JSON(response.DefaultNotFoundError())
+	}
+
 	if _, err := r.service.Delete(c.Request().Context(), c.Param("id")); err != nil {
 		return c.JSON(response.DefaultNotFoundError())
 	}
