@@ -9,9 +9,8 @@ import (
 
 // LoginRequest authentication login input request.
 type LoginRequest struct {
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	RefreshToken string `json:"refresh_token"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 // Validate validates the LoginRequest struct
@@ -21,16 +20,11 @@ func (r *LoginRequest) Validate() *response.Error {
 		validation.Field(&r.Password, validation.Required, validation.Length(5, 128)),
 	)
 
-	errRefresh := validation.ValidateStruct(r,
-		validation.Field(&r.RefreshToken, validation.Required, validation.Length(32, 255)),
-	)
-
-	// If both validations have failed, return an error.
-	if errBasic != nil && errRefresh != nil {
+	if errBasic != nil {
 		return &response.Error{
 			Status:  http.StatusBadRequest,
 			Error:   "Invalid input",
-			Details: "You must provide user and password, or a refresh_token",
+			Details: "You must provide user and password",
 		}
 	}
 
@@ -41,4 +35,26 @@ func (r *LoginRequest) Validate() *response.Error {
 type LoginResponse struct {
 	AccessToken  string `json:"token"`
 	RefreshToken string `json:"refresh_token,omitempty"`
+}
+
+// RefreshRequest refresh your JWT token.
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
+// Validate validates the LoginRequest struct
+func (r *RefreshRequest) Validate() *response.Error {
+	errRefresh := validation.ValidateStruct(r,
+		validation.Field(&r.RefreshToken, validation.Required, validation.Length(32, 255)),
+	)
+
+	if errRefresh != nil {
+		return &response.Error{
+			Status:  http.StatusBadRequest,
+			Error:   "Invalid input",
+			Details: "You must provide a refresh_token",
+		}
+	}
+
+	return nil
 }
