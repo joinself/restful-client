@@ -7,4 +7,4 @@ until migrate -path=/srv/migrations/ -database sqlite3://${RESTFUL_CLIENT_STORAG
 done
 
 echo "[`date`] Starting server..."
-/srv/restful-client
+exec /srv/restful-client
