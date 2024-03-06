@@ -62,3 +62,17 @@ func (m ChangePasswordRequest) Validate() *response.Error {
 		Details: err.Error(),
 	}
 }
+
+type ExtAccount struct {
+	UserName               string `json:"id"`
+	Resources              string `json:"resources"`
+	RequiresPasswordChange bool   `json:"requires_password_change"`
+}
+
+type ExtListResponse struct {
+	Page       int          `json:"page"`
+	PerPage    int          `json:"per_page"`
+	PageCount  int          `json:"page_count"`
+	TotalCount int          `json:"total_count"`
+	Items      []ExtAccount `json:"items"`
+}

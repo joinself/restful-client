@@ -206,6 +206,11 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 	// Send the request.
 	resp, err := client.FactService().Request(r)
 	if err != nil {
+		println(",,......")
+		println(",,......")
+		println(err.Error())
+		println(",,......")
+		println(",,......")
 		s.markRequestAs(req.ID, entity.STATUS_ERRORED)
 	} else if resp.Status == "rejected" {
 		s.markRequestAs(req.ID, entity.STATUS_REJECTED)
