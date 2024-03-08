@@ -90,6 +90,8 @@ github.com/joinself/self-go-sdk v0.0.0-20230915061409-604d443dd45c h1:7drysmMJPW
 github.com/joinself/self-go-sdk v0.0.0-20230915061409-604d443dd45c/go.mod h1:EQzLULSbxHbmiQWrc8F61RCPWAteyaPuszosB/I8O6c=
 github.com/joinself/self-go-sdk v0.0.0-20240301082147-50e07b37e564 h1:BXz3eXc/SbPoyQyGI+fIS6/7FfHqoma3tSyJI9F6H6A=
 github.com/joinself/self-go-sdk v0.0.0-20240301082147-50e07b37e564/go.mod h1:QW00jZB17HJVeIHzY6/wg9kSCctmZVHgh034lWiJVDE=
+github.com/joinself/self-go-sdk v0.0.0-20240308120817-69c5d50cd154 h1:8QZayqpmuoEuyZug4jJKhYoQqVe1h5kht5sipxCBZoo=
+github.com/joinself/self-go-sdk v0.0.0-20240308120817-69c5d50cd154/go.mod h1:QW00jZB17HJVeIHzY6/wg9kSCctmZVHgh034lWiJVDE=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/jtolds/gls v4.20.0+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfVYBRgL+9YlvaHOwJU=
