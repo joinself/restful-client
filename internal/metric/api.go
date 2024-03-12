@@ -28,17 +28,19 @@ type resource struct {
 // @Description    Retrieves a paginated list of metrics for a specific app_id, matching the specified filters.
 //
 //	Pagination is provided through optional page and per_page parameters.
-//	If not provided, the defaults are page 1 and per_page 10.
+//	Defaults are page 1 and per_page 10 if not provided.
 //
 // @Tags           metrics
 // @Accept         json
 // @Produce        json
 // @Security       BearerAuth
-// @Param          app_id   path   string  true  "Unique Identifier (UUID) for the App"
-// @Param          page query int false "The page number for pagination. If not provided, the default is 1."
-// @Param          per_page query int false "The number of metrics to return per page for pagination. If not provided, the default is 10."
-// @Success        200  {object}  ExtListResponse  "Successful retrieval of metrics list will return a 200 status and a list of metrics"
-// @Failure        500  {object}  response.Error "In case of an internal server error during the request, a 500 status and an error object will be returned"
+// @Param          app_id path string true "App's Unique Identifier (UUID)"
+// @Param          page query int false "Page number for pagination, default is 1 if not provided."
+// @Param          per_page query int false "Number of metrics per page for pagination, default is 10 if not provided."
+// @Param          from query int false "Start time for the metrics query in Unix timestamp, default is 0 if not provided."
+// @Param          to query int false "End time for the metrics query in Unix timestamp, default is current time if not provided."
+// @Success        200 {object} ExtListResponse "Successful metrics list retrieval returns a 200 status and a list of metrics."
+// @Failure        500 {object} response.Error "A 500 status and an error object will be returned in case of an internal server error during the request."
 // @Router         /apps/{app_id}/metrics [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
