@@ -105,13 +105,13 @@ migrate-reset: ## reset database and re-run all migrations
 	@$(MIGRATE) up
 
 .PHONY: migrate-test
-migrate: ## run all new database migrations
+migrate-test: ## run all new database migrations
 	@echo "Running all new database migrations..."
 	@echo " -> $(MIGRATE_TEST) up"
 	@$(MIGRATE_TEST) up
 
 .PHONY: migrate-test-reset
-migrate-reset: ## reset database and re-run all migrations
+migrate-test-reset: ## reset database and re-run all migrations
 	@echo "Resetting test database..."
 	@$(MIGRATE_TEST) drop
 	@echo "Running all test database migrations..."

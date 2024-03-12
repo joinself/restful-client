@@ -25,6 +25,7 @@ import (
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/healthcheck"
 	"github.com/joinself/restful-client/internal/message"
+	"github.com/joinself/restful-client/internal/metric"
 	"github.com/joinself/restful-client/internal/notification"
 	"github.com/joinself/restful-client/internal/request"
 	"github.com/joinself/restful-client/internal/self"
@@ -128,6 +129,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	accountRepo := account.NewRepository(db, logger)
 	appRepo := app.NewRepository(db, logger)
 	apikeyRepo := apikey.NewRepository(db, tokenChecker, logger)
+	metricRepo := metric.NewRepository(db, tokenChecker, logger)
 
 	// Services
 	rService := request.NewService(requestRepo, factRepo, attestationRepo, logger)
@@ -138,6 +140,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		RequestRepo:    requestRepo,
 		RequestService: rService,
 		AppRepo:        appRepo,
+		MetricRepo:     metricRepo,
 		Logger:         logger,
 		StorageKey:     cfg.StorageKey,
 		StorageDir:     cfg.StorageDir,
@@ -184,6 +187,10 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	)
 	apikey.RegisterHandlers(appsGroup,
 		apikey.NewService(cfg, apikeyRepo, logger),
+		logger,
+	)
+	metric.RegisterHandlers(appsGroup,
+		metric.NewService(cfg, metricRepo, logger),
 		logger,
 	)
 

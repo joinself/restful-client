@@ -13,6 +13,7 @@ import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/message"
+	"github.com/joinself/restful-client/internal/metric"
 	"github.com/joinself/restful-client/internal/request"
 	"github.com/joinself/restful-client/pkg/helper"
 	"github.com/joinself/restful-client/pkg/log"
@@ -53,6 +54,7 @@ type Config struct {
 	FactRepo       fact.Repository
 	MessageRepo    message.Repository
 	RequestRepo    request.Repository
+	MetricRepo     metric.Repository
 	Logger         log.Logger
 	Poster         webhook.Poster
 	RequestService request.Service
@@ -63,6 +65,7 @@ type service struct {
 	fRepo    fact.Repository
 	mRepo    message.Repository
 	rRepo    request.Repository
+	metRepo  metric.Repository
 	logger   log.Logger
 	selfID   string
 	w        webhook.Poster
@@ -77,6 +80,7 @@ func NewService(c Config) Service {
 		fRepo:    c.FactRepo,
 		mRepo:    c.MessageRepo,
 		rRepo:    c.RequestRepo,
+		metRepo:  c.MetricRepo,
 		logger:   c.Logger,
 		selfID:   c.SelfClient.SelfAppID(),
 		rService: c.RequestService,
@@ -140,6 +144,7 @@ func (s *service) processIncomingMessage(m *messaging.Message) {
 		s.logger.With(context.Background(), "self").Infof("failed to decode message payload: %s", err.Error())
 		return
 	}
+	println(" ----> " + payload["typ"].(string))
 
 	switch payload["typ"].(string) {
 	case "chat.message":
@@ -151,7 +156,23 @@ func (s *service) processIncomingMessage(m *messaging.Message) {
 	case "identities.facts.query.resp":
 		_ = s.processFactsQueryResp(m.Payload, payload)
 
+	case "identities.facts.issue":
+		_ = s.processIssuedFacts(m.Payload, payload)
 	}
+}
+
+func (s *service) processIssuedFacts(body []byte, payload map[string]interface{}) error {
+	metrics, err := parseIncomingMetrics(payload)
+	if err != nil {
+		s.logger.Error("failed parsing incomming metrics")
+	}
+
+	for _, m := range metrics {
+		m.AppID = s.selfID
+		s.metRepo.Upsert(context.Background(), m)
+	}
+
+	return nil
 }
 
 func (s *service) processFactsQueryResp(body []byte, payload map[string]interface{}) error {

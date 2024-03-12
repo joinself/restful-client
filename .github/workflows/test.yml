@@ -34,7 +34,7 @@ jobs:
           sudo cp /tmp/golangci-lint-1.21.0-linux-amd64/golangci-lint /usr/local/bin
           make lint
           make build
-          make migrate
+          make migrate-test
           make test
       - name: Failure notification
         if: ${{ github.ref == 'refs/heads/main' && failure() }}

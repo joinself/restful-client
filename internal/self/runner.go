@@ -7,6 +7,7 @@ import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/message"
+	"github.com/joinself/restful-client/internal/metric"
 	"github.com/joinself/restful-client/internal/request"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/support"
@@ -32,6 +33,7 @@ type runner struct {
 	mRepo      message.Repository
 	rRepo      request.Repository
 	aRepo      appStatusSetter
+	metRepo    metric.Repository
 	logger     log.Logger
 	rService   request.Service
 	storageKey string
@@ -44,6 +46,7 @@ type RunnerConfig struct {
 	MessageRepo    message.Repository
 	RequestRepo    request.Repository
 	AppRepo        appStatusSetter
+	MetricRepo     metric.Repository
 	Logger         log.Logger
 	RequestService request.Service
 	StorageKey     string
@@ -58,6 +61,7 @@ func NewRunner(config RunnerConfig) Runner {
 		mRepo:      config.MessageRepo,
 		rRepo:      config.RequestRepo,
 		aRepo:      config.AppRepo,
+		metRepo:    config.MetricRepo,
 		logger:     config.Logger,
 		rService:   config.RequestService,
 		storageKey: config.StorageKey,
@@ -94,6 +98,7 @@ func (r *runner) Run(app entity.App) error {
 		RequestRepo:    r.rRepo,
 		Logger:         r.logger,
 		RequestService: r.rService,
+		MetricRepo:     r.metRepo,
 		SelfClient:     support.NewSelfClient(client),
 		Poster:         webhook.NewWebhook(app.Callback),
 	})
