@@ -257,6 +257,49 @@
                 }
             }
         },
+        "/apps/{app_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing app and sends a request for public information and avoids incoming comms from that app. You must be authenticated as an admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apps"
+                ],
+                "summary": "Deletes an existing app.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the app to delete",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/apps/{app_id}/connections": {
             "get": {
                 "security": [
@@ -1254,49 +1297,6 @@
                 }
             }
         },
-        "/apps/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Deletes an existing app and sends a request for public information and avoids incoming comms from that app. You must be authenticated as an admin.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "apps"
-                ],
-                "summary": "Deletes an existing app.",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID of the app to delete",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
-                        "schema": {
-                            "$ref": "#/definitions/response.Error"
-                        }
-                    }
-                }
-            }
-        },
         "/healthcheck": {
             "get": {
                 "description": "check the service is up and running",
@@ -1341,7 +1341,7 @@
                 "summary": "User Authentication",
                 "parameters": [
                     {
-                        "description": "Authentication request body with your username and password, or a refresh token",
+                        "description": "Authentication request body with your username and password",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1353,6 +1353,52 @@
                 "responses": {
                     "200": {
                         "description": "Successfully authenticated, JWT token and Refresh JWT token are returned in response",
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Returns error details",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Returns error details",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/refresh": {
+            "post": {
+                "description": "Takes a refresh token and returns a new JWT token for API interaction.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh JWT token",
+                "parameters": [
+                    {
+                        "description": "Request body with your refresh token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.RefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully refreshed, new JWT token is returned in response",
                         "schema": {
                             "$ref": "#/definitions/auth.LoginResponse"
                         }
@@ -1482,9 +1528,6 @@
                 "password": {
                     "type": "string"
                 },
-                "refresh_token": {
-                    "type": "string"
-                },
                 "username": {
                     "type": "string"
                 }
@@ -1497,6 +1540,14 @@
                     "type": "string"
                 },
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.RefreshRequest": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
                     "type": "string"
                 }
             }
@@ -1682,16 +1733,16 @@
                 "cid": {
                     "type": "string"
                 },
+                "connection_id": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
                 "iat": {
                     "type": "string"
                 },
-                "iss": {
-                    "type": "string"
-                },
-                "jti": {
+                "id": {
                     "type": "string"
                 },
                 "rid": {

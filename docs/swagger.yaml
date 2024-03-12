@@ -70,8 +70,6 @@ definitions:
     properties:
       password:
         type: string
-      refresh_token:
-        type: string
       username:
         type: string
     type: object
@@ -80,6 +78,11 @@ definitions:
       refresh_token:
         type: string
       token:
+        type: string
+    type: object
+  auth.RefreshRequest:
+    properties:
+      refresh_token:
         type: string
     type: object
   connection.CreateConnectionRequest:
@@ -199,13 +202,13 @@ definitions:
         type: string
       cid:
         type: string
+      connection_id:
+        type: string
       created_at:
         type: string
       iat:
         type: string
-      iss:
-        type: string
-      jti:
+      id:
         type: string
       rid:
         type: string
@@ -476,6 +479,35 @@ paths:
       summary: Creates a new app.
       tags:
       - app
+  /apps/{app_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing app and sends a request for public information
+        and avoids incoming comms from that app. You must be authenticated as an admin.
+      parameters:
+      - description: ID of the app to delete
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "404":
+          description: Not found - The requested resource does not exist, or you don't
+            have permissions to access it
+          schema:
+            $ref: '#/definitions/response.Error'
+      security:
+      - BearerAuth: []
+      summary: Deletes an existing app.
+      tags:
+      - apps
   /apps/{app_id}/connections:
     get:
       consumes:
@@ -1149,35 +1181,6 @@ paths:
       summary: Get request details.
       tags:
       - requests
-  /apps/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Deletes an existing app and sends a request for public information
-        and avoids incoming comms from that app. You must be authenticated as an admin.
-      parameters:
-      - description: ID of the app to delete
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-          schema:
-            type: string
-        "404":
-          description: Not found - The requested resource does not exist, or you don't
-            have permissions to access it
-          schema:
-            $ref: '#/definitions/response.Error'
-      security:
-      - BearerAuth: []
-      summary: Deletes an existing app.
-      tags:
-      - apps
   /healthcheck:
     get:
       consumes:
@@ -1204,8 +1207,7 @@ paths:
       description: Authenticates a user and returns a temporary JWT token and refresh
         token for API interaction.
       parameters:
-      - description: Authentication request body with your username and password,
-          or a refresh token
+      - description: Authentication request body with your username and password
         in: body
         name: request
         required: true
@@ -1228,6 +1230,36 @@ paths:
           schema:
             $ref: '#/definitions/response.Error'
       summary: User Authentication
+      tags:
+      - Authentication
+  /refresh:
+    post:
+      consumes:
+      - application/json
+      description: Takes a refresh token and returns a new JWT token for API interaction.
+      parameters:
+      - description: Request body with your refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully refreshed, new JWT token is returned in response
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: Returns error details
+          schema:
+            $ref: '#/definitions/response.Error'
+        "401":
+          description: Returns error details
+          schema:
+            $ref: '#/definitions/response.Error'
+      summary: Refresh JWT token
       tags:
       - Authentication
 schemes:
