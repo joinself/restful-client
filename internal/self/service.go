@@ -2,7 +2,6 @@ package self
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +13,7 @@ import (
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/message"
+	"github.com/joinself/restful-client/internal/metric"
 	"github.com/joinself/restful-client/internal/request"
 	"github.com/joinself/restful-client/pkg/helper"
 	"github.com/joinself/restful-client/pkg/log"
@@ -54,6 +54,7 @@ type Config struct {
 	FactRepo       fact.Repository
 	MessageRepo    message.Repository
 	RequestRepo    request.Repository
+	MetricRepo     metric.Repository
 	Logger         log.Logger
 	Poster         webhook.Poster
 	RequestService request.Service
@@ -64,6 +65,7 @@ type service struct {
 	fRepo    fact.Repository
 	mRepo    message.Repository
 	rRepo    request.Repository
+	metRepo  metric.Repository
 	logger   log.Logger
 	selfID   string
 	w        webhook.Poster
@@ -78,6 +80,7 @@ func NewService(c Config) Service {
 		fRepo:    c.FactRepo,
 		mRepo:    c.MessageRepo,
 		rRepo:    c.RequestRepo,
+		metRepo:  c.MetricRepo,
 		logger:   c.Logger,
 		selfID:   c.SelfClient.SelfAppID(),
 		rService: c.RequestService,
@@ -159,38 +162,15 @@ func (s *service) processIncomingMessage(m *messaging.Message) {
 }
 
 func (s *service) processIssuedFacts(body []byte, payload map[string]interface{}) error {
-	type transactionFact struct {
-		Key   string `json:"key"`
-		Value string `json:"value"`
+	metrics, err := parseIncomingMetrics(payload)
+	if err != nil {
+		s.logger.Error("failed parsing incomming metrics")
 	}
-	type transactionFacts struct {
-		Facts []transactionFact `json:"facts"`
-	}
-	println(".........")
-	println(".........")
-	println(".........")
-	// iss := payload["iss"].(string)
-	// println(iss)
-	// TODO: you must verify the signature of this fact before processing it
-	for _, a := range payload["attestations"].([]interface{}) {
-		p1 := a.(map[string]interface{})["payload"].(string)
-		p, err := base64.RawURLEncoding.DecodeString(p1)
-		if err != nil {
-			panic(err)
-		}
 
-		var x transactionFacts
-		err = json.Unmarshal(p, &x)
-		if err != nil {
-			panic(err)
-		}
-		for _, f := range x.Facts {
-			println(f.Value)
-		}
+	for _, m := range metrics {
+		m.AppID = s.selfID
+		s.metRepo.Upsert(context.Background(), m)
 	}
-	println(".........")
-	println(".........")
-	println(".........")
 
 	return nil
 }

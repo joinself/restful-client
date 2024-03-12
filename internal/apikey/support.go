@@ -39,7 +39,7 @@ func (m CreateApiKeyRequest) Validate() *response.Error {
 	err := validation.ValidateStruct(&m,
 		validation.Field(&m.Name, validation.Required, validation.Length(0, 128)),
 		validation.Field(&m.Scope, validation.Required, validation.Length(0, 128)),
-		validation.Field(&m.Scope, validation.In("FULL", "MESSAGING", "REQUESTS")),
+		validation.Field(&m.Scope, validation.In("FULL", "MESSAGING", "REQUESTS", "METRICS")),
 	)
 	if err == nil {
 		return nil
@@ -62,6 +62,9 @@ func (m CreateApiKeyRequest) GetResources(appID string) []string {
 		},
 		"REQUESTS": []string{
 			fmt.Sprintf("GET /v1/apps/%s/requests*", appID),
+		},
+		"METRICS": []string{
+			fmt.Sprintf("GET /v1/apps/%s/metrics*", appID),
 		},
 	}
 
