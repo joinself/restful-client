@@ -42,10 +42,10 @@ type resource struct {
 // @Security     BearerAuth
 // @Param        app_id   path      string  true  "Application ID"
 // @Param        connection_id   path      string  true  "Connection ID"
-// @Param        jti   path      string  true  "Message JTI (JWT ID)"
+// @Param        id   path      string  true  "Message ID"
 // @Success      200  {object}  Message "Successful retrieval of message details"
 // @Failure      404  {object}  response.Error "Resource not found or unauthorized access"
-// @Router       /apps/{app_id}/connections/{connection_id}/messages/{jti} [get]
+// @Router       /apps/{app_id}/connections/{connection_id}/messages/{id} [get]
 func (r resource) get(c echo.Context) error {
 	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
@@ -157,13 +157,13 @@ func (r resource) create(c echo.Context) error {
 // @Security      BearerAuth
 // @Param         app_id   path      string  true  "Application ID"
 // @Param         connection_id   path      string  true  "Connection ID"
-// @Param         jti   path      string  true  "Message ID (jti)"
+// @Param         id   path      string  true  "Message ID"
 // @Param         request body UpdateMessageRequest true "Request to update a message"
 // @Success       200  {object}  Message "Successfully updated message"
 // @Failure       400  {object}  response.Error "Invalid input"
 // @Failure       404  {object}  response.Error "Resource not found or unauthorized access"
 // @Failure       500  {object}  response.Error "Internal server error"
-// @Router        /apps/{app_id}/connections/{connection_id}/messages/{jti} [put]
+// @Router        /apps/{app_id}/connections/{connection_id}/messages/{id} [put]
 func (r resource) update(c echo.Context) error {
 	var input UpdateMessageRequest
 	if err := c.Bind(&input); err != nil {
