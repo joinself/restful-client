@@ -25,6 +25,10 @@ func (m mockService) Get(ctx context.Context, username, password string) (Accoun
 	return Account{}, nil
 }
 
+func (m mockService) List(ctx context.Context) []ExtAccount {
+	return []ExtAccount{}
+}
+
 func (m mockService) Create(ctx context.Context, input CreateAccountRequest) (Account, error) {
 	if input.Username == ErrorUsername {
 		return Account{}, errors.New("expected error")

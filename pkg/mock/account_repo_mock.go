@@ -24,6 +24,10 @@ func (m AccountRepositoryMock) Count(ctx context.Context) (int, error) {
 	return len(m.Items), nil
 }
 
+func (m AccountRepositoryMock) List(ctx context.Context) ([]entity.Account, error) {
+	return []entity.Account{}, nil
+}
+
 func (m AccountRepositoryMock) GetByUsername(ctx context.Context, username string) (entity.Account, error) {
 	for _, item := range m.Items {
 		if item.UserName == username {
