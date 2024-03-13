@@ -35,6 +35,8 @@ type Repository interface {
 	SetPassword(ctx context.Context, id int, password string) error
 	// Delete removes the account with given ID from the storage.
 	Delete(ctx context.Context, id int) error
+	// List returns a list of all entity.Account
+	List(ctx context.Context) ([]entity.Account, error)
 }
 
 // repository persists accounts in database
@@ -198,4 +200,15 @@ func (r repository) generateSafeRandomSalt(saltSize int) ([]byte, error) {
 	}
 
 	return salt, errors.New("could not generate a random salt")
+}
+
+// List returns a list of all entity.Account
+func (r repository) List(ctx context.Context) ([]entity.Account, error) {
+	var accounts []entity.Account
+	err := r.db.With(ctx).
+		Select().
+		OrderBy("id").
+		OrderBy("created_at DESC").
+		All(&accounts)
+	return accounts, err
 }

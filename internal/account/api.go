@@ -5,6 +5,7 @@ import (
 
 	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/log"
+	"github.com/joinself/restful-client/pkg/pagination"
 	"github.com/joinself/restful-client/pkg/response"
 	"github.com/labstack/echo/v4"
 )
@@ -13,6 +14,7 @@ import (
 func RegisterHandlers(r *echo.Group, service Service, logger log.Logger) {
 	res := resource{service, logger}
 
+	r.GET("", res.list)
 	r.POST("", res.create)
 	r.DELETE("/:username", res.delete)
 	r.PUT("/:username/password", res.changePassword)
@@ -130,4 +132,27 @@ func (r resource) changePassword(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+// ListAccounts godoc
+// @Summary        Lists all configured accounts.
+// @Description    Retrieves and lists all the configured accounts for the restful client. You must be authenticated as an admin.
+// @Tags           accounts
+// @Accept         json
+// @Produce        json
+// @Security       BearerAuth
+// @Success        200 {object} ExtListResponse "Successful operation"
+// @Failure        404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
+// @Router         /accounts [get]
+func (r resource) list(c echo.Context) error {
+	user := acl.CurrentUser(c)
+	if user == nil || !user.IsAdmin() {
+		return c.JSON(response.DefaultNotFoundError())
+	}
+
+	apps := r.service.List(c.Request().Context())
+	pages := pagination.NewFromRequest(c.Request(), len(apps))
+	pages.Items = apps
+
+	return c.JSON(http.StatusOK, pages)
 }

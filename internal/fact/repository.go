@@ -116,16 +116,15 @@ func (r repository) SetStatus(ctx context.Context, connID int, id string, status
 	return r.Update(ctx, fact)
 }
 
-var facts []entity.Fact
-
 func (r repository) FindByRequestID(ctx context.Context, connectionID *int, requestID string) ([]entity.Fact, error) {
+	var facts []entity.Fact
 
 	sql := r.db.With(ctx).
 		Select().
 		OrderBy("id").
 		Where(&dbx.HashExp{"request_id": requestID})
 	if connectionID != nil {
-		sql.AndWhere(&dbx.HashExp{"connection_id": connectionID})
+		sql.AndWhere(&dbx.HashExp{"connection_id": *connectionID})
 	}
 
 	err := sql.All(&facts)

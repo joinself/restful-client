@@ -17,6 +17,7 @@ type Service interface {
 	SetPassword(ctx context.Context, username, password, newPassword string) error
 	Delete(ctx context.Context, username string) error
 	Count(ctx context.Context) (int, error)
+	List(ctx context.Context) []ExtAccount
 }
 
 // FactService service to manage sending and receiving fact requests
@@ -97,4 +98,22 @@ func (s service) Delete(ctx context.Context, username string) error {
 // Count returns the number of accounts.
 func (s service) Count(ctx context.Context) (int, error) {
 	return s.repo.Count(ctx)
+}
+
+func (s service) List(ctx context.Context) []ExtAccount {
+	accounts, err := s.repo.List(ctx)
+	if err != nil {
+		return []ExtAccount{}
+	}
+
+	output := []ExtAccount{}
+	for _, a := range accounts {
+		output = append(output, ExtAccount{
+			UserName:               a.UserName,
+			Resources:              a.Resources,
+			RequiresPasswordChange: (a.RequiresPasswordChange != 0),
+		})
+	}
+
+	return output
 }
