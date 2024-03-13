@@ -86,7 +86,7 @@ func (r resource) create(c echo.Context) error {
 // @Accept          json
 // @Produce         json
 // @Security        BearerAuth
-// @Param           id   path      int  true  "ID of the app to delete"
+// @Param           app_id   path      int  true  "ID of the app to delete"
 // @Success         204  {string} string  "No Content"
 // @Failure         404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
 // @Router          /apps/{app_id} [delete]

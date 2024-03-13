@@ -25,6 +25,38 @@ const docTemplate = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/accounts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves and lists all the configured accounts for the restful client. You must be authenticated as an admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Lists all configured accounts.",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/account.ExtListResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -281,7 +313,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "ID of the app to delete",
-                        "name": "id",
+                        "name": "app_id",
                         "in": "path",
                         "required": true
                     }
@@ -818,54 +850,6 @@ const docTemplate = `{
             }
         },
         "/apps/{app_id}/connections/{connection_id}/messages/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Deletes a specific message from a specific connection within an app.",
-                "tags": [
-                    "messages"
-                ],
-                "summary": "Deletes a message.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Application ID",
-                        "name": "app_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Connection ID",
-                        "name": "connection_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Message ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "Successfully deleted message, no content returned"
-                    },
-                    "404": {
-                        "description": "Resource not found or unauthorized access",
-                        "schema": {
-                            "$ref": "#/definitions/response.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/apps/{app_id}/connections/{connection_id}/messages/{jti}": {
             "get": {
                 "security": [
                     {
@@ -900,8 +884,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Message JTI (JWT ID)",
-                        "name": "jti",
+                        "description": "Message ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -955,8 +939,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Message ID (jti)",
-                        "name": "jti",
+                        "description": "Message ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     },
@@ -991,6 +975,52 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a specific message from a specific connection within an app.",
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Deletes a message.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Application ID",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Message ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted message, no content returned"
+                    },
+                    "404": {
+                        "description": "Resource not found or unauthorized access",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
@@ -1464,6 +1494,43 @@ const docTemplate = `{
                 }
             }
         },
+        "account.ExtAccount": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "requires_password_change": {
+                    "type": "boolean"
+                },
+                "resources": {
+                    "type": "string"
+                }
+            }
+        },
+        "account.ExtListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/account.ExtAccount"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "page_count": {
+                    "type": "integer"
+                },
+                "per_page": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
         "app.CreateAppRequest": {
             "type": "object",
             "properties": {
@@ -1877,6 +1944,9 @@ const docTemplate = `{
         "request.RequestResource": {
             "type": "object",
             "properties": {
+                "id": {
+                    "type": "string"
+                },
                 "uri": {
                     "type": "string"
                 }
