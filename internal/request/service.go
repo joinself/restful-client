@@ -34,6 +34,7 @@ type RequesterService interface {
 }
 
 type RequestResource struct {
+	ID  string `json:"id"`
 	URI string `json:"uri"`
 }
 
@@ -92,6 +93,7 @@ func (s service) Get(ctx context.Context, appID, id string) (Request, error) {
 		if err == nil {
 			for _, f := range facts {
 				resources = append(resources, RequestResource{
+					ID:  f.ID,
 					URI: f.URI(appID),
 				})
 			}
@@ -206,11 +208,6 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 	// Send the request.
 	resp, err := client.FactService().Request(r)
 	if err != nil {
-		println(",,......")
-		println(",,......")
-		println(err.Error())
-		println(",,......")
-		println(",,......")
 		s.markRequestAs(req.ID, entity.STATUS_ERRORED)
 	} else if resp.Status == "rejected" {
 		s.markRequestAs(req.ID, entity.STATUS_REJECTED)

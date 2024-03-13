@@ -49,6 +49,9 @@ func (r resource) get(c echo.Context) error {
 
 	f, err := r.service.Get(c.Request().Context(), conn.ID, c.Param("id"))
 	if err != nil {
+		println("......")
+		println(err.Error())
+		println("......")
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
