@@ -45,7 +45,7 @@ func (r resource) list(c echo.Context) error {
 // CreateApp godoc
 // @Summary         Creates a new app.
 // @Description     Creates a new app with the given parameters. You must be authenticated as an admin.
-// @Tags            app
+// @Tags            apps
 // @Accept          json
 // @Produce         json
 // @Security        BearerAuth

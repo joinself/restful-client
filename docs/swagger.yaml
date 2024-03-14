@@ -526,7 +526,7 @@ paths:
       - BearerAuth: []
       summary: Creates a new app.
       tags:
-      - app
+      - apps
   /apps/{app_id}:
     delete:
       consumes:
