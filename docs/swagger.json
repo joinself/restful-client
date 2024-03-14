@@ -247,7 +247,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "app"
+                    "apps"
                 ],
                 "summary": "Creates a new app.",
                 "parameters": [
