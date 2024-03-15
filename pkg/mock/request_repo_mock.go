@@ -16,7 +16,16 @@ func (m RequestRepositoryMock) SetRunner(runner support.SelfClientGetter) {
 
 }
 
-func (m RequestRepositoryMock) Get(ctx context.Context, id string) (entity.Request, error) {
+func (m RequestRepositoryMock) Get(ctx context.Context, appID, id string) (entity.Request, error) {
+	for _, item := range m.Items {
+		if item.ID == id {
+			return item, nil
+		}
+	}
+	return entity.Request{}, sql.ErrNoRows
+}
+
+func (m RequestRepositoryMock) GetByID(ctx context.Context, id string) (entity.Request, error) {
 	for _, item := range m.Items {
 		if item.ID == id {
 			return item, nil

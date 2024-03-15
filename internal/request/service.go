@@ -20,8 +20,8 @@ import (
 
 // Service encapsulates usecase logic for requests.
 type Service interface {
-	Get(ctx context.Context, appID, id string) (Request, error)
-	Create(ctx context.Context, appID string, conn *entity.Connection, input CreateRequest) (Request, error)
+	Get(ctx context.Context, appID, id string) (ExtRequest, error)
+	Create(ctx context.Context, appID string, conn *entity.Connection, input CreateRequest) (ExtRequest, error)
 	CreateFactsFromResponse(conn entity.Connection, req entity.Request, facts []selffact.Fact) []entity.Fact
 	SetRunner(runner support.SelfClientGetter)
 }
@@ -31,25 +31,6 @@ type RequesterService interface {
 	Request(*selffact.FactRequest) (*selffact.FactResponse, error)
 	GenerateQRCode(req *selffact.QRFactRequest) ([]byte, error)
 	GenerateDeepLink(req *selffact.DeepLinkFactRequest) (string, error)
-}
-
-type RequestResource struct {
-	ID  string `json:"id"`
-	URI string `json:"uri"`
-}
-
-// Fact represents the data about an request.
-type Request struct {
-	ID        string            `json:"id"`
-	Type      string            `json:"typ"`
-	Facts     []FactRequest     `json:"facts"`
-	Auth      bool              `json:"auth,omitempty"`
-	Status    string            `json:"status"`
-	QRCode    string            `json:"qr_code,omitempty"`
-	DeepLink  string            `json:"deep_link,omitempty"`
-	Resources []RequestResource `json:"resources,omitempty"`
-	CreatedAt time.Time         `json:"created_at"`
-	UpdatedAt time.Time         `json:"updated_at"`
 }
 
 type service struct {
@@ -75,43 +56,40 @@ func (s *service) SetRunner(runner support.SelfClientGetter) {
 }
 
 // Get returns the request with the specified the request ID.
-func (s service) Get(ctx context.Context, appID, id string) (Request, error) {
-	request, err := s.repo.Get(ctx, id)
+func (s service) Get(ctx context.Context, appID, id string) (ExtRequest, error) {
+	request, err := s.repo.Get(ctx, appID, id)
 	if err != nil {
-		return Request{}, err
+		return ExtRequest{}, err
 	}
 
 	var facts []FactRequest
 	err = json.Unmarshal(request.Facts, &facts)
 	if err != nil {
-		return Request{}, err
+		return ExtRequest{}, err
 	}
 
-	resources := []RequestResource{}
+	resources := []ExtResource{}
 	if request.IsResponded() {
 		facts, err := s.fRepo.FindByRequestID(ctx, request.ConnectionID, request.ID)
 		if err == nil {
 			for _, f := range facts {
-				resources = append(resources, RequestResource{
-					ID:  f.ID,
-					URI: f.URI(appID),
+				resources = append(resources, ExtResource{
+					ID:           f.ID,
+					ConnectionID: f.ISS,
 				})
 			}
 		}
 	}
 
-	return Request{
+	return ExtRequest{
 		ID:        request.ID,
-		Type:      request.Type,
 		Status:    request.Status,
-		Auth:      request.Auth,
 		Resources: resources,
-		Facts:     facts,
 	}, nil
 }
 
 // Create creates a new request.
-func (s service) Create(ctx context.Context, appID string, connection *entity.Connection, req CreateRequest) (Request, error) {
+func (s service) Create(ctx context.Context, appID string, connection *entity.Connection, req CreateRequest) (ExtRequest, error) {
 	id := entity.GenerateID()
 	now := time.Now()
 
@@ -124,11 +102,12 @@ func (s service) Create(ctx context.Context, appID string, connection *entity.Co
 	}
 	factsBody, err := json.Marshal(facts)
 	if err != nil {
-		return Request{}, err
+		return ExtRequest{}, err
 	}
 
 	f := entity.Request{
 		ID:          id,
+		AppID:       appID,
 		Type:        req.Type,
 		Facts:       factsBody,
 		Status:      "requested",
@@ -147,26 +126,26 @@ func (s service) Create(ctx context.Context, appID string, connection *entity.Co
 
 	err = s.repo.Create(ctx, f)
 	if err != nil {
-		return Request{}, err
+		return ExtRequest{}, err
 	}
 
 	if req.OutOfBand {
 		r, err := s.buildSelfFactQRRequest(f)
 		if err != nil {
 			s.logger.Debug("error building Self Fact Request")
-			return Request{}, err
+			return ExtRequest{}, err
 		}
 
 		client, ok := s.runner.Get(appID)
 		if !ok {
 			s.logger.Debug("client %s not found", appID)
-			return Request{}, err
+			return ExtRequest{}, err
 		}
 
 		qrdata, err := client.FactService().GenerateQRCode(r)
 		if err != nil {
 			s.logger.Debug("error generating QR Code")
-			return Request{}, err
+			return ExtRequest{}, err
 		}
 		link := ""
 		dlr, err := s.buildSelfFactDLRequest(f, appID)

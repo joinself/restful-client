@@ -1277,7 +1277,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/request.Request"
+                            "$ref": "#/definitions/request.ExtRequest"
                         }
                     }
                 }
@@ -1321,7 +1321,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/request.Request"
+                            "$ref": "#/definitions/request.ExtRequest"
                         }
                     }
                 }
@@ -1884,6 +1884,43 @@
                 }
             }
         },
+        "request.ExtRequest": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "string"
+                },
+                "deep_link": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "qr_code": {
+                    "type": "string"
+                },
+                "resources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.ExtResource"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.ExtResource": {
+            "type": "object",
+            "properties": {
+                "connection_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
         "request.FactRequest": {
             "type": "object",
             "properties": {
@@ -1895,58 +1932,6 @@
                     "items": {
                         "type": "string"
                     }
-                }
-            }
-        },
-        "request.Request": {
-            "type": "object",
-            "properties": {
-                "auth": {
-                    "type": "boolean"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "deep_link": {
-                    "type": "string"
-                },
-                "facts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/request.FactRequest"
-                    }
-                },
-                "id": {
-                    "type": "string"
-                },
-                "qr_code": {
-                    "type": "string"
-                },
-                "resources": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/request.RequestResource"
-                    }
-                },
-                "status": {
-                    "type": "string"
-                },
-                "typ": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "request.RequestResource": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "uri": {
-                    "type": "string"
                 }
             }
         },

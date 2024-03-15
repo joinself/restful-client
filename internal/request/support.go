@@ -7,6 +7,20 @@ import (
 	"github.com/joinself/restful-client/pkg/response"
 )
 
+type ExtResource struct {
+	ID           string `json:"id"`
+	ConnectionID string `json:"connection_id"`
+}
+
+type ExtRequest struct {
+	ID        string        `json:"id"`
+	AppID     string        `json:"app_id"`
+	Status    string        `json:"status,omitempty"`
+	QRCode    string        `json:"qr_code,omitempty"`
+	DeepLink  string        `json:"deep_link,omitempty"`
+	Resources []ExtResource `json:"resources,omitempty"`
+}
+
 type FactRequest struct {
 	Sources []string `json:"sources,omitempty"`
 	Name    string   `json:"name"`

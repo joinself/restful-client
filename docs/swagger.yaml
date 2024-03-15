@@ -280,6 +280,30 @@ definitions:
       type:
         type: string
     type: object
+  request.ExtRequest:
+    properties:
+      app_id:
+        type: string
+      deep_link:
+        type: string
+      id:
+        type: string
+      qr_code:
+        type: string
+      resources:
+        items:
+          $ref: '#/definitions/request.ExtResource'
+        type: array
+      status:
+        type: string
+    type: object
+  request.ExtResource:
+    properties:
+      connection_id:
+        type: string
+      id:
+        type: string
+    type: object
   request.FactRequest:
     properties:
       name:
@@ -288,40 +312,6 @@ definitions:
         items:
           type: string
         type: array
-    type: object
-  request.Request:
-    properties:
-      auth:
-        type: boolean
-      created_at:
-        type: string
-      deep_link:
-        type: string
-      facts:
-        items:
-          $ref: '#/definitions/request.FactRequest'
-        type: array
-      id:
-        type: string
-      qr_code:
-        type: string
-      resources:
-        items:
-          $ref: '#/definitions/request.RequestResource'
-        type: array
-      status:
-        type: string
-      typ:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  request.RequestResource:
-    properties:
-      id:
-        type: string
-      uri:
-        type: string
     type: object
   response.Error:
     properties:
@@ -1194,7 +1184,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/request.Request'
+            $ref: '#/definitions/request.ExtRequest'
       security:
       - BearerAuth: []
       summary: Sends a request request.
@@ -1222,7 +1212,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/request.Request'
+            $ref: '#/definitions/request.ExtRequest'
       security:
       - BearerAuth: []
       summary: Get request details.

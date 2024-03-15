@@ -33,7 +33,7 @@ type resource struct {
 // @Security     BearerAuth
 // @Param        app_id   path      string  true  "App id"
 // @Param        id   path      int  true  "Request request id"
-// @Success      200  {object}  Request
+// @Success      200  {object}  ExtRequest
 // @Router       /apps/{app_id}/requests/{id} [get]
 func (r resource) get(c echo.Context) error {
 	request, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
@@ -41,6 +41,7 @@ func (r resource) get(c echo.Context) error {
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
+	request.AppID = c.Param("app_id")
 	return c.JSON(http.StatusOK, request)
 }
 
@@ -53,7 +54,7 @@ func (r resource) get(c echo.Context) error {
 // @Security        BearerAuth
 // @Param           app_id   path      string  true  "App id"
 // @Param           request body CreateRequest true "query params"
-// @Success         200  {object}  Request
+// @Success         200  {object}  ExtRequest
 // @Router          /apps/{app_id}/requests [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateRequest
@@ -81,5 +82,6 @@ func (r resource) create(c echo.Context) error {
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
+	request.AppID = c.Param("app_id")
 	return c.JSON(http.StatusAccepted, request)
 }

@@ -19,19 +19,19 @@ import (
 
 type mockService struct{}
 
-func (m mockService) Get(ctx context.Context, appID, id string) (Request, error) {
+func (m mockService) Get(ctx context.Context, appID, id string) (ExtRequest, error) {
 	if id == "not_found_id" {
-		return Request{}, errors.New("not found")
+		return ExtRequest{}, errors.New("not found")
 	}
 
-	return Request{}, nil
+	return ExtRequest{}, nil
 }
 
-func (m mockService) Create(ctx context.Context, appID string, conn *entity.Connection, input CreateRequest) (Request, error) {
+func (m mockService) Create(ctx context.Context, appID string, conn *entity.Connection, input CreateRequest) (ExtRequest, error) {
 	if appID == "error" {
-		return Request{}, errors.New("error!")
+		return ExtRequest{}, errors.New("error!")
 	}
-	return Request{}, nil
+	return ExtRequest{}, nil
 }
 
 func (m mockService) CreateFactsFromResponse(conn entity.Connection, req entity.Request, facts []selffact.Fact) []entity.Fact {
@@ -106,7 +106,7 @@ func TestGetRequestAPIEndpointAsPlainWithPermissions(t *testing.T) {
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusOK,
-			WantResponse: `{"created_at":"0001-01-01T00:00:00Z", "facts":null, "id":"", "status":"", "typ":"", "updated_at":"0001-01-01T00:00:00Z"}`,
+			WantResponse: `{"app_id":"app_id", "id":""}`,
 		},
 		{
 			Name:         "connection not found",
