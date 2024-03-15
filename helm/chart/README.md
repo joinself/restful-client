@@ -9,7 +9,8 @@ This chart bootstraps a deployment of Self RESTful client on Kubernetes using th
 ## Install the Chart
 
 Add the required Kubernetes secrets:
-```
+```yaml
+# restful-client-secrets.yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -25,9 +26,13 @@ stringData:
 ```
 > Note: Replace the values above with those specific to your environment.
 
+```bash
+kubectl apply -f restful-client-secrets.yaml
+```
+
 Install the chart:
 ```bash
-helm install restful-client oci://ghcr.io/joinself/restful-client --set existingSecret=restful-client
+helm install restful-client oci://ghcr.io/joinself/charts/restful-client --set existingSecret=restful-client
 ```
 
 ## Uninstall the Chart

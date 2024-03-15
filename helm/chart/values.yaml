@@ -16,8 +16,8 @@ appEnvironment: ""
 existingSecret: ""
 
 secretKeys:
-  authUsername: api-username
-  authPassword: api-password
+  authUsername: auth-username
+  authPassword: auth-password
   storageKey: storage-key
   jwtSigningKey: jwt-signing-key
   appID: app-id
