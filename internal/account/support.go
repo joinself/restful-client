@@ -9,9 +9,10 @@ import (
 
 // CreateAccountRequest represents an account creation request.
 type CreateAccountRequest struct {
-	Username  string   `json:"username"`
-	Password  string   `json:"password"`
-	Resources []string `json:"resources"`
+	Username               string   `json:"username"`
+	Password               string   `json:"password"`
+	Resources              []string `json:"resources"`
+	RequiresPasswordChange *bool    `json:"requires_password_change,omitempty"`
 }
 
 // Validate validates the CreateAccountRequest fields.
@@ -36,7 +37,7 @@ func (m CreateAccountRequest) Validate() *response.Error {
 type CreateAccountResponse struct {
 	UserName               string `json:"user_name"`
 	Resources              string `json:"resources"`
-	RequiresPasswordChange int    `json:"requires_password_change"`
+	RequiresPasswordChange bool   `json:"requires_password_change"`
 }
 
 // ChangePasswordRequest represents an account update request.

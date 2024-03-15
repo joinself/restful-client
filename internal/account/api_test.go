@@ -37,7 +37,7 @@ func (m mockService) Create(ctx context.Context, input CreateAccountRequest) (Ac
 		entity.Account{
 			UserName:               input.Username,
 			Resources:              strings.Join(input.Resources, ","),
-			RequiresPasswordChange: 0,
+			RequiresPasswordChange: 1,
 		},
 	}, nil
 }
@@ -80,7 +80,7 @@ func TestCreateAccountAPIEndpointAsAdmin(t *testing.T) {
 			Body:         `{"username":"test_larger","password":"pass_larger","resources":[]}`,
 			Header:       nil,
 			WantStatus:   http.StatusCreated,
-			WantResponse: `{"requires_password_change":0, "resources":"", "user_name":"test_larger"}`,
+			WantResponse: `{"requires_password_change":true, "resources":"", "user_name":"test_larger"}`,
 		},
 		{
 			Name:         "invalid input",
@@ -270,7 +270,7 @@ func OTestChangePasswordAPIEndpointAsAdmin(t *testing.T) {
 			Body:         `{"new_password":"new_password","password":"pass_larger","resources":[]}`,
 			Header:       nil,
 			WantStatus:   http.StatusCreated,
-			WantResponse: `{"requires_password_change":0, "resources":"", "user_name":"test_larger"}`,
+			WantResponse: `{"requires_password_change":false, "resources":"", "user_name":"test_larger"}`,
 		},
 		{
 			Name:         "invalid input",

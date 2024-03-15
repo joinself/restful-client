@@ -91,7 +91,6 @@ func (r repository) Create(ctx context.Context, account entity.Account) error {
 	}
 	account.Salt = string(salt)
 	account.HashedPassword = r.hashPassword(account.Password, []byte(account.Salt))
-	account.RequiresPasswordChange = 1
 
 	return r.db.With(ctx).Model(&account).Insert()
 }
