@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "restful-client.fullname" . }}
+  labels:
+    {{- include "restful-client.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "restful-client.selectorLabels" . | nindent 4 }}
+  ports:
+    - port: {{ .Values.service.port }}

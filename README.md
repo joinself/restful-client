@@ -39,6 +39,10 @@ docker run -it \
 
 > Note: Replace `SELF_APP_ID` and `SELF_APP_SECRET` with your application ID and secret key.
 
+### Kubernetes
+
+[Helm chart](https://github.com/joinself/restful-client/tree/main/helm/chart)
+
 ### Build from source
 
 #### Requirements

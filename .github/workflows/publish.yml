@@ -1,4 +1,4 @@
-name: _build-docker
+name: _publish
 
 on:
   workflow_call:
@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Setup job
         uses: joinself/github-actions-public/setup-job@main
-      - name: Build Docker
+      - name: Publish
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -42,29 +42,29 @@ jobs:
             esac
           fi
 
-          if [[ ${GITHUB_REF} == "refs/heads/main" ]]; then
-            git tag -a ${version} -m "${version}"
-            git push origin ${version}
+          git tag -a ${version} -m "${version}"
+          git push origin ${version}
 
-            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f docker/Dockerfile .
-            docker tag ${CONTAINER_REGISTRY_URL}:${version} ${CONTAINER_REGISTRY_URL}:latest
-            echo "${GH_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker push ${CONTAINER_REGISTRY_URL}:${version}
-            docker push ${CONTAINER_REGISTRY_URL}:latest
+          docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f docker/Dockerfile .
+          docker tag ${CONTAINER_REGISTRY_URL}:${version} ${CONTAINER_REGISTRY_URL}:latest
+          echo "${GH_TOKEN}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ${CONTAINER_REGISTRY_URL}:${version}
+          docker push ${CONTAINER_REGISTRY_URL}:latest
 
-            subject=$(git log -n 1 --format=%s)
-            body=$(git log -n 1 --format=%b | grep -E '^\*|^-' | sed 's/^*/-/g') || true
-            if [[ -z ${body} ]]; then
-              release_notes="- ${subject}"
-            else
-              release_notes="${body}"
-            fi
-            gh release create "${version}" --notes "${release_notes}"
+          helm package helm/chart
+          pkg_name=$(`ls *.tgz)
+          helm push ${pkg_name} oci://ghcr.io/joinself/charts
 
-            slack-release-notification -v ${version}
+          subject=$(git log -n 1 --format=%s)
+          body=$(git log -n 1 --format=%b | grep -E '^\*|^-' | sed 's/^*/-/g') || true
+          if [[ -z ${body} ]]; then
+            release_notes="- ${subject}"
           else
-            docker build -t ${CONTAINER_REGISTRY_URL}:${version} -f docker/Dockerfile .
+            release_notes="${body}"
           fi
+          gh release create "${version}" --notes "${release_notes}"
+
+          slack-release-notification -v ${version}
       - name: Failure notification
         if: ${{ github.ref == 'refs/heads/main' && failure() }}
         uses: joinself/github-actions-public/failure-notification@main

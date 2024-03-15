@@ -22,11 +22,12 @@ jobs:
     with:
       continue-on-error: true
     secrets: inherit
-  test:
+  build:
     needs: [license-compliance, secret-scan]
-    uses: ./.github/workflows/test.yml
+    uses: ./.github/workflows/build.yml
     secrets: inherit
-  build-docker:
-    needs: test
-    uses: ./.github/workflows/build-docker.yml
+  publish:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: build
+    uses: ./.github/workflows/publish.yml
     secrets: inherit
