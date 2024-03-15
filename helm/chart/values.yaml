@@ -1,0 +1,39 @@
+image:
+  registry: ghcr.io
+  repository: joinself/restful-client
+  tag: latest
+  pullPolicy: IfNotPresent
+
+authUsername: ""
+authPassword: ""
+storageDir: /data
+storageKey: ""
+jwtSigningKey: ""
+appID: ""
+appSecret: ""
+appEnvironment: ""
+
+existingSecret: ""
+
+secretKeys:
+  authUsername: auth-username
+  authPassword: auth-password
+  storageKey: storage-key
+  jwtSigningKey: jwt-signing-key
+  appID: app-id
+  appSecret: app-secret
+  appEnvironment: app-environment
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources: {}
+
+persistence:
+  enabled: true
+  mountPath: /data
+  accessModes:
+    - ReadWriteOnce
+  size: 8Gi
+  storageClass: ""

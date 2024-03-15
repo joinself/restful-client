@@ -37,3 +37,6 @@ thunder-tests/
 
 # IDE
 .vscode
+
+*.tgz
+*.tar.gz
