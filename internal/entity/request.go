@@ -16,6 +16,7 @@ type RequestFacts struct {
 // Request represents a request record.
 type Request struct {
 	ID           string    `json:"id"`
+	AppID        string    `json:"app_id"`
 	Type         string    `json:"typ"`
 	ConnectionID *int      `json:"-"`
 	Facts        []byte    `json:"facts"`

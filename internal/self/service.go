@@ -193,7 +193,7 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 		return err
 	}
 
-	req, err := s.rRepo.Get(context.Background(), resp.CID)
+	req, err := s.rRepo.GetByID(context.Background(), resp.CID)
 	if err != nil {
 		req = entity.Request{
 			ConnectionID: &conn.ID,

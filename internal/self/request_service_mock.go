@@ -11,29 +11,29 @@ import (
 )
 
 type RequestServiceMock struct {
-	Items []request.Request
+	Items []request.ExtRequest
 }
 
 func (m RequestServiceMock) SetRunner(runner support.SelfClientGetter) {
 }
 
-func (m RequestServiceMock) Get(ctx context.Context, appID, id string) (request.Request, error) {
+func (m RequestServiceMock) Get(ctx context.Context, appID, id string) (request.ExtRequest, error) {
 	for _, item := range m.Items {
 		if item.ID == id {
 			return item, nil
 		}
 	}
-	return request.Request{}, sql.ErrNoRows
+	return request.ExtRequest{}, sql.ErrNoRows
 }
 
-func (m *RequestServiceMock) Create(ctx context.Context, appID string, connection *entity.Connection, input request.CreateRequest) (request.Request, error) {
-	r := request.Request{}
+func (m *RequestServiceMock) Create(ctx context.Context, appID string, connection *entity.Connection, input request.CreateRequest) (request.ExtRequest, error) {
+	r := request.ExtRequest{}
 	m.Items = append(m.Items, r)
 	return r, nil
 }
 
 func (m *RequestServiceMock) CreateFactsFromResponse(conn entity.Connection, req entity.Request, facts []selffact.Fact) []entity.Fact {
-	r := request.Request{}
+	r := request.ExtRequest{}
 	m.Items = append(m.Items, r)
 	return nil
 }

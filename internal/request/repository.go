@@ -2,8 +2,10 @@ package request
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/pkg/dbcontext"
 	"github.com/joinself/restful-client/pkg/log"
@@ -12,7 +14,7 @@ import (
 // Repository encapsulates the logic to access requests from the data source.
 type Repository interface {
 	// Get returns the request with the specified request ID.
-	Get(ctx context.Context, id string) (entity.Request, error)
+	Get(ctx context.Context, appID, id string) (entity.Request, error)
 	// Create saves a new request in the storage.
 	Create(ctx context.Context, request entity.Request) error
 	// Update updates the request with given ID in the storage.
@@ -21,6 +23,7 @@ type Repository interface {
 	Delete(ctx context.Context, id string) error
 	// SetStatus updates the status of the given request.
 	SetStatus(ctx context.Context, id string, status string) error
+	GetByID(ctx context.Context, id string) (entity.Request, error)
 }
 
 // repository persists requests in database
@@ -35,10 +38,20 @@ func NewRepository(db *dbcontext.DB, logger log.Logger) Repository {
 }
 
 // Get reads the request with the specified ID from the database.
-func (r repository) Get(ctx context.Context, id string) (entity.Request, error) {
-	var request entity.Request
-	err := r.db.With(ctx).Select().Model(id, &request)
-	return request, err
+func (r repository) Get(ctx context.Context, appID, id string) (entity.Request, error) {
+	var requests []entity.Request
+
+	err := r.db.With(ctx).
+		Select().
+		OrderBy("id").
+		Where(&dbx.HashExp{"id": id, "app_id": appID}).
+		All(&requests)
+
+	if len(requests) == 0 {
+		return entity.Request{}, errors.New("sql: no rows in result set")
+	}
+
+	return requests[0], err
 }
 
 // Create saves a new request record in the database.
@@ -54,7 +67,7 @@ func (r repository) Update(ctx context.Context, request entity.Request) error {
 
 // Delete deletes an request with the specified ID from the database.
 func (r repository) Delete(ctx context.Context, id string) error {
-	request, err := r.Get(ctx, id)
+	request, err := r.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -62,11 +75,17 @@ func (r repository) Delete(ctx context.Context, id string) error {
 }
 
 func (r repository) SetStatus(ctx context.Context, id string, status string) error {
-	request, err := r.Get(ctx, id)
+	request, err := r.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
 	request.Status = status
 	request.UpdatedAt = time.Now()
 	return r.Update(ctx, request)
+}
+
+func (r repository) GetByID(ctx context.Context, id string) (entity.Request, error) {
+	var request entity.Request
+	err := r.db.With(ctx).Select().Model(id, &request)
+	return request, err
 }
