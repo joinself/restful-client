@@ -24,7 +24,7 @@ stringData:
   app-secret: "sk_1:56qJGhYCJmTHsYChCp3sPSjmiGlN2yG0KakYDquMAD0"
   app-environment: "sandbox"
 ```
-> Note: Replace the values above with those specific to your environment.
+> Note: Replace the values shown above with those specific to your environment.
 
 ```bash
 kubectl apply -f restful-client-secrets.yaml
