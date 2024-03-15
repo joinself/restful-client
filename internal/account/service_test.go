@@ -69,6 +69,7 @@ func Test_service_CRUD(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, username, account.UserName)
+	assert.Equal(t, account.RequiresPasswordChange, 1)
 	assert.NotEmpty(t, account.CreatedAt)
 	assert.NotEmpty(t, account.UpdatedAt)
 	count, _ = s.Count(ctx)
@@ -91,4 +92,20 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Nil(t, err)
 	count, _ = s.Count(ctx)
 	assert.Equal(t, 0, count)
+
+	// successful creation without password change
+	username2 := "selfid2"
+	f := false
+	account2, err := s.Create(ctx, CreateAccountRequest{
+		Username:               username2,
+		Password:               "password",
+		Resources:              []string{"appid"},
+		RequiresPasswordChange: &f,
+	})
+	assert.Nil(t, err)
+	assert.Equal(t, username2, account2.UserName)
+	assert.Equal(t, account2.RequiresPasswordChange, 0)
+	assert.NotEmpty(t, account2.CreatedAt)
+	assert.NotEmpty(t, account2.UpdatedAt)
+
 }

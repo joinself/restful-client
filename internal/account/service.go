@@ -58,11 +58,19 @@ func (s service) Create(ctx context.Context, req CreateAccountRequest) (Account,
 
 	now := time.Now()
 	account := entity.Account{
-		UserName:  req.Username,
-		Password:  req.Password,
-		CreatedAt: now,
-		UpdatedAt: now,
+		UserName:               req.Username,
+		Password:               req.Password,
+		CreatedAt:              now,
+		UpdatedAt:              now,
+		RequiresPasswordChange: 1,
 	}
+
+	if req.RequiresPasswordChange != nil {
+		if *req.RequiresPasswordChange == false {
+			account.RequiresPasswordChange = 0
+		}
+	}
+
 	account.SetResources(req.Resources)
 	err = s.repo.Create(ctx, account)
 	if err != nil {

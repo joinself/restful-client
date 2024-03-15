@@ -60,7 +60,7 @@ func (r resource) create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, CreateAccountResponse{
 		UserName:               account.UserName,
 		Resources:              account.Resources,
-		RequiresPasswordChange: account.RequiresPasswordChange,
+		RequiresPasswordChange: (account.RequiresPasswordChange == 1),
 	})
 }
 
