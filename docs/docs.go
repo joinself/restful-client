@@ -291,49 +291,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/apps/{app_id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Deletes an existing app and sends a request for public information and avoids incoming comms from that app. You must be authenticated as an admin.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "apps"
-                ],
-                "summary": "Deletes an existing app.",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "ID of the app to delete",
-                        "name": "app_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
-                        "schema": {
-                            "$ref": "#/definitions/response.Error"
-                        }
-                    }
-                }
-            }
-        },
         "/apps/{app_id}/connections": {
             "get": {
                 "security": [
@@ -1329,6 +1286,107 @@ const docTemplate = `{
                 }
             }
         },
+        "/apps/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing app and sends a request for public information and avoids incoming comms from that app. You must be authenticated as an admin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apps"
+                ],
+                "summary": "Deletes an existing app.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the app to delete",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{id}/config": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows you to update the configuration of a specific app. The user must be an admin to perform this action.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apps"
+                ],
+                "summary": "Update the configuration of a specific app",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID of the app to be configured. This is a unique identifier.",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Configuration details for the app. Contains the new settings that will be applied.",
+                        "name": "config",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/app.AppConfig"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully updated the app configuration. No Content is returned.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - The request could not be understood or was missing required parameters.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found - The app with the specified ID does not exist, or the user does not have the required permissions to access it.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/healthcheck": {
             "get": {
                 "description": "check the service is up and running",
@@ -1469,6 +1527,9 @@ const docTemplate = `{
                 "password": {
                     "type": "string"
                 },
+                "requires_password_change": {
+                    "type": "boolean"
+                },
                 "resources": {
                     "type": "array",
                     "items": {
@@ -1484,7 +1545,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "requires_password_change": {
-                    "type": "integer"
+                    "type": "boolean"
                 },
                 "resources": {
                     "type": "string"
@@ -1528,6 +1589,23 @@ const docTemplate = `{
                 },
                 "total_count": {
                     "type": "integer"
+                }
+            }
+        },
+        "app.AppConfig": {
+            "type": "object",
+            "properties": {
+                "allows_calls": {
+                    "type": "boolean"
+                },
+                "allows_messaging": {
+                    "type": "boolean"
+                },
+                "listed": {
+                    "type": "boolean"
+                },
+                "sync_metrics": {
+                    "type": "boolean"
                 }
             }
         },
