@@ -2,9 +2,12 @@ package app
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"os"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/self"
 	"github.com/joinself/restful-client/pkg/log"
@@ -18,6 +21,7 @@ type Service interface {
 	Get(ctx context.Context, id string) (App, error)
 	Create(ctx context.Context, input CreateAppRequest) (App, error)
 	Delete(ctx context.Context, id string) (App, error)
+	SetConfig(ctx context.Context, id string, ac AppConfig) error
 }
 
 // FactService service to manage sending and receiving fact requests
@@ -121,4 +125,32 @@ func (s service) Delete(ctx context.Context, id string) (App, error) {
 // Count returns the number of apps.
 func (s service) Count(ctx context.Context) (int, error) {
 	return s.repo.Count(ctx)
+}
+
+func (s service) SetConfig(ctx context.Context, id string, ac AppConfig) error {
+	client, ok := s.runner.Get(id)
+	if !ok {
+		return errors.New("app not configured")
+	}
+
+	cid := uuid.New().String()
+	jti := uuid.New().String()
+	p := map[string]interface{}{
+		"typ":  "config.set",
+		"cid":  cid,
+		"data": ac,
+		"jti":  jti,
+		"iss":  client.SelfAppID(),
+	}
+	body, err := json.Marshal(p)
+	if err != nil {
+		return errors.New("internal error")
+	}
+
+	client.MessagingService().Send(
+		[]string{"self_portal:1"},
+		cid,
+		body,
+	)
+	return nil
 }

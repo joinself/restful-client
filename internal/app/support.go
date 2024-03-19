@@ -48,3 +48,10 @@ func (m CreateAppRequest) Validate() *response.Error {
 		Details: err.Error(),
 	}
 }
+
+type AppConfig struct {
+	Listed          *bool `json:"listed,omitempty"`
+	AllowsMessaging *bool `json:"allows_messaging,omitempty"`
+	AllowsCalls     *bool `json:"allows_calls,omitempty"`
+	SyncMetrics     *bool `json:"sync_metrics,omitempty"`
+}

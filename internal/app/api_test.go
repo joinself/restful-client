@@ -50,6 +50,10 @@ func (m mockService) Delete(ctx context.Context, id string) (App, error) {
 	return App{}, nil
 }
 
+func (m mockService) SetConfig(ctx context.Context, id string, ac AppConfig) error {
+	return nil
+}
+
 func TestListAppsAPIEndpointAsAdmin(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
@@ -231,6 +235,65 @@ func TestDeleteAppAPIEndpointAsPlain(t *testing.T) {
 			Header:       nil,
 			WantStatus:   http.StatusNotFound,
 			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+		},
+	}
+	for _, tc := range tests {
+		test.Endpoint(t, router, tc)
+	}
+}
+
+func TestSetAppConfigAsPLain(t *testing.T) {
+	logger, _ := log.NewForTest()
+	router := test.MockRouter(logger)
+
+	rg := router.Group("/apps")
+	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	RegisterHandlers(rg, mockService{}, logger)
+
+	tests := []test.APITestCase{
+		{
+			Name:         "success",
+			Method:       "POST",
+			URL:          "/apps/app_id/config",
+			Body:         `{"listed":false}`,
+			Header:       nil,
+			WantStatus:   http.StatusNotFound,
+			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+		},
+	}
+	for _, tc := range tests {
+		test.Endpoint(t, router, tc)
+	}
+}
+
+func TestSetAppConfigAsAdmin(t *testing.T) {
+	logger, _ := log.NewForTest()
+	router := test.MockRouter(logger)
+
+	rg := router.Group("/apps")
+	rg.Use(acl.AuthAsAdminMiddleware())
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	RegisterHandlers(rg, mockService{}, logger)
+
+	tests := []test.APITestCase{
+		{
+			Name:         "success",
+			Method:       "POST",
+			URL:          "/apps/app_id/config",
+			Body:         `{"listed":false}`,
+			Header:       nil,
+			WantStatus:   http.StatusAccepted,
+			WantResponse: ``,
+		},
+		{
+			Name:         "invalid input",
+			Method:       "POST",
+			URL:          "/apps/app_id/config",
+			Body:         `{]`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"The provided body is not valid", "error":"Invalid input", "status":400}`,
 		},
 	}
 	for _, tc := range tests {

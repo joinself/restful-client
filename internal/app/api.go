@@ -17,6 +17,7 @@ func RegisterHandlers(r *echo.Group, s Service, logger log.Logger) {
 	r.GET("", res.list)
 	r.POST("", res.create)
 	r.DELETE("/:id", res.delete)
+	r.POST("/:id/config", res.config)
 }
 
 type resource struct {
@@ -86,10 +87,10 @@ func (r resource) create(c echo.Context) error {
 // @Accept          json
 // @Produce         json
 // @Security        BearerAuth
-// @Param           app_id   path      int  true  "ID of the app to delete"
+// @Param           id   path      int  true  "ID of the app to delete"
 // @Success         204  {string} string  "No Content"
 // @Failure         404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
-// @Router          /apps/{app_id} [delete]
+// @Router          /apps/{id} [delete]
 func (r resource) delete(c echo.Context) error {
 	user := acl.CurrentUser(c)
 	if user == nil || !user.IsAdmin() {
@@ -101,4 +102,34 @@ func (r resource) delete(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+// SetAppConfig godoc
+// @Summary Update the configuration of a specific app
+// @Description This endpoint allows you to update the configuration of a specific app. The user must be an admin to perform this action.
+// @Tags apps
+// @Accept  json
+// @Produce  json
+// @Security BearerAuth
+// @Param id path int true "ID of the app to be configured. This is a unique identifier."
+// @Param config body AppConfig true "Configuration details for the app. Contains the new settings that will be applied."
+// @Success 204 {string} string "Successfully updated the app configuration. No Content is returned."
+// @Failure 400 {object} response.Error "Bad Request - The request could not be understood or was missing required parameters."
+// @Failure 404 {object} response.Error "Not Found - The app with the specified ID does not exist, or the user does not have the required permissions to access it."
+// @Router /apps/{id}/config [post]
+func (r resource) config(c echo.Context) error {
+	user := acl.CurrentUser(c)
+	if user == nil || !user.IsAdmin() {
+		return c.JSON(response.DefaultNotFoundError())
+	}
+
+	var input AppConfig
+	if err := c.Bind(&input); err != nil {
+		r.logger.With(c.Request().Context()).Info(err)
+		return c.JSON(response.DefaultBadRequestError())
+	}
+
+	r.service.SetConfig(c.Request().Context(), c.Param("id"), input)
+
+	return c.NoContent(http.StatusAccepted)
 }
