@@ -1,7 +1,7 @@
 image:
   registry: ghcr.io
   repository: joinself/restful-client
-  tag: latest
+  tag: 0.74.0
   pullPolicy: IfNotPresent
 
 authUsername: ""
