@@ -69,7 +69,7 @@ func (s service) Get(ctx context.Context, appID, id string) (ExtRequest, error) 
 	}
 
 	resources := []ExtResource{}
-	if request.IsResponded() {
+	if request.IsResponded() || request.IsOutOfBand() {
 		facts, err := s.fRepo.FindByRequestID(ctx, request.ConnectionID, request.ID)
 		if err == nil {
 			for _, f := range facts {
@@ -113,6 +113,7 @@ func (s service) Create(ctx context.Context, appID string, connection *entity.Co
 		Status:      "requested",
 		Callback:    req.Callback,
 		Description: req.Description,
+		OutOfBand:   req.OutOfBand,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}

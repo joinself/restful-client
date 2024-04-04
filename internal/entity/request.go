@@ -22,6 +22,7 @@ type Request struct {
 	Facts        []byte    `json:"facts"`
 	Description  string    `json:"description"`
 	Auth         bool      `json:"auth,omitempty"`
+	OutOfBand    bool      `json:"out_of_band,omitempty"`
 	Status       string    `json:"status"`
 	Callback     string    `json:"callback"`
 	CreatedAt    time.Time `json:"created_at"`
@@ -30,4 +31,8 @@ type Request struct {
 
 func (r *Request) IsResponded() bool {
 	return (r.Status == "responded")
+}
+
+func (r *Request) IsOutOfBand() bool {
+	return r.OutOfBand
 }
