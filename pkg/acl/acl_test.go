@@ -12,6 +12,13 @@ func TestIsAPermittedResource(t *testing.T) {
 		want      bool
 	}{
 		{
+			name:      "Wildcard on different resources",
+			permitted: []string{"ANY /apps/710f4305-67f7-4ab5-a057-deb0e1c1ad52/connections/*/messages"},
+			current:   "POST /apps/710f4305-67f7-4ab5-a057-deb0e1c1ad52/connections/78948918892/messages",
+			want:      true,
+		},
+
+		{
 			name:      "Exact match",
 			permitted: []string{"GET /apps/resource1"},
 			current:   "GET /apps/resource1",
