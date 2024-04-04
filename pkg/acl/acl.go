@@ -140,7 +140,7 @@ func isWildcardMatch(tplParts, curParts []string) bool {
 		return false
 	}
 
-	if curParts[0] != tplParts[0] && tplParts[0] == "ANY" {
+	if curParts[0] != tplParts[0] && tplParts[0] != "ANY" {
 		return false
 	}
 
