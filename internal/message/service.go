@@ -19,6 +19,8 @@ type Service interface {
 	Create(ctx context.Context, appID, connectionID string, connection int, input CreateMessageRequest) (Message, error)
 	Update(ctx context.Context, appID string, connectionID int, selfID string, jti string, req UpdateMessageRequest) (Message, error)
 	Delete(ctx context.Context, connectionID int, jti string) error
+	MarkAsRead(ctx context.Context, appID, connection, jti string) error
+	MarkAsReceived(ctx context.Context, appID, connection, jti string) error
 }
 
 // Message represents the data about an message.
@@ -143,6 +145,26 @@ func (s service) Query(ctx context.Context, connection int, messagesSince int, o
 		result = append(result, newMessageFromEntity(item))
 	}
 	return result, nil
+}
+
+// MarkAsRead marks the given message as read.
+func (s service) MarkAsRead(ctx context.Context, appID, connection, jti string) error {
+	client, ok := s.runner.Get(appID)
+	if !ok {
+		return nil
+	}
+	client.ChatService().Read([]string{connection}, []string{jti}, "")
+	return nil
+}
+
+// MarkAsRead marks the given message as received.
+func (s service) MarkAsReceived(ctx context.Context, appID, connection, jti string) error {
+	client, ok := s.runner.Get(appID)
+	if !ok {
+		return nil
+	}
+	client.ChatService().Delivered([]string{connection}, []string{jti}, "")
+	return nil
 }
 
 func (s service) sendMessage(appID, connection string, body string) (*chat.Message, error) {
