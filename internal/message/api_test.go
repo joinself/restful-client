@@ -59,6 +59,12 @@ func (m mockService) Delete(ctx context.Context, connectionID int, jti string) e
 	}
 	return nil
 }
+func (m mockService) MarkAsRead(ctx context.Context, appID, connection, jti string, connectionID int) error {
+	return nil
+}
+func (m mockService) MarkAsReceived(ctx context.Context, appID, connection, jti string, connectionID int) error {
+	return nil
+}
 
 type mockConnectionService struct{}
 
@@ -135,7 +141,7 @@ func TestGetMessageAPIEndpointAsPlainWithPermissions(t *testing.T) {
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusOK,
-			WantResponse: `{"body":"body", "cid":"cid", "created_at":"0001-01-01T00:00:00Z", "iat":"0001-01-01T00:00:00Z", "connection_id":"iss", "id":"", "rid":"", "updated_at":"0001-01-01T00:00:00Z"}`,
+			WantResponse: `{"body":"body", "cid":"cid", "created_at":"0001-01-01T00:00:00Z", "iat":"0001-01-01T00:00:00Z", "connection_id":"iss", "id":"", "read":false, "received":false, "rid":"", "updated_at":"0001-01-01T00:00:00Z"}`,
 		},
 		{
 			Name:         "connection not found",

@@ -35,6 +35,8 @@ type Service interface {
 	processChatMessage(payload map[string]interface{}) error
 	processConnectionResp(payload map[string]interface{}) error
 	processIncomingMessage(m *messaging.Message)
+	processChatMessageRead(payload map[string]interface{}) error
+	processChatMessageDelivered(payload map[string]interface{}) error
 }
 
 // WebhookPayload represents a the payload that will be resent to the
@@ -297,7 +299,7 @@ func (s *service) processChatMessage(payload map[string]interface{}) error {
 func (s *service) processChatMessageRead(payload map[string]interface{}) error {
 	cids := payload["cids"].([]interface{})
 	if len(cids) == 0 {
-		return nil
+		return errors.New("invalid cids received")
 	}
 
 	// Get connection or create one.
@@ -315,7 +317,7 @@ func (s *service) processChatMessageRead(payload map[string]interface{}) error {
 func (s *service) processChatMessageDelivered(payload map[string]interface{}) error {
 	cids := payload["cids"].([]interface{})
 	if len(cids) == 0 {
-		return nil
+		return errors.New("invalid cids received")
 	}
 
 	// Get connection or create one.
