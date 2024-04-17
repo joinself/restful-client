@@ -236,12 +236,12 @@ func (r resource) delete(c echo.Context) error {
 // @Failure         500  {object}  response.Error "An error occurred while processing your request. Please try again."
 // @Router          /apps/{app_id}/connections/{connection_id}/messages/{id}/read [post]
 func (r resource) read(c echo.Context) error {
-	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	r.service.MarkAsRead(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"))
+	r.service.MarkAsRead(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"), connection.ID)
 	if err != nil {
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
@@ -262,12 +262,12 @@ func (r resource) read(c echo.Context) error {
 // @Failure         500  {object}  response.Error "Internal server error while processing your request"
 // @Router          /apps/{app_id}/connections/{connection_id}/messages/{id}/received [post]
 func (r resource) received(c echo.Context) error {
-	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	err = r.service.MarkAsReceived(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"))
+	err = r.service.MarkAsReceived(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"), connection.ID)
 	if err != nil {
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}

@@ -14,6 +14,8 @@ type Message struct {
 	RID          string    `json:"rid"`
 	Body         string    `json:"body"`
 	IAT          time.Time `json:"iat"`
+	Read         bool      `json:"read"`
+	Received     bool      `json:"received"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
