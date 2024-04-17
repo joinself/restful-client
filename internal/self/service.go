@@ -158,6 +158,14 @@ func (s *service) processIncomingMessage(m *messaging.Message) {
 
 	case "identities.facts.issue":
 		_ = s.processIssuedFacts(m.Payload, payload)
+
+	case "chat.message.read":
+		// TODO: do something
+		_ = s.processChatMessageRead(payload)
+
+	case "chat.message.delivered":
+		_ = s.processChatMessageDelivered(payload)
+
 	}
 }
 
@@ -284,6 +292,42 @@ func (s *service) processChatMessage(payload map[string]interface{}) error {
 		Type: webhook.TYPE_MESSAGE,
 		URI:  fmt.Sprintf("/apps/%s/connections/%s/messages/%s", s.selfID, c.SelfID, msg.JTI),
 		Data: msg})
+}
+
+func (s *service) processChatMessageRead(payload map[string]interface{}) error {
+	cids := payload["cids"].([]interface{})
+	if len(cids) == 0 {
+		return nil
+	}
+
+	// Get connection or create one.
+	c, err := s.getOrCreateConnection(payload["iss"].(string), "-")
+	if err != nil {
+		s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
+		return err
+	}
+
+	m, err := s.mRepo.Get(context.Background(), c.ID, cids[0].(string))
+	m.Read = true
+	return s.mRepo.Update(context.Background(), m)
+}
+
+func (s *service) processChatMessageDelivered(payload map[string]interface{}) error {
+	cids := payload["cids"].([]interface{})
+	if len(cids) == 0 {
+		return nil
+	}
+
+	// Get connection or create one.
+	c, err := s.getOrCreateConnection(payload["iss"].(string), "-")
+	if err != nil {
+		s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
+		return err
+	}
+
+	m, err := s.mRepo.Get(context.Background(), c.ID, cids[0].(string))
+	m.Received = true
+	return s.mRepo.Update(context.Background(), m)
 }
 
 func (s *service) getOrCreateConnection(selfID, name string) (entity.Connection, error) {
