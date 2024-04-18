@@ -20,6 +20,8 @@ func RegisterHandlers(r *echo.Group, service Service, cService connection.Servic
 	r.POST("/:app_id/connections/:connection_id/messages", res.create)
 	r.PUT("/:app_id/connections/:connection_id/messages/:id", res.update)
 	r.DELETE("/:app_id/connections/:connection_id/messages/:id", res.delete)
+	r.POST("/:app_id/connections/:connection_id/messages/:id/read", res.read)
+	r.POST("/:app_id/connections/:connection_id/messages/:id/received", res.received)
 }
 
 var (
@@ -217,4 +219,58 @@ func (r resource) delete(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// MarkMessageAsRead    godoc
+// @Summary         Marks a specific message as read
+// @Description     This endpoint allows you to mark a specific message as read in a given application by its connection ID and message ID.
+// @Tags            messages
+// @Security        BearerAuth
+// @Accept          json
+// @Produce         json
+// @Param           app_id   path   string  true  "Unique identifier of the application"
+// @Param           connection_id   path   string  true  "Unique identifier of the connection"
+// @Param           id   path   string  true  "Unique identifier of the message to be marked as read"
+// @Success         204  {object}  nil "Successfully marked the message as read. No content is returned."
+// @Failure         404  {object}  response.Error "The requested resource could not be found, or you're not authorized to access it."
+// @Failure         500  {object}  response.Error "An error occurred while processing your request. Please try again."
+// @Router          /apps/{app_id}/connections/{connection_id}/messages/{id}/read [post]
+func (r resource) read(c echo.Context) error {
+	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	if err != nil {
+		return c.JSON(response.DefaultNotFoundError())
+	}
+
+	r.service.MarkAsRead(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"), connection.ID)
+	if err != nil {
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
+// MarkMessageAsReceived godoc
+// @Summary         Marks a message as received
+// @Description     Updates the status of the specified message to 'received'.
+// @Tags            messages
+// @Security        BearerAuth
+// @Param           app_id   path   string  true  "Application ID"
+// @Param           connection_id   path   string  true  "Connection ID"
+// @Param           id   path   string  true  "Message ID"
+// @Success         200  {object}  nil "Successfully updated message status to received"
+// @Failure         404  {object}  response.Error "Message not found or unauthorized access"
+// @Failure         500  {object}  response.Error "Internal server error while processing your request"
+// @Router          /apps/{app_id}/connections/{connection_id}/messages/{id}/received [post]
+func (r resource) received(c echo.Context) error {
+	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	if err != nil {
+		return c.JSON(response.DefaultNotFoundError())
+	}
+
+	err = r.service.MarkAsReceived(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"), connection.ID)
+	if err != nil {
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
+	}
+
+	return c.NoContent(http.StatusOK)
 }

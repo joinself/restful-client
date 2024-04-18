@@ -19,6 +19,8 @@ type Service interface {
 	Create(ctx context.Context, appID, connectionID string, connection int, input CreateMessageRequest) (Message, error)
 	Update(ctx context.Context, appID string, connectionID int, selfID string, jti string, req UpdateMessageRequest) (Message, error)
 	Delete(ctx context.Context, connectionID int, jti string) error
+	MarkAsRead(ctx context.Context, appID, connection, jti string, connectionID int) error
+	MarkAsReceived(ctx context.Context, appID, connection, jti string, connectionID int) error
 }
 
 // Message represents the data about an message.
@@ -29,6 +31,8 @@ type Message struct {
 	RID          string    `json:"rid"`
 	Body         string    `json:"body"`
 	IAT          time.Time `json:"iat"`
+	Read         bool      `json:"read"`
+	Received     bool      `json:"received"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -41,6 +45,8 @@ func newMessageFromEntity(m entity.Message) Message {
 		RID:          m.RID,
 		Body:         m.Body,
 		IAT:          m.IAT,
+		Read:         m.Read,
+		Received:     m.Received,
 		CreatedAt:    m.CreatedAt,
 		UpdatedAt:    m.UpdatedAt,
 	}
@@ -143,6 +149,45 @@ func (s service) Query(ctx context.Context, connection int, messagesSince int, o
 		result = append(result, newMessageFromEntity(item))
 	}
 	return result, nil
+}
+
+// MarkAsRead marks the given message as read.
+func (s service) MarkAsRead(ctx context.Context, appID, connection, jti string, connectionID int) error {
+	message, err := s.repo.Get(ctx, connectionID, jti)
+	if err != nil {
+		return err
+	}
+	message.Read = true
+	if err := s.repo.Update(ctx, message); err != nil {
+		return err
+	}
+
+	// Send the confirmation to the connection.
+	client, ok := s.runner.Get(appID)
+	if !ok {
+		return nil
+	}
+	client.ChatService().Read([]string{connection}, []string{jti}, "")
+	return nil
+}
+
+// MarkAsRead marks the given message as received.
+func (s service) MarkAsReceived(ctx context.Context, appID, connection, jti string, connectionID int) error {
+	message, err := s.repo.Get(ctx, connectionID, jti)
+	if err != nil {
+		return err
+	}
+	message.Received = true
+	if err := s.repo.Update(ctx, message); err != nil {
+		return err
+	}
+
+	client, ok := s.runner.Get(appID)
+	if !ok {
+		return nil
+	}
+	client.ChatService().Delivered([]string{connection}, []string{jti}, "")
+	return nil
 }
 
 func (s service) sendMessage(appID, connection string, body string) (*chat.Message, error) {

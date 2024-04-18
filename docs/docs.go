@@ -1028,6 +1028,120 @@ const docTemplate = `{
                 }
             }
         },
+        "/apps/{app_id}/connections/{connection_id}/messages/{id}/read": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "This endpoint allows you to mark a specific message as read in a given application by its connection ID and message ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Marks a specific message as read",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier of the application",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique identifier of the connection",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique identifier of the message to be marked as read",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully marked the message as read. No content is returned."
+                    },
+                    "404": {
+                        "description": "The requested resource could not be found, or you're not authorized to access it.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "An error occurred while processing your request. Please try again.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{app_id}/connections/{connection_id}/messages/{id}/received": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates the status of the specified message to 'received'.",
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Marks a message as received",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Application ID",
+                        "name": "app_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Connection ID",
+                        "name": "connection_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Message ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully updated message status to received"
+                    },
+                    "404": {
+                        "description": "Message not found or unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error while processing your request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/apps/{app_id}/connections/{connection_id}/notify": {
             "post": {
                 "security": [
@@ -1469,6 +1583,9 @@ const docTemplate = `{
                 "password": {
                     "type": "string"
                 },
+                "requires_password_change": {
+                    "type": "boolean"
+                },
                 "resources": {
                     "type": "array",
                     "items": {
@@ -1484,7 +1601,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "requires_password_change": {
-                    "type": "integer"
+                    "type": "boolean"
                 },
                 "resources": {
                     "type": "string"

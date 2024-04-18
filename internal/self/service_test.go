@@ -228,3 +228,63 @@ func TestEnsureSelfClientIsStarted(t *testing.T) {
 	s.Run()
 	assert.True(t, c.sMock.Started)
 }
+
+func TestProcessChatMesageRead(t *testing.T) {
+	c := config{}
+	s := buildService(&c)
+
+	tests := map[bool][]interface{}{
+		true:  []interface{}{},
+		false: []interface{}{"cid"},
+	}
+
+	for expectedError, cids := range tests {
+		payload := map[string]interface{}{
+			"typ":    "chat.message.read",
+			"iss":    "ISS",
+			"msg":    "MSG",
+			"jti":    "JTI",
+			"aud":    "AUD",
+			"status": "accepted",
+			"cids":   cids,
+		}
+		var ExportProcessReadMessage = (Service).processChatMessageRead
+		err := ExportProcessReadMessage(s, payload)
+		if expectedError {
+			assert.Error(t, err)
+		} else {
+			assert.NoError(t, err)
+		}
+	}
+
+}
+
+func TestProcessChatMesageReceived(t *testing.T) {
+	c := config{}
+	s := buildService(&c)
+
+	tests := map[bool][]interface{}{
+		true:  []interface{}{},
+		false: []interface{}{"cid"},
+	}
+
+	for expectedError, cids := range tests {
+		payload := map[string]interface{}{
+			"typ":    "chat.message.received",
+			"iss":    "ISS",
+			"msg":    "MSG",
+			"jti":    "JTI",
+			"aud":    "AUD",
+			"status": "accepted",
+			"cids":   cids,
+		}
+		var ExportProcessDeliveredMessage = (Service).processChatMessageDelivered
+		err := ExportProcessDeliveredMessage(s, payload)
+		if expectedError {
+			assert.Error(t, err)
+		} else {
+			assert.NoError(t, err)
+		}
+	}
+
+}
