@@ -165,8 +165,20 @@ func (s *service) processIncomingMessage(m *messaging.Message) {
 		// TODO: do something
 		_ = s.processChatMessageRead(payload)
 
-	case "chat.message.delivered":
-		_ = s.processChatMessageDelivered(payload)
+	case "chat.voice.setup":
+		_ = s.processChatVoiceSetup(payload)
+
+	case "chat.voice.start":
+		_ = s.processChatVoiceStart(payload)
+
+	case "chat.voice.accept":
+		_ = s.processChatVoiceAccept(payload)
+
+	case "chat.voice.stop":
+		_ = s.processChatVoiceStop(payload)
+
+	case "chat.voice.busy":
+		_ = s.processChatVoiceBusy(payload)
 
 	}
 }
@@ -330,6 +342,46 @@ func (s *service) processChatMessageDelivered(payload map[string]interface{}) er
 	m, err := s.mRepo.Get(context.Background(), c.ID, cids[0].(string))
 	m.Received = true
 	return s.mRepo.Update(context.Background(), m)
+}
+
+func (s *service) processChatVoiceSetup(payload map[string]interface{}) error {
+	return s.w.Post(webhook.WebhookPayload{
+		Type:    webhook.TYPE_VOICE_SETUP,
+		URI:     "",
+		Payload: payload,
+	})
+}
+
+func (s *service) processChatVoiceStart(payload map[string]interface{}) error {
+	return s.w.Post(webhook.WebhookPayload{
+		Type:    webhook.TYPE_VOICE_START,
+		URI:     "",
+		Payload: payload,
+	})
+}
+
+func (s *service) processChatVoiceAccept(payload map[string]interface{}) error {
+	return s.w.Post(webhook.WebhookPayload{
+		Type:    webhook.TYPE_VOICE_ACCEPT,
+		URI:     "",
+		Payload: payload,
+	})
+}
+
+func (s *service) processChatVoiceStop(payload map[string]interface{}) error {
+	return s.w.Post(webhook.WebhookPayload{
+		Type:    webhook.TYPE_VOICE_STOP,
+		URI:     "",
+		Payload: payload,
+	})
+}
+
+func (s *service) processChatVoiceBusy(payload map[string]interface{}) error {
+	return s.w.Post(webhook.WebhookPayload{
+		Type:    webhook.TYPE_VOICE_BUSY,
+		URI:     "",
+		Payload: payload,
+	})
 }
 
 func (s *service) getOrCreateConnection(selfID, name string) (entity.Connection, error) {
