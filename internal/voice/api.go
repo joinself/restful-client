@@ -13,7 +13,7 @@ import (
 func RegisterHandlers(r *echo.Group, service Service, cService connection.Service, logger log.Logger) {
 	res := resource{service, cService, logger}
 
-	r.POST("/:app_id/connections/:connection_id/call/:id/setup", res.setup)
+	r.POST("/:app_id/connections/:connection_id/call", res.setup)
 	r.POST("/:app_id/connections/:connection_id/call/:id/start", res.start)
 	r.POST("/:app_id/connections/:connection_id/call/:id/stop", res.stop)
 	r.POST("/:app_id/connections/:connection_id/call/:id/accept", res.accept)
@@ -43,9 +43,12 @@ func (r resource) setup(c echo.Context) error {
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	r.service.Setup(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), input.Name, c.Param("id"))
+	call, err := r.service.Setup(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), input.Name)
+	if err != nil {
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
+	}
 
-	return c.JSON(http.StatusOK, c.Param("id"))
+	return c.JSON(http.StatusOK, call)
 }
 
 func (r resource) start(c echo.Context) error {
@@ -93,45 +96,25 @@ func (r resource) accept(c echo.Context) error {
 }
 
 func (r resource) stop(c echo.Context) error {
-	var input CancelData
-	if err := c.Bind(&input); err != nil {
-		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(response.DefaultBadRequestError())
-	}
-
-	if reqErr := input.Validate(); reqErr != nil {
-		return c.JSON(reqErr.Status, reqErr)
-	}
-
 	// Get the connection id
 	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	r.service.Stop(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"), input.CID)
+	r.service.Stop(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"))
 
 	return c.JSON(http.StatusOK, c.Param("id"))
 }
 
 func (r resource) busy(c echo.Context) error {
-	var input CancelData
-	if err := c.Bind(&input); err != nil {
-		r.logger.With(c.Request().Context()).Info(err)
-		return c.JSON(response.DefaultBadRequestError())
-	}
-
-	if reqErr := input.Validate(); reqErr != nil {
-		return c.JSON(reqErr.Status, reqErr)
-	}
-
 	// Get the connection id
 	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	r.service.Busy(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"), input.CID)
+	r.service.Busy(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"))
 
 	return c.JSON(http.StatusOK, c.Param("id"))
 }
