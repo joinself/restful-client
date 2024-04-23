@@ -29,6 +29,7 @@ import (
 	"github.com/joinself/restful-client/internal/notification"
 	"github.com/joinself/restful-client/internal/request"
 	"github.com/joinself/restful-client/internal/self"
+	"github.com/joinself/restful-client/internal/voice"
 	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/dbcontext"
 	"github.com/joinself/restful-client/pkg/filter"
@@ -130,6 +131,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	appRepo := app.NewRepository(db, logger)
 	apikeyRepo := apikey.NewRepository(db, tokenChecker, logger)
 	metricRepo := metric.NewRepository(db, tokenChecker, logger)
+	voiceRepo := voice.NewRepository(db, logger)
 
 	// Services
 	rService := request.NewService(requestRepo, factRepo, attestationRepo, logger)
@@ -148,6 +150,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	rService.SetRunner(runner)
 	cService := connection.NewService(connectionRepo, runner, logger)
 	aService := app.NewService(appRepo, runner, logger)
+	vService := voice.NewService(voiceRepo, runner, logger)
 
 	// TODO: preload all deleted pi keys
 	apikeyRepo.PreloadDeleted(context.Background())
@@ -191,6 +194,11 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	)
 	metric.RegisterHandlers(appsGroup,
 		metric.NewService(cfg, metricRepo, logger),
+		logger,
+	)
+	voice.RegisterHandlers(appsGroup,
+		vService,
+		cService,
 		logger,
 	)
 
