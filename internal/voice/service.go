@@ -3,14 +3,15 @@ package voice
 import (
 	"context"
 	"errors"
-	"log"
 
 	"github.com/gofrs/uuid"
 	"github.com/joinself/restful-client/internal/entity"
+	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/support"
 )
 
 type Service interface {
+	Get(ctx context.Context, appID, recipient, callID string) (*entity.Call, error)
 	Start(ctx context.Context, appID, connectionID, callID string, data ProceedData) error
 	Accept(ctx context.Context, appID, recipient, callID string, data ProceedData) error
 	Busy(ctx context.Context, appID, recipient, callID string) error
@@ -26,6 +27,11 @@ type service struct {
 
 func NewService(repo Repository, runner support.SelfClientGetter, logger log.Logger) Service {
 	return service{repo, runner, logger}
+}
+
+func (s service) Get(ctx context.Context, appID, recipient, callID string) (*entity.Call, error) {
+	call, err := s.repo.Get(ctx, appID, recipient, callID)
+	return &call, err
 }
 
 func (s service) Setup(ctx context.Context, appID, recipient, name string) (*entity.Call, error) {

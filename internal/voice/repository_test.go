@@ -16,11 +16,10 @@ import (
 func TestRepository(t *testing.T) {
 	logger, _ := log.NewForTest()
 	db := test.DB(t)
-	test.ResetTables(t, db, "voice")
+	test.ResetTables(t, db, "call")
 	repo := NewRepository(db, logger)
 
 	ctx := context.Background()
-	// Generate random integer
 	appID, _ := uuid.NewV4()
 	connection, _ := uuid.NewV4()
 	callID, _ := uuid.NewV4()

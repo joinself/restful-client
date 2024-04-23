@@ -13,11 +13,11 @@ import (
 func RegisterHandlers(r *echo.Group, service Service, cService connection.Service, logger log.Logger) {
 	res := resource{service, cService, logger}
 
-	r.POST("/:app_id/connections/:connection_id/call", res.setup)
-	r.POST("/:app_id/connections/:connection_id/call/:id/start", res.start)
-	r.POST("/:app_id/connections/:connection_id/call/:id/stop", res.stop)
-	r.POST("/:app_id/connections/:connection_id/call/:id/accept", res.accept)
-	r.POST("/:app_id/connections/:connection_id/call/:id/busy", res.busy)
+	r.POST("/:app_id/connections/:connection_id/calls", res.setup)
+	r.POST("/:app_id/connections/:connection_id/calls/:id/start", res.start)
+	r.POST("/:app_id/connections/:connection_id/calls/:id/stop", res.stop)
+	r.POST("/:app_id/connections/:connection_id/calls/:id/accept", res.accept)
+	r.POST("/:app_id/connections/:connection_id/calls/:id/busy", res.busy)
 }
 
 type resource struct {
@@ -70,7 +70,7 @@ func (r resource) start(c echo.Context) error {
 
 	r.service.Start(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"), input)
 
-	return c.JSON(http.StatusOK, c.Param("id"))
+	return c.JSON(http.StatusOK, ``)
 }
 
 func (r resource) accept(c echo.Context) error {

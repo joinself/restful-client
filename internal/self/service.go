@@ -15,6 +15,7 @@ import (
 	"github.com/joinself/restful-client/internal/message"
 	"github.com/joinself/restful-client/internal/metric"
 	"github.com/joinself/restful-client/internal/request"
+	"github.com/joinself/restful-client/internal/voice"
 	"github.com/joinself/restful-client/pkg/helper"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/support"
@@ -57,36 +58,39 @@ type Config struct {
 	MessageRepo    message.Repository
 	RequestRepo    request.Repository
 	MetricRepo     metric.Repository
+	VoiceRepo      voice.Repository
 	Logger         log.Logger
 	Poster         webhook.Poster
 	RequestService request.Service
 }
 type service struct {
-	client   support.SelfClient
-	cRepo    connection.Repository
-	fRepo    fact.Repository
-	mRepo    message.Repository
-	rRepo    request.Repository
-	metRepo  metric.Repository
-	logger   log.Logger
-	selfID   string
-	w        webhook.Poster
-	rService request.Service
+	client    support.SelfClient
+	cRepo     connection.Repository
+	fRepo     fact.Repository
+	mRepo     message.Repository
+	rRepo     request.Repository
+	metRepo   metric.Repository
+	voiceRepo voice.Repository
+	logger    log.Logger
+	selfID    string
+	w         webhook.Poster
+	rService  request.Service
 }
 
 // NewService creates a new fact service.
 func NewService(c Config) Service {
 	s := service{
-		client:   c.SelfClient,
-		cRepo:    c.ConnectionRepo,
-		fRepo:    c.FactRepo,
-		mRepo:    c.MessageRepo,
-		rRepo:    c.RequestRepo,
-		metRepo:  c.MetricRepo,
-		logger:   c.Logger,
-		selfID:   c.SelfClient.SelfAppID(),
-		rService: c.RequestService,
-		w:        c.Poster,
+		client:    c.SelfClient,
+		cRepo:     c.ConnectionRepo,
+		fRepo:     c.FactRepo,
+		mRepo:     c.MessageRepo,
+		rRepo:     c.RequestRepo,
+		metRepo:   c.MetricRepo,
+		voiceRepo: c.VoiceRepo,
+		logger:    c.Logger,
+		selfID:    c.SelfClient.SelfAppID(),
+		rService:  c.RequestService,
+		w:         c.Poster,
 	}
 	s.SetupHooks()
 
@@ -345,6 +349,19 @@ func (s *service) processChatMessageDelivered(payload map[string]interface{}) er
 }
 
 func (s *service) processChatVoiceSetup(payload map[string]interface{}) error {
+	err := s.voiceRepo.Create(context.Background(), &entity.Call{
+		AppID:     s.selfID,
+		SelfID:    payload["iss"].(string),
+		CallID:    payload["call_id"].(string),
+		Status:    entity.VOICE_CALL_SETUP,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
+
+	if err != nil {
+		return err
+	}
+
 	return s.w.Post(webhook.WebhookPayload{
 		Type:    webhook.TYPE_VOICE_SETUP,
 		URI:     "",
@@ -353,6 +370,23 @@ func (s *service) processChatVoiceSetup(payload map[string]interface{}) error {
 }
 
 func (s *service) processChatVoiceStart(payload map[string]interface{}) error {
+	call, err := s.voiceRepo.Get(
+		context.Background(),
+		s.selfID, payload["iss"].(string),
+		payload["call_id"].(string))
+	if err != nil {
+		return err
+	}
+
+	call.Status = entity.VOICE_CALL_STARTED
+	call.PeerInfo = payload["peer_info"].(string)
+	data := payload["data"].(map[string]string)
+	call.Name = data["operator_name"]
+	err = s.voiceRepo.Update(context.Background(), call)
+	if err != nil {
+		return err
+	}
+
 	return s.w.Post(webhook.WebhookPayload{
 		Type:    webhook.TYPE_VOICE_START,
 		URI:     "",
@@ -361,6 +395,20 @@ func (s *service) processChatVoiceStart(payload map[string]interface{}) error {
 }
 
 func (s *service) processChatVoiceAccept(payload map[string]interface{}) error {
+	call, err := s.voiceRepo.Get(
+		context.Background(),
+		s.selfID, payload["iss"].(string),
+		payload["call_id"].(string))
+	if err != nil {
+		return err
+	}
+
+	call.Status = entity.VOICE_CALL_ACCEPTED
+	err = s.voiceRepo.Update(context.Background(), call)
+	if err != nil {
+		return err
+	}
+
 	return s.w.Post(webhook.WebhookPayload{
 		Type:    webhook.TYPE_VOICE_ACCEPT,
 		URI:     "",
@@ -369,6 +417,20 @@ func (s *service) processChatVoiceAccept(payload map[string]interface{}) error {
 }
 
 func (s *service) processChatVoiceStop(payload map[string]interface{}) error {
+	call, err := s.voiceRepo.Get(
+		context.Background(),
+		s.selfID, payload["iss"].(string),
+		payload["call_id"].(string))
+	if err != nil {
+		return err
+	}
+
+	call.Status = entity.VOICE_CALL_ENDED
+	err = s.voiceRepo.Update(context.Background(), call)
+	if err != nil {
+		return err
+	}
+
 	return s.w.Post(webhook.WebhookPayload{
 		Type:    webhook.TYPE_VOICE_STOP,
 		URI:     "",
@@ -377,6 +439,20 @@ func (s *service) processChatVoiceStop(payload map[string]interface{}) error {
 }
 
 func (s *service) processChatVoiceBusy(payload map[string]interface{}) error {
+	call, err := s.voiceRepo.Get(
+		context.Background(),
+		s.selfID, payload["iss"].(string),
+		payload["call_id"].(string))
+	if err != nil {
+		return err
+	}
+
+	call.Status = entity.VOICE_CALL_BUSY
+	err = s.voiceRepo.Update(context.Background(), call)
+	if err != nil {
+		return err
+	}
+
 	return s.w.Post(webhook.WebhookPayload{
 		Type:    webhook.TYPE_VOICE_BUSY,
 		URI:     "",

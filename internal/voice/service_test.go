@@ -51,52 +51,26 @@ func TestUpdateMessageRequest_Validate(t *testing.T) {
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
 	runner := mock.NewRunnerMock()
-	s := NewService(&mock.MessageRepositoryMock{}, runner, logger)
+	s := NewService(&mock.VoiceRepositoryMock{}, runner, logger)
 	ctx := context.Background()
 
-	connection := 1
-
-	// initial count
-	count, _ := s.Count(ctx, connection, 0)
-	assert.Equal(t, 0, count)
+	appID, _ := uuid.NewV4()
+	connection, _ := uuid.NewV4()
+	callID, _ := uuid.NewV4()
 
 	// successful creation
-	voice, err := s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "test"})
+	call, err := s.Setup(ctx, appID.String(), connection.String(), callID.String())
 	assert.Nil(t, err)
-	id := voice.ID
-	assert.Equal(t, "test", voice.Body)
-	assert.NotEmpty(t, voice.CreatedAt)
-	assert.NotEmpty(t, voice.UpdatedAt)
-	count, _ = s.Count(ctx, connection, 0)
-	assert.Equal(t, 1, count)
-
-	_, _ = s.Create(ctx, "app", "connection", connection, CreateMessageRequest{Body: "test2"})
+	assert.Equal(t, callID.String(), call.CallID)
 
 	// update
-	voice, err = s.Update(ctx, "app", connection, "connection", voice.ID, UpdateMessageRequest{Body: "test updated"})
+	err = s.Start(ctx, appID.String(), connection.String(), callID.String(), ProceedData{PeerInfo: "pper_info"})
 	assert.Nil(t, err)
-	assert.Equal(t, "test updated", voice.Body)
-	_, err = s.Update(ctx, "app", connection, "connection", "1", UpdateMessageRequest{Body: "test updated"})
-	assert.NotNil(t, err)
+	assert.Equal(t, "started", call.Status)
 
 	// get
-	_, err = s.Get(ctx, connection, "1")
+	call, err = s.Get(ctx, appID.String(), connection.String(), callID.String())
 	assert.NotNil(t, err)
-	voice, err = s.Get(ctx, connection, voice.ID)
-	assert.Nil(t, err)
-	assert.Equal(t, "test updated", voice.Body)
-	assert.Equal(t, id, voice.ID)
-
-	// query
-	voices, _ := s.Query(ctx, connection, 0, 0, 0)
-	assert.Equal(t, 2, len(voices))
-
-	// delete
-	err = s.Delete(ctx, connection, "non existing")
-	assert.NotNil(t, err)
-	err = s.Delete(ctx, connection, voice.ID)
-	assert.Nil(t, err)
-	count, _ = s.Count(ctx, connection, 0)
-	assert.Equal(t, 1, count)
+	assert.Equal(t, "started", call.Status)
 }
 */
