@@ -16,8 +16,8 @@ import (
 
 type mockService struct{}
 
-func (m mockService) Get(ctx context.Context, appID, recipient, callID string) (*entity.Call, error) {
-	return &entity.Call{}, nil
+func (m mockService) Get(ctx context.Context, appID, recipient, callID string) (ExtCall, error) {
+	return ExtCall{}, nil
 }
 func (m mockService) Start(ctx context.Context, appID, connectionID, callID string, data ProceedData) error {
 	return nil
@@ -44,11 +44,11 @@ func (m mockService) Count(ctx context.Context, aID, cID string, callsSince int)
 }
 
 // Query returns the calls with the specified offset and limit.
-func (m mockService) Query(ctx context.Context, aID, cID string, callsSince int, offset, limit int) ([]entity.Call, error) {
+func (m mockService) Query(ctx context.Context, aID, cID string, callsSince int, offset, limit int) ([]ExtCall, error) {
 	if callsSince == 98 {
-		return []entity.Call{}, errors.New("expected error")
+		return []ExtCall{}, errors.New("expected error")
 	}
-	return []entity.Call{}, nil
+	return []ExtCall{}, nil
 
 }
 

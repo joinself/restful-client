@@ -21,6 +21,7 @@ func RegisterHandlers(r *echo.Group, service Service, cService connection.Servic
 	res := resource{service, cService, logger}
 
 	r.GET("/:app_id/connections/:connection_id/calls", res.query)
+	r.GET("/:app_id/connections/:connection_id/calls/:id", res.get)
 	r.POST("/:app_id/connections/:connection_id/calls", res.setup)
 	r.POST("/:app_id/connections/:connection_id/calls/:id/start", res.start)
 	r.POST("/:app_id/connections/:connection_id/calls/:id/stop", res.stop)
@@ -40,7 +41,7 @@ func (r resource) query(c echo.Context) error {
 	cID := c.Param("connection_id")
 
 	// Get the connection id
-	_, err := r.cService.Get(c.Request().Context(), aID, cID)
+	_, err := r.cService.Get(ctx, aID, cID)
 	if err != nil {
 		return c.JSON(response.DefaultNotFoundError())
 	}
@@ -65,6 +66,27 @@ func (r resource) query(c echo.Context) error {
 
 	pages.Items = messages
 	return c.JSON(http.StatusOK, pages)
+}
+
+func (r resource) get(c echo.Context) error {
+	ctx := c.Request().Context()
+	aID := c.Param("app_id")
+	cID := c.Param("connection_id")
+
+	_, err := r.cService.Get(ctx, aID, cID)
+	if err != nil {
+		println("connection does not exist")
+		return c.JSON(response.DefaultNotFoundError())
+	}
+
+	call, err := r.service.Get(ctx, aID, cID, c.Param("id"))
+	if err != nil {
+		println("call does not exist")
+		println(c.Param("id"))
+		return c.JSON(response.DefaultNotFoundError())
+	}
+
+	return c.JSON(http.StatusOK, call)
 }
 
 func (r resource) setup(c echo.Context) error {

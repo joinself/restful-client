@@ -349,19 +349,6 @@ func (s *service) processChatMessageDelivered(payload map[string]interface{}) er
 }
 
 func (s *service) processChatVoiceSetup(payload map[string]interface{}) error {
-	err := s.voiceRepo.Create(context.Background(), &entity.Call{
-		AppID:     s.selfID,
-		SelfID:    payload["iss"].(string),
-		CallID:    payload["call_id"].(string),
-		Status:    entity.VOICE_CALL_SETUP,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	})
-
-	if err != nil {
-		return err
-	}
-
 	return s.w.Post(webhook.WebhookPayload{
 		Type:    webhook.TYPE_VOICE_SETUP,
 		URI:     "",
@@ -370,20 +357,18 @@ func (s *service) processChatVoiceSetup(payload map[string]interface{}) error {
 }
 
 func (s *service) processChatVoiceStart(payload map[string]interface{}) error {
-	call, err := s.voiceRepo.Get(
-		context.Background(),
-		s.selfID, payload["iss"].(string),
-		payload["call_id"].(string))
-	if err != nil {
-		return err
-	}
+	err := s.voiceRepo.Create(context.Background(), &entity.Call{
+		AppID:     s.selfID,
+		SelfID:    payload["iss"].(string),
+		CallID:    payload["call_id"].(string),
+		Status:    entity.VOICE_CALL_STARTED,
+		PeerInfo:  payload["peer_info"].(string),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
 
-	call.Status = entity.VOICE_CALL_STARTED
-	call.PeerInfo = payload["peer_info"].(string)
-	data := payload["data"].(map[string]string)
-	call.Name = data["operator_name"]
-	err = s.voiceRepo.Update(context.Background(), call)
 	if err != nil {
+		println(err.Error())
 		return err
 	}
 

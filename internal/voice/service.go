@@ -11,7 +11,7 @@ import (
 )
 
 type Service interface {
-	Get(ctx context.Context, appID, recipient, callID string) (*entity.Call, error)
+	Get(ctx context.Context, appID, recipient, callID string) (ExtCall, error)
 	Start(ctx context.Context, appID, connectionID, callID string, data ProceedData) error
 	Accept(ctx context.Context, appID, recipient, callID string, data ProceedData) error
 	Busy(ctx context.Context, appID, recipient, callID string) error
@@ -20,7 +20,7 @@ type Service interface {
 	// Count returns the number of calls.
 	Count(ctx context.Context, aID, cID string, callsSince int) (int, error)
 	// Query returns the calls with the specified offset and limit.
-	Query(ctx context.Context, aID, cID string, callsSince int, offset, limit int) ([]entity.Call, error)
+	Query(ctx context.Context, aID, cID string, callsSince int, offset, limit int) ([]ExtCall, error)
 }
 
 type service struct {
@@ -33,9 +33,9 @@ func NewService(repo Repository, runner support.SelfClientGetter, logger log.Log
 	return service{repo, runner, logger}
 }
 
-func (s service) Get(ctx context.Context, appID, recipient, callID string) (*entity.Call, error) {
+func (s service) Get(ctx context.Context, appID, recipient, callID string) (ExtCall, error) {
 	call, err := s.repo.Get(ctx, appID, recipient, callID)
-	return &call, err
+	return newExtCall(call), err
 }
 
 func (s service) Setup(ctx context.Context, appID, recipient, name string) (*entity.Call, error) {
@@ -179,10 +179,14 @@ func (s service) Count(ctx context.Context, aID, cID string, callsSince int) (in
 }
 
 // Query returns the calls with the specified offset and limit.
-func (s service) Query(ctx context.Context, aID, cID string, callsSince int, offset, limit int) ([]entity.Call, error) {
+func (s service) Query(ctx context.Context, aID, cID string, callsSince int, offset, limit int) ([]ExtCall, error) {
 	items, err := s.repo.Query(ctx, aID, cID, callsSince, offset, limit)
 	if err != nil {
 		return nil, err
 	}
-	return items, nil
+	output := []ExtCall{}
+	for _, i := range items {
+		output = append(output, newExtCall(i))
+	}
+	return output, nil
 }
