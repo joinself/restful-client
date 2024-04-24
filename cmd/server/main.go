@@ -143,6 +143,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		RequestService: rService,
 		AppRepo:        appRepo,
 		MetricRepo:     metricRepo,
+		VoiceRepo:      voiceRepo,
 		Logger:         logger,
 		StorageKey:     cfg.StorageKey,
 		StorageDir:     cfg.StorageDir,
