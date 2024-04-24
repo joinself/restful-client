@@ -39,7 +39,7 @@ func (m CreateApiKeyRequest) Validate() *response.Error {
 	err := validation.ValidateStruct(&m,
 		validation.Field(&m.Name, validation.Required, validation.Length(0, 128)),
 		validation.Field(&m.Scope, validation.Required, validation.Length(0, 128)),
-		validation.Field(&m.Scope, validation.In("FULL", "MESSAGING", "REQUESTS", "METRICS")),
+		validation.Field(&m.Scope, validation.In("FULL", "MESSAGING", "REQUESTS", "METRICS", "CALLS")),
 	)
 	if err == nil {
 		return nil
@@ -53,17 +53,21 @@ func (m CreateApiKeyRequest) Validate() *response.Error {
 
 func (m CreateApiKeyRequest) GetResources(appID string) []string {
 	validResources := map[string][]string{
-		"FULL": []string{
+		"FULL": {
 			fmt.Sprintf("ANY /v1/apps/%s*", appID),
 		},
-		"MESSAGING": []string{
+		"MESSAGING": {
 			fmt.Sprintf("GET /v1/apps/%s/connections", appID),
 			fmt.Sprintf("ANY /v1/apps/%s/connections/*/messages*", appID),
 		},
-		"REQUESTS": []string{
+		"CALLS": {
+			fmt.Sprintf("GET /v1/apps/%s/connections", appID),
+			fmt.Sprintf("ANY /v1/apps/%s/connections/*/calls*", appID),
+		},
+		"REQUESTS": {
 			fmt.Sprintf("GET /v1/apps/%s/requests*", appID),
 		},
-		"METRICS": []string{
+		"METRICS": {
 			fmt.Sprintf("GET /v1/apps/%s/metrics*", appID),
 		},
 	}
