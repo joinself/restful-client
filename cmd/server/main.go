@@ -239,7 +239,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		Service: clean.NewService(clean.Config{
 			DB:     db,
 			Period: cfg.CleanupPeriod,
-			Tables: []string{"fact", "message", "request", "attestation"},
+			Tables: []string{"fact", "message", "request", "attestation", "call"},
 			Logger: logger,
 		}),
 	})
