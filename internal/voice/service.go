@@ -17,6 +17,10 @@ type Service interface {
 	Busy(ctx context.Context, appID, recipient, callID string) error
 	Stop(ctx context.Context, appID, recipient, callID string) error
 	Setup(ctx context.Context, appID, recipient, name string) (*entity.Call, error)
+	// Count returns the number of calls.
+	Count(ctx context.Context, aID, cID string, callsSince int) (int, error)
+	// Query returns the calls with the specified offset and limit.
+	Query(ctx context.Context, aID, cID string, callsSince int, offset, limit int) ([]entity.Call, error)
 }
 
 type service struct {
@@ -167,4 +171,18 @@ func (s service) Stop(ctx context.Context, appID, recipient, callID string) erro
 	}
 
 	return c.VoiceService().Stop(recipient, cid.String(), callID)
+}
+
+// Count returns the number of calls.
+func (s service) Count(ctx context.Context, aID, cID string, callsSince int) (int, error) {
+	return s.repo.Count(ctx, aID, cID, callsSince)
+}
+
+// Query returns the calls with the specified offset and limit.
+func (s service) Query(ctx context.Context, aID, cID string, callsSince int, offset, limit int) ([]entity.Call, error) {
+	items, err := s.repo.Query(ctx, aID, cID, callsSince, offset, limit)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
 }

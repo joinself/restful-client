@@ -3,6 +3,7 @@ package voice
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/joinself/restful-client/internal/entity"
@@ -20,6 +21,10 @@ type Repository interface {
 	Update(ctx context.Context, call entity.Call) error
 	// Delete removes the call with given ID from the storage.
 	Delete(ctx context.Context, appID, selfID, id string) error
+	// Count returns the number of the calls records in the database.
+	Count(ctx context.Context, aID, cID string, callsSince int) (int, error)
+	// Query retrieves the calls records with the specified offset and limit from the database.
+	Query(ctx context.Context, aID, cID string, callsSince int, offset, limit int) ([]entity.Call, error)
 }
 
 // repository persists calls in database
@@ -68,4 +73,39 @@ func (r repository) Delete(ctx context.Context, appID, selfID, id string) error 
 		return err
 	}
 	return r.db.With(ctx).Model(&call).Delete()
+}
+
+// Count returns the number of the calls records in the database.
+func (r repository) Count(ctx context.Context, aID, cID string, callsSince int) (int, error) {
+	var count int
+	exp := dbx.NewExp("selfid={:cid} AND appid={:aid}", dbx.Params{"cid": cID, "aid": aID})
+	if callsSince > 0 {
+		exp = dbx.And(dbx.NewExp(fmt.Sprintf("id>%d", callsSince)))
+	}
+
+	err := r.db.With(ctx).
+		Select("COUNT(*)").
+		From("call").
+		Where(exp).
+		Row(&count)
+	return count, err
+}
+
+// Query retrieves the calls records with the specified offset and limit from the database.
+func (r repository) Query(ctx context.Context, aID, cID string, callsSince int, offset, limit int) ([]entity.Call, error) {
+	var calls []entity.Call
+	exp := dbx.NewExp("selfid={:cid} AND appid={:aid}", dbx.Params{"cid": cID, "aid": aID})
+	if callsSince > 0 {
+		exp = dbx.And(dbx.NewExp(fmt.Sprintf("id>%d", callsSince)))
+	}
+
+	err := r.db.With(ctx).
+		Select().
+		OrderBy("id").
+		Where(exp).
+		Offset(int64(offset)).
+		Limit(int64(limit)).
+		OrderBy("created_at DESC").
+		All(&calls)
+	return calls, err
 }

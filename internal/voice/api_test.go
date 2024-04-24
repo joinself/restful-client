@@ -35,6 +35,23 @@ func (m mockService) Setup(ctx context.Context, appID, recipient, name string) (
 	return &entity.Call{}, nil
 }
 
+// Count returns the number of calls.
+func (m mockService) Count(ctx context.Context, aID, cID string, callsSince int) (int, error) {
+	if callsSince == 99 {
+		return 0, errors.New("expected count error")
+	}
+	return 0, nil
+}
+
+// Query returns the calls with the specified offset and limit.
+func (m mockService) Query(ctx context.Context, aID, cID string, callsSince int, offset, limit int) ([]entity.Call, error) {
+	if callsSince == 98 {
+		return []entity.Call{}, errors.New("expected error")
+	}
+	return []entity.Call{}, nil
+
+}
+
 type mockConnectionService struct{}
 
 func (m mockConnectionService) Get(ctx context.Context, appid, selfid string) (connection.Connection, error) {
@@ -93,6 +110,83 @@ func (m mockConnectionService) Delete(ctx context.Context, appid, selfid string)
 	return connection.Connection{}, nil
 }
 
+func TestListCallsAPIEndpointAsAdmin(t *testing.T) {
+	logger, _ := log.NewForTest()
+	router := test.MockRouter(logger)
+
+	rg := router.Group("/apps")
+	rg.Use(acl.AuthAsAdminMiddleware())
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
+
+	tests := []test.APITestCase{
+		{
+			Name:         "success",
+			Method:       "GET",
+			URL:          "/apps/app_id/connections/conn_id/calls",
+			Body:         ``,
+			Header:       nil,
+			WantStatus:   http.StatusOK,
+			WantResponse: `{"items":[], "page":1, "page_count":0, "per_page":100, "total_count":0}`,
+		},
+		{
+			Name:         "invalid_connection",
+			Method:       "GET",
+			URL:          "/apps/app_id/connections/not_found_id/calls",
+			Body:         ``,
+			Header:       nil,
+			WantStatus:   http.StatusNotFound,
+			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+		},
+		{
+			Name:         "internal error on count",
+			Method:       "GET",
+			URL:          "/apps/app_id/connections/conn_id/calls?calls_since=99",
+			Body:         ``,
+			Header:       nil,
+			WantStatus:   http.StatusInternalServerError,
+			WantResponse: `There was a problem with your request. *`,
+		},
+		{
+			Name:         "internal error on query",
+			Method:       "GET",
+			URL:          "/apps/app_id/connections/conn_id/calls?calls_since=98",
+			Body:         ``,
+			Header:       nil,
+			WantStatus:   http.StatusInternalServerError,
+			WantResponse: `There was a problem with your request. *`,
+		},
+	}
+	for _, tc := range tests {
+		test.Endpoint(t, router, tc)
+	}
+}
+
+func TestListCallsAPIEndpointAsPlain(t *testing.T) {
+	logger, _ := log.NewForTest()
+	router := test.MockRouter(logger)
+
+	rg := router.Group("/apps")
+	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
+
+	tests := []test.APITestCase{
+		{
+			Name:         "not found",
+			Method:       "GET",
+			URL:          "/apps/app_id/connections/conn_id/calls",
+			Body:         ``,
+			Header:       nil,
+			WantStatus:   http.StatusNotFound,
+			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+		},
+	}
+	for _, tc := range tests {
+		test.Endpoint(t, router, tc)
+	}
+}
+
 func TestSetupCallAPIEndpointAsPlainWithPermissions(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
@@ -114,21 +208,21 @@ func TestSetupCallAPIEndpointAsPlainWithPermissions(t *testing.T) {
 		},
 		{
 			Name:         "connection not found",
-			Method:       "GET",
+			Method:       "POST",
 			URL:          "/apps/app_id/connections/not_found_id/calls",
-			Body:         ``,
+			Body:         `{"name":"foo"}`,
 			Header:       nil,
 			WantStatus:   http.StatusNotFound,
 			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
 		},
 		{
 			Name:         "connection not found",
-			Method:       "GET",
+			Method:       "POST",
 			URL:          "/apps/app_id/connections/conn_id/calls",
-			Body:         ``,
+			Body:         `{"name":""}`,
 			Header:       nil,
-			WantStatus:   http.StatusNotFound,
-			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"name: cannot be blank.", "error":"Invalid input", "status":400}`,
 		},
 	}
 	for _, tc := range tests {
