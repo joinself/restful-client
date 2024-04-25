@@ -33,11 +33,12 @@ type Fact struct {
 }
 
 type FactToIssue struct {
-	Key    string          `json:"key"`
-	Value  string          `json:"value"`
-	Source string          `json:"source"`
-	Group  *fact.FactGroup `json:"group,omitempty"`
-	Type   string          `json:"type,omitempty"`
+	Key        string          `json:"key"`
+	Value      string          `json:"value"`
+	Source     string          `json:"source"`
+	Group      *fact.FactGroup `json:"group,omitempty"`
+	Type       string          `json:"type,omitempty"`
+	ExpTimeout *time.Duration  `json:"exp_timeout,omitempty"`
 }
 
 type service struct {
@@ -140,9 +141,11 @@ func (s service) issueFact(f CreateFactRequest, appid, selfid string) {
 	fi := []fact.FactToIssue{}
 	for _, fa := range f.Facts {
 		nf := fact.FactToIssue{
-			Key:    fa.Key,
-			Value:  fa.Value,
-			Source: fa.Source,
+			Key:        fa.Key,
+			Value:      fa.Value,
+			Source:     fa.Source,
+			Type:       fa.Type,
+			ExpTimeout: fa.ExpTimeout,
 		}
 
 		if fa.Group != nil {
