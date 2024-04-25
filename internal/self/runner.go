@@ -2,6 +2,7 @@ package self
 
 import (
 	"context"
+	"sync"
 
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/entity"
@@ -19,6 +20,7 @@ import (
 type Runner interface {
 	Run(app entity.App) error
 	Stop(id string)
+	StopAll()
 	Get(id string) (*selfsdk.Client, bool)
 	Poster(id string) (webhook.Poster, bool)
 }
@@ -122,6 +124,21 @@ func (r *runner) Run(app entity.App) error {
 
 func (r *runner) Stop(id string) {
 	r.runners[id].Stop()
+}
+
+// StopAll stops all runners.
+func (r *runner) StopAll() {
+	var wg sync.WaitGroup
+	for id, _ := range r.runners {
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			r.logger.Info("gracefully stopping ", id)
+			r.runners[id].Stop()
+			r.logger.Info("stopped ", id)
+		}(id)
+	}
+	wg.Wait()
 }
 
 func (r *runner) setupSelfClient(app entity.App) (*selfsdk.Client, error) {

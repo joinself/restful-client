@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"testing"
@@ -220,7 +221,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	)
 
 	if cfg.DefaultSelfApp != nil {
-		runner.Run(entity.App{
+		go runner.Run(entity.App{
 			ID:           cfg.DefaultSelfApp.SelfAppID,
 			DeviceSecret: cfg.DefaultSelfApp.SelfAppDeviceSecret,
 			Env:          cfg.DefaultSelfApp.SelfEnv,
@@ -246,15 +247,28 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	go cleaner.Run()
 
 	for _, app := range status {
-		runner.Run(app)
+		go runner.Run(app)
 	}
 
 	if cfg.ServeDocs == "true" {
 		e.GET("/docs/*", echoSwagger.WrapHandler)
 	}
 
-	// Start server
-	fmt.Println(e.Start(":" + strconv.Itoa(cfg.ServerPort)))
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	go func() {
+		fmt.Println(e.Start(":" + strconv.Itoa(cfg.ServerPort)))
+	}()
+
+	<-ctx.Done()
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	runner.StopAll()
+
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
+	}
 
 	return e
 }
