@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"testing"
@@ -253,8 +254,21 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		e.GET("/docs/*", echoSwagger.WrapHandler)
 	}
 
-	// Start server
-	fmt.Println(e.Start(":" + strconv.Itoa(cfg.ServerPort)))
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	go func() {
+		fmt.Println(e.Start(":" + strconv.Itoa(cfg.ServerPort)))
+	}()
+
+	<-ctx.Done()
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	runner.StopAll()
+
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
+	}
 
 	return e
 }

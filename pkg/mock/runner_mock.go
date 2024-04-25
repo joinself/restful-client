@@ -25,6 +25,12 @@ func (m RunnerMock) Stop(id string) {
 	m.apps[id] = false
 }
 
+func (m RunnerMock) StopAll() {
+	for id, _ := range m.apps {
+		m.apps[id] = false
+	}
+}
+
 func (m RunnerMock) Get(id string) (*selfsdk.Client, bool) {
 	return nil, false
 }
