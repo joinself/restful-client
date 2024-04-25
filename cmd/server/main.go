@@ -220,7 +220,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	)
 
 	if cfg.DefaultSelfApp != nil {
-		runner.Run(entity.App{
+		go runner.Run(entity.App{
 			ID:           cfg.DefaultSelfApp.SelfAppID,
 			DeviceSecret: cfg.DefaultSelfApp.SelfAppDeviceSecret,
 			Env:          cfg.DefaultSelfApp.SelfEnv,
@@ -246,7 +246,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	go cleaner.Run()
 
 	for _, app := range status {
-		runner.Run(app)
+		go runner.Run(app)
 	}
 
 	if cfg.ServeDocs == "true" {
