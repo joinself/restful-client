@@ -15,8 +15,13 @@ const (
 	// TYPE_CONNECTION webhook type used when a connection is received
 	TYPE_CONNECTION = "connection"
 	// TYPE_REQUEST webhook type used when a request response is received
-	TYPE_REQUEST = "request"
-	TYPE_RAW     = "raw"
+	TYPE_REQUEST      = "request"
+	TYPE_RAW          = "raw"
+	TYPE_VOICE_START  = "voice_start"
+	TYPE_VOICE_BUSY   = "voice_busy"
+	TYPE_VOICE_STOP   = "voice_stop"
+	TYPE_VOICE_ACCEPT = "voice_accept"
+	TYPE_VOICE_SETUP  = "voice_setup"
 )
 
 // WebhookPayload represents a the payload that will be resent to the
