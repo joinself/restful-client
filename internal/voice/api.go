@@ -35,6 +35,19 @@ type resource struct {
 	logger   log.Logger
 }
 
+// GetMessages godoc
+// @Summary Retrieves a paginated list of calls
+// @Description Retrieves a list of calls based on the provided Application ID and Connection ID, starting from the call defined in the query parameter 'lastCall'. The list is paginated.
+// @Tags calls
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param app_id path string true "Unique identifier of the Application"
+// @Param connection_id path string true "Unique identifier of the Connection"
+// @Param lastCall query int false "Unique identifier of the last Call from which to start the list. If not provided, the list starts from the most recent call."
+// @Success 200 {object} pagination.PagedResult{items=Message} "Successfully retrieved the list of calls. The response contains the paginated list of calls."
+// @Failure 404 {object} response.Error "The requested resource could not be found, or the request was unauthorized. Check the Application ID and Connection ID."
+// @Router /apps/{app_id}/connections/{connection_id}/calls [get]
 func (r resource) query(c echo.Context) error {
 	ctx := c.Request().Context()
 	aID := c.Param("app_id")
@@ -68,6 +81,19 @@ func (r resource) query(c echo.Context) error {
 	return c.JSON(http.StatusOK, pages)
 }
 
+// GetMessage godoc
+// @Summary Retrieve a specific call's details
+// @Description Retrieves detailed information about a specific call based on the provided Application ID, Connection ID, and Call ID.
+// @Tags calls
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param app_id path string true "Unique identifier of the Application"
+// @Param connection_id path string true "Unique identifier of the Connection"
+// @Param id path string true "Unique identifier of the Call"
+// @Success 200 {object} Message "Successfully retrieved the call details. The response contains the call's details."
+// @Failure 404 {object} response.Error "The requested resource could not be found, or the request was unauthorized. Check the Application ID, Connection ID, and Call ID."
+// @Router /apps/{app_id}/connections/{connection_id}/calls/{id} [get]
 func (r resource) get(c echo.Context) error {
 	ctx := c.Request().Context()
 	aID := c.Param("app_id")
@@ -89,6 +115,21 @@ func (r resource) get(c echo.Context) error {
 	return c.JSON(http.StatusOK, call)
 }
 
+// SetupCall godoc
+// @Summary Setup a new call
+// @Description Sends a setup request to the specific connection to initiate a call.
+// @Tags calls
+// @Accept  json
+// @Produce  json
+// @Security BearerAuth
+// @Param app_id path string true "Identifier of the application"
+// @Param connection_id path string true "Identifier of the connection"
+// @Param id path string true "Identifier of the call"
+// @Success 200 {object} Message "Successfully initiated the call. The response body contains the details of the call."
+// @Failure 400 {object} response.Error "Invalid request. The request body or the params contains an error."
+// @Failure 404 {object} response.Error "Resource not found. The requested application, connection, or call does not exist."
+// @Failure 500 {object} response.Error "Internal server error. An unexpected error occurred on the server."
+// @Router /apps/{app_id}/connections/{connection_id}/calls/{id}/setup [post]
 func (r resource) setup(c echo.Context) error {
 	var input SetupData
 	if err := c.Bind(&input); err != nil {
@@ -114,6 +155,21 @@ func (r resource) setup(c echo.Context) error {
 	return c.JSON(http.StatusOK, call)
 }
 
+// StartCall godoc
+// @Summary Start a new call
+// @Description Sends a start request to the specific connection to initiate a call.
+// @Tags calls
+// @Accept  json
+// @Produce  json
+// @Security BearerAuth
+// @Param app_id path string true "Identifier of the application"
+// @Param connection_id path string true "Identifier of the connection"
+// @Param id path string true "Identifier of the call"
+// @Success 200 {object} Message "Successfully initiated the call. The response body contains the details of the call."
+// @Failure 400 {object} response.Error "Invalid request. The request body or the params contains an error."
+// @Failure 404 {object} response.Error "Resource not found. The requested application, connection, or call does not exist."
+// @Failure 500 {object} response.Error "Internal server error. An unexpected error occurred on the server."
+// @Router /apps/{app_id}/connections/{connection_id}/calls/{id}/start [post]
 func (r resource) start(c echo.Context) error {
 	var input ProceedData
 	if err := c.Bind(&input); err != nil {
@@ -136,6 +192,21 @@ func (r resource) start(c echo.Context) error {
 	return c.JSON(http.StatusOK, ``)
 }
 
+// AcceptCall godoc
+// @Summary Accept a new call
+// @Description Sends an accept request to the specific connection to initiate a call.
+// @Tags calls
+// @Accept  json
+// @Produce  json
+// @Security BearerAuth
+// @Param app_id path string true "Identifier of the application"
+// @Param connection_id path string true "Identifier of the connection"
+// @Param id path string true "Identifier of the call"
+// @Success 200 {object} Message "Successfully initiated the call. The response body contains the details of the call."
+// @Failure 400 {object} response.Error "Invalid request. The request body or the params contains an error."
+// @Failure 404 {object} response.Error "Resource not found. The requested application, connection, or call does not exist."
+// @Failure 500 {object} response.Error "Internal server error. An unexpected error occurred on the server."
+// @Router /apps/{app_id}/connections/{connection_id}/calls/{id}/accept [post]
 func (r resource) accept(c echo.Context) error {
 	var input ProceedData
 	if err := c.Bind(&input); err != nil {
@@ -158,6 +229,21 @@ func (r resource) accept(c echo.Context) error {
 	return c.JSON(http.StatusOK, c.Param("id"))
 }
 
+// StopCall godoc
+// @Summary Stop a new call
+// @Description Sends a stop request to the specific connection to initiate a call.
+// @Tags calls
+// @Accept  json
+// @Produce  json
+// @Security BearerAuth
+// @Param app_id path string true "Identifier of the application"
+// @Param connection_id path string true "Identifier of the connection"
+// @Param id path string true "Identifier of the call"
+// @Success 200 {object} Message "Successfully initiated the call. The response body contains the details of the call."
+// @Failure 400 {object} response.Error "Invalid request. The request body or the params contains an error."
+// @Failure 404 {object} response.Error "Resource not found. The requested application, connection, or call does not exist."
+// @Failure 500 {object} response.Error "Internal server error. An unexpected error occurred on the server."
+// @Router /apps/{app_id}/connections/{connection_id}/calls/{id}/stop [post]
 func (r resource) stop(c echo.Context) error {
 	// Get the connection id
 	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
@@ -170,6 +256,21 @@ func (r resource) stop(c echo.Context) error {
 	return c.JSON(http.StatusOK, c.Param("id"))
 }
 
+// BusyCall godoc
+// @Summary Busy a new call
+// @Description Sends a busy request to the specific connection to initiate a call.
+// @Tags calls
+// @Accept  json
+// @Produce  json
+// @Security BearerAuth
+// @Param app_id path string true "Identifier of the application"
+// @Param connection_id path string true "Identifier of the connection"
+// @Param id path string true "Identifier of the call"
+// @Success 200 {object} Message "Successfully initiated the call. The response body contains the details of the call."
+// @Failure 400 {object} response.Error "Invalid request. The request body or the params contains an error."
+// @Failure 404 {object} response.Error "Resource not found. The requested application, connection, or call does not exist."
+// @Failure 500 {object} response.Error "Internal server error. An unexpected error occurred on the server."
+// @Router /apps/{app_id}/connections/{connection_id}/calls/{id}/busy [post]
 func (r resource) busy(c echo.Context) error {
 	// Get the connection id
 	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))

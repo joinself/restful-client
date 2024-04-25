@@ -1931,6 +1931,12 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "read": {
+                    "type": "boolean"
+                },
+                "received": {
+                    "type": "boolean"
+                },
                 "rid": {
                     "type": "string"
                 },
