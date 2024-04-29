@@ -114,6 +114,7 @@ func (s service) Create(ctx context.Context, appID string, connection *entity.Co
 		Callback:    req.Callback,
 		Description: req.Description,
 		OutOfBand:   req.OutOfBand,
+		AllowedFor:  req.AllowedFor,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
@@ -254,6 +255,7 @@ func (s service) buildSelfFactRequest(selfID string, req entity.Request) (*selff
 		Description: req.Description,
 		Facts:       facts,
 		Expiry:      time.Minute * 5,
+		AllowedFor:  req.AllowedFor,
 	}
 
 	if req.Auth {

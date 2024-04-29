@@ -2,6 +2,7 @@ package request
 
 import (
 	"net/http"
+	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joinself/restful-client/pkg/response"
@@ -34,6 +35,7 @@ type CreateRequest struct {
 	Callback    string        `json:"callback"`
 	SelfID      string        `json:"connection_self_id"`
 	OutOfBand   bool          `json:"out_of_band,omitempty"`
+	AllowedFor  time.Duration `json:"allowed_for,omitempty"`
 }
 
 // Validate validates the CreateRequest fields.
