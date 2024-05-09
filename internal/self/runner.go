@@ -10,6 +10,7 @@ import (
 	"github.com/joinself/restful-client/internal/message"
 	"github.com/joinself/restful-client/internal/metric"
 	"github.com/joinself/restful-client/internal/request"
+	"github.com/joinself/restful-client/internal/signature"
 	"github.com/joinself/restful-client/internal/voice"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/support"
@@ -38,6 +39,7 @@ type runner struct {
 	aRepo      appStatusSetter
 	metRepo    metric.Repository
 	vRepo      voice.Repository
+	sRepo      signature.Repository
 	logger     log.Logger
 	rService   request.Service
 	storageKey string
@@ -52,6 +54,7 @@ type RunnerConfig struct {
 	AppRepo        appStatusSetter
 	MetricRepo     metric.Repository
 	VoiceRepo      voice.Repository
+	SignatureRepo  signature.Repository
 	Logger         log.Logger
 	RequestService request.Service
 	StorageKey     string
