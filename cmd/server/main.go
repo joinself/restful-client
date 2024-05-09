@@ -30,6 +30,7 @@ import (
 	"github.com/joinself/restful-client/internal/notification"
 	"github.com/joinself/restful-client/internal/request"
 	"github.com/joinself/restful-client/internal/self"
+	"github.com/joinself/restful-client/internal/signature"
 	"github.com/joinself/restful-client/internal/voice"
 	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/dbcontext"
@@ -133,6 +134,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	apikeyRepo := apikey.NewRepository(db, tokenChecker, logger)
 	metricRepo := metric.NewRepository(db, tokenChecker, logger)
 	voiceRepo := voice.NewRepository(db, logger)
+	signatureRepo := signature.NewRepository(db, logger)
 
 	// Services
 	rService := request.NewService(requestRepo, factRepo, attestationRepo, logger)
@@ -145,6 +147,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 		AppRepo:        appRepo,
 		MetricRepo:     metricRepo,
 		VoiceRepo:      voiceRepo,
+		SignatureRepo:  signatureRepo,
 		Logger:         logger,
 		StorageKey:     cfg.StorageKey,
 		StorageDir:     cfg.StorageDir,
@@ -153,6 +156,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	cService := connection.NewService(connectionRepo, runner, logger)
 	aService := app.NewService(appRepo, runner, logger)
 	vService := voice.NewService(voiceRepo, runner, logger)
+	sService := signature.NewService(signatureRepo, runner, logger)
 
 	// TODO: preload all deleted pi keys
 	apikeyRepo.PreloadDeleted(context.Background())
@@ -200,6 +204,11 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	)
 	voice.RegisterHandlers(appsGroup,
 		vService,
+		cService,
+		logger,
+	)
+	signature.RegisterHandlers(appsGroup,
+		sService,
 		cService,
 		logger,
 	)
