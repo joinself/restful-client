@@ -15,8 +15,20 @@ type ExtListResponse struct {
 	Items      []Message `json:"items"`
 }
 
+type MessageObject struct {
+	Link    string `json:"link"`
+	Name    string `json:"name"`
+	Mime    string `json:"mime"`
+	Expires int64  `json:"expires,omitempty"`
+	Key     string `json:"key,omitempty"`
+}
+type MessageOptions struct {
+	Objects []MessageObject `json:"objects"`
+}
+
 type CreateMessageRequest struct {
-	Body string `json:"body"`
+	Body    string         `json:"body"`
+	Options MessageOptions `json:"options,omitempty"`
 }
 
 // Validate validates the CreateMessageRequest fields.

@@ -206,6 +206,8 @@ definitions:
     properties:
       body:
         type: string
+      options:
+        $ref: '#/definitions/message.MessageOptions'
     type: object
   message.ExtListResponse:
     properties:
@@ -245,6 +247,26 @@ definitions:
       updated_at:
         type: string
     type: object
+  message.MessageObject:
+    properties:
+      expires:
+        type: integer
+      key:
+        type: string
+      link:
+        type: string
+      mime:
+        type: string
+      name:
+        type: string
+    type: object
+  message.MessageOptions:
+    properties:
+      objects:
+        items:
+          $ref: '#/definitions/message.MessageObject'
+        type: array
+    type: object
   message.UpdateMessageRequest:
     properties:
       body:
@@ -270,21 +292,6 @@ definitions:
         type: object
     type: object
   request.CreateRequest:
-    properties:
-      callback:
-        type: string
-      connection_self_id:
-        type: string
-      description:
-        type: string
-      facts:
-        items:
-          $ref: '#/definitions/request.FactRequest'
-        type: array
-      out_of_band:
-        type: boolean
-      type:
-        type: string
     type: object
   request.ExtRequest:
     properties:
