@@ -14,3 +14,7 @@ d44355c1a7f18848dab309668440e94c6ba35cd2:thunder-tests/thunderEnvironment.json:j
 9881b19ec3a9f0dd36be3bb89e5c715e3c059abd:docker-compose.yml:hashicorp-tf-password:23
 6305169dcdc3fe1f01238e2ff9d0699d31db7983:config/local.yml:generic-api-key:2
 6305169dcdc3fe1f01238e2ff9d0699d31db7983:docker-compose.yml:hashicorp-tf-password:23
+786c97d2c79263042dce09a0f6a45f62c7272774:config/local.yml:self-key:4
+d8c6a0a33591b5689c418aa6b212cb44ec5439b9:config/local.yml:self-secret-key:4
+dcf54be14a761a8bbb529f014dda366c526c047c:config/local.yml:self-secret-key:3
+786c97d2c79263042dce09a0f6a45f62c7272774:config/local.yml:self-secret-key:4
