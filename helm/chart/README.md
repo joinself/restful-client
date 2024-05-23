@@ -16,7 +16,7 @@ kind: Secret
 metadata:
   name: restful-client
 stringData:
-  auth-username: "self"
+  auth-username: "restful-client"
   auth-password: "secret"
   storage-key: "secret"
   jwt-signing-key: "secret"

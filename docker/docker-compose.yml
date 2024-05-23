@@ -3,7 +3,7 @@ services:
     image: ghcr.io/joinself/restful-client:latest
     environment:
       RESTFUL_CLIENT_JWT_SIGNING_KEY: secret
-      RESTFUL_CLIENT_USER: self
+      RESTFUL_CLIENT_USER: restful-client
       RESTFUL_CLIENT_PASSWORD: secret
       RESTFUL_CLIENT_STORAGE_DIR: /data
       RESTFUL_CLIENT_STORAGE_KEY: secret

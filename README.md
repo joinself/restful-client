@@ -25,7 +25,7 @@ To run the service directly via Docker amend the environment variables as requir
 ```bash
 docker run -it \
   -e RESTFUL_CLIENT_JWT_SIGNING_KEY=secret \
-  -e RESTFUL_CLIENT_USER=self \
+  -e RESTFUL_CLIENT_USER=restful-client \
   -e RESTFUL_CLIENT_PASSWORD=secret \
   -e RESTFUL_CLIENT_STORAGE_DIR=/data \
   -e RESTFUL_CLIENT_STORAGE_KEY=secret \
@@ -72,7 +72,7 @@ cd restful-client
 
 # Replace <SELF_APP_ID> and <SELF_APP_SECRET> with your application ID and secret key.
 export RESTFUL_CLIENT_JWT_SIGNING_KEY=secret
-export RESTFUL_CLIENT_USER=self
+export RESTFUL_CLIENT_USER=restful-client
 export RESTFUL_CLIENT_PASSWORD=secret
 export RESTFUL_CLIENT_STORAGE_DIR=/data
 export RESTFUL_CLIENT_STORAGE_KEY=secret
