@@ -3,7 +3,6 @@ package object
 import (
 	"net/http"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/response"
 	"github.com/labstack/echo/v4"
@@ -41,7 +40,6 @@ func (r resource) create(c echo.Context) error {
 		r.logger.With(c.Request().Context()).Info(err)
 		return c.JSON(response.DefaultBadRequestError())
 	}
-	spew.Dump(input)
 
 	if reqErr := input.Validate(); reqErr != nil {
 		return c.JSON(reqErr.Status, reqErr)
