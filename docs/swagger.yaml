@@ -95,20 +95,29 @@ definitions:
   auth.LoginRequest:
     properties:
       password:
+        description: |-
+          Password password to authenticate with. Length has to be between 5 and
+          128 characters.
         type: string
       username:
+        description: |-
+          Username the username to authenticate with. Length has to be between 5 and
+          128 characters.
         type: string
     type: object
   auth.LoginResponse:
     properties:
       refresh_token:
+        description: RefreshToken the token to be used to refresh the access token.
         type: string
       token:
+        description: AccessToken the token to be used on authenticated requests.
         type: string
     type: object
   auth.RefreshRequest:
     properties:
       refresh_token:
+        description: RefreshToken the token to be used to refresh the access token.
         type: string
     type: object
   connection.CreateConnectionRequest:
@@ -270,21 +279,6 @@ definitions:
         type: object
     type: object
   request.CreateRequest:
-    properties:
-      callback:
-        type: string
-      connection_self_id:
-        type: string
-      description:
-        type: string
-      facts:
-        items:
-          $ref: '#/definitions/request.FactRequest'
-        type: array
-      out_of_band:
-        type: boolean
-      type:
-        type: string
     type: object
   request.ExtRequest:
     properties:
@@ -1301,6 +1295,86 @@ paths:
       summary: Get request details.
       tags:
       - requests
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint authenticates user credentials (username and password)
+        and, upon successful authentication,
+      parameters:
+      - description: Login credentials object containing 'username' and 'password'
+          fields.
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'Authentication successful: Returns the JWT for API access
+            and a refresh token.'
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: 'Bad Request: The request is malformed or the JSON body cannot
+            be parsed.'
+          schema:
+            $ref: '#/definitions/response.Error'
+        "401":
+          description: 'Unauthorized: Authentication failed due to invalid credentials
+            or inactive user account.'
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: 'Internal Server Error: An unexpected error occurred while
+            processing the authentication request.'
+          schema:
+            $ref: '#/definitions/response.Error'
+      summary: Authenticate User and Retrieve Tokens
+      tags:
+      - Authentication
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint is used to refresh an expired or about to expire
+        JWT token.
+      parameters:
+      - description: Contains the refresh token that needs to be validated and exchanged
+          for a new JWT token.
+        in: body
+        name: refreshToken
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: A new JWT token is successfully generated and returned along
+            with its expiry information.
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "400":
+          description: 'Bad Request: The request is invalid or malformed. The error
+            message provides more details.'
+          schema:
+            $ref: '#/definitions/response.Error'
+        "401":
+          description: 'Unauthorized: The provided refresh token is invalid or expired,
+            and a new JWT token cannot be issued.'
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: 'Internal Server Error: An unexpected error occurred while
+            processing the refresh token request.'
+          schema:
+            $ref: '#/definitions/response.Error'
+      summary: Refresh JWT Token
+      tags:
+      - Authentication
   /healthcheck:
     get:
       consumes:
@@ -1320,68 +1394,6 @@ paths:
       summary: healthcheck endpoint
       tags:
       - healthcheck
-  /login:
-    post:
-      consumes:
-      - application/json
-      description: Authenticates a user and returns a temporary JWT token and refresh
-        token for API interaction.
-      parameters:
-      - description: Authentication request body with your username and password
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/auth.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully authenticated, JWT token and Refresh JWT token
-            are returned in response
-          schema:
-            $ref: '#/definitions/auth.LoginResponse'
-        "400":
-          description: Returns error details
-          schema:
-            $ref: '#/definitions/response.Error'
-        "401":
-          description: Returns error details
-          schema:
-            $ref: '#/definitions/response.Error'
-      summary: User Authentication
-      tags:
-      - Authentication
-  /refresh:
-    post:
-      consumes:
-      - application/json
-      description: Takes a refresh token and returns a new JWT token for API interaction.
-      parameters:
-      - description: Request body with your refresh token
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/auth.RefreshRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully refreshed, new JWT token is returned in response
-          schema:
-            $ref: '#/definitions/auth.LoginResponse'
-        "400":
-          description: Returns error details
-          schema:
-            $ref: '#/definitions/response.Error'
-        "401":
-          description: Returns error details
-          schema:
-            $ref: '#/definitions/response.Error'
-      summary: Refresh JWT token
-      tags:
-      - Authentication
 schemes:
 - http
 - https

@@ -53,7 +53,7 @@ func TestLoginAPIEndpoint(t *testing.T) {
 			Body:         `{"username":"test_larger","password":"wrong pass"}`,
 			Header:       nil,
 			WantStatus:   http.StatusUnauthorized,
-			WantResponse: "",
+			WantResponse: `{"details":"Provided auth credentials are invalid", "error":"You're unauthorized to perform this action", "status":401}`,
 		},
 		{
 			Name:         "bad json",
@@ -62,7 +62,7 @@ func TestLoginAPIEndpoint(t *testing.T) {
 			Body:         `"username":"test_larger","password":"wrong pass"}`,
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: "",
+			WantResponse: `{"details":"The provided body is not valid", "error":"Invalid input", "status":400}`,
 		},
 		{
 			Name:         "invalid data",
@@ -71,7 +71,25 @@ func TestLoginAPIEndpoint(t *testing.T) {
 			Body:         `{"username":"","password":""}`,
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: "",
+			WantResponse: `{"details":"password: cannot be blank; username: cannot be blank.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "invalid username",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"username":"foo","password":"pass_larger"}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"username: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "invalid password",
+			Method:       "POST",
+			URL:          "/login",
+			Body:         `{"username":"test_larger","password":"foo"}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"password: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
 		},
 	}
 	for _, tc := range tests {
@@ -102,7 +120,7 @@ func TestRefreshAPIEndpoint(t *testing.T) {
 			Body:         `{]`,
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: "",
+			WantResponse: `{"details":"The provided body is not valid", "error":"Invalid input", "status":400}`,
 		},
 		{
 			Name:         "invalid data",
@@ -111,10 +129,10 @@ func TestRefreshAPIEndpoint(t *testing.T) {
 			Body:         `{"refresh_token":""}`,
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: "",
+			WantResponse: `{"details":"You must provide a refresh_token", "error":"Invalid input", "status":400}`,
 		},
 		{
-			Name:         "refresh token errored",
+			Name:         "invalid refresh token",
 			Method:       "POST",
 			URL:          "/refresh",
 			Body:         `{"refresh_token":"test_token_test_token_test_token_test_token_test_token_error"}`,

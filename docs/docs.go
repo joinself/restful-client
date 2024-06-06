@@ -1443,6 +1443,110 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/login": {
+            "post": {
+                "description": "This endpoint authenticates user credentials (username and password) and, upon successful authentication,",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Authenticate User and Retrieve Tokens",
+                "parameters": [
+                    {
+                        "description": "Login credentials object containing 'username' and 'password' fields.",
+                        "name": "credentials",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authentication successful: Returns the JWT for API access and a refresh token.",
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request: The request is malformed or the JSON body cannot be parsed.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized: Authentication failed due to invalid credentials or inactive user account.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error: An unexpected error occurred while processing the authentication request.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "This endpoint is used to refresh an expired or about to expire JWT token.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh JWT Token",
+                "parameters": [
+                    {
+                        "description": "Contains the refresh token that needs to be validated and exchanged for a new JWT token.",
+                        "name": "refreshToken",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.RefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A new JWT token is successfully generated and returned along with its expiry information.",
+                        "schema": {
+                            "$ref": "#/definitions/auth.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request: The request is invalid or malformed. The error message provides more details.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized: The provided refresh token is invalid or expired, and a new JWT token cannot be issued.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error: An unexpected error occurred while processing the refresh token request.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/healthcheck": {
             "get": {
                 "description": "check the service is up and running",
@@ -1467,98 +1571,6 @@ const docTemplate = `{
                         "description": "ok",
                         "schema": {
                             "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/login": {
-            "post": {
-                "description": "Authenticates a user and returns a temporary JWT token and refresh token for API interaction.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "User Authentication",
-                "parameters": [
-                    {
-                        "description": "Authentication request body with your username and password",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/auth.LoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully authenticated, JWT token and Refresh JWT token are returned in response",
-                        "schema": {
-                            "$ref": "#/definitions/auth.LoginResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Returns error details",
-                        "schema": {
-                            "$ref": "#/definitions/response.Error"
-                        }
-                    },
-                    "401": {
-                        "description": "Returns error details",
-                        "schema": {
-                            "$ref": "#/definitions/response.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/refresh": {
-            "post": {
-                "description": "Takes a refresh token and returns a new JWT token for API interaction.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Refresh JWT token",
-                "parameters": [
-                    {
-                        "description": "Request body with your refresh token",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/auth.RefreshRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully refreshed, new JWT token is returned in response",
-                        "schema": {
-                            "$ref": "#/definitions/auth.LoginResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Returns error details",
-                        "schema": {
-                            "$ref": "#/definitions/response.Error"
-                        }
-                    },
-                    "401": {
-                        "description": "Returns error details",
-                        "schema": {
-                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -1712,9 +1724,11 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "password": {
+                    "description": "Password password to authenticate with. Length has to be between 5 and\n128 characters.",
                     "type": "string"
                 },
                 "username": {
+                    "description": "Username the username to authenticate with. Length has to be between 5 and\n128 characters.",
                     "type": "string"
                 }
             }
@@ -1723,9 +1737,11 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "refresh_token": {
+                    "description": "RefreshToken the token to be used to refresh the access token.",
                     "type": "string"
                 },
                 "token": {
+                    "description": "AccessToken the token to be used on authenticated requests.",
                     "type": "string"
                 }
             }
@@ -1734,6 +1750,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "refresh_token": {
+                    "description": "RefreshToken the token to be used to refresh the access token.",
                     "type": "string"
                 }
             }
@@ -1984,30 +2001,7 @@ const docTemplate = `{
             }
         },
         "request.CreateRequest": {
-            "type": "object",
-            "properties": {
-                "callback": {
-                    "type": "string"
-                },
-                "connection_self_id": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "facts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/request.FactRequest"
-                    }
-                },
-                "out_of_band": {
-                    "type": "boolean"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
+            "type": "object"
         },
         "request.ExtRequest": {
             "type": "object",
