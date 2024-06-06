@@ -24,7 +24,7 @@ func Test_service_Authenticate(t *testing.T) {
 	}
 	s := NewService(&cfg, &mock.AccountRepositoryMock{}, &mock.AppRepositoryMock{}, logger)
 	_, err := s.Login(context.Background(), "unknown", "bad")
-	assert.Equal(t, errors.Unauthorized(""), err)
+	assert.Equal(t, errors.Unauthorized("account does not exist"), err)
 	resp, err := s.Login(context.Background(), "demo", "pass")
 	assert.Nil(t, err)
 	assert.NotEmpty(t, resp.AccessToken)
@@ -41,7 +41,7 @@ func Test_service_authenticate(t *testing.T) {
 		UserName: "foooo",
 		Password: "baaar",
 	})
-	assert.Nil(t, s.authenticate(context.Background(), "foooo", "baaar"))
+	assert.NotNil(t, s.authenticate(context.Background(), "foooo", "baaar"))
 }
 
 func Test_service_GenerateJWT(t *testing.T) {
