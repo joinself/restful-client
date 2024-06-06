@@ -57,14 +57,17 @@ func (s service) Login(ctx context.Context, username, password string) (LoginRes
 	var err error
 	identity := s.authenticate(ctx, username, password)
 	if identity == nil {
-		return res, errors.Unauthorized("")
+		s.logger.With(ctx).Infof("account %s does not exist", username)
+		return res, errors.Unauthorized("account does not exist")
 	}
 
 	res.AccessToken, err = s.generateJWT(identity)
 	if err != nil {
+		s.logger.With(ctx).Infof("error generating the jwt token %v", err)
 		return res, err
 	}
 	if s.rTokenExpiration == 0 {
+		s.logger.With(ctx).Info("token expiration is 0")
 		return res, nil
 	}
 
@@ -80,21 +83,26 @@ func (s service) Refresh(ctx context.Context, token string) (LoginResponse, erro
 	// Extract the id from the token.
 	id, err := s.getRefreshJWTSubject(token)
 	if err != nil {
+		s.logger.With(ctx).Infof("problem extracting the user id from the input token - %v", err)
 		return res, errors.Unauthorized(err.Error())
 	}
 
 	// Check the user still exists on the DB
 	identity := s.getByID(ctx, id)
 	if identity == nil {
+		s.logger.With(ctx).Infof("error retrieving user %s by id", id)
 		return res, errors.Unauthorized("")
 	}
 
 	// Generate an auth token
 	res.AccessToken, err = s.generateJWT(identity)
 	if err != nil {
+		s.logger.With(ctx).Infof("error generating the access token - %v", err)
 		return res, err
 	}
+
 	if s.rTokenExpiration == 0 {
+		s.logger.With(ctx).Info("token expiration is 0")
 		return res, nil
 	}
 
@@ -108,7 +116,7 @@ func (s service) authenticate(ctx context.Context, username, password string) ac
 
 	// This is the ENVIRONMENT configured credentials.
 	if username == s.user && password == s.password {
-		logger.Infof("admin authentication successful")
+		logger.Debug("admin authentication successful")
 		return entity.User{
 			ID:                     "0",
 			Name:                   s.user,
@@ -120,7 +128,7 @@ func (s service) authenticate(ctx context.Context, username, password string) ac
 
 	a, err := s.accountRepo.Get(ctx, username, password)
 	if err == nil {
-		logger.Infof("non-admin authentication successful")
+		logger.Debug("non-admin authentication successful")
 		u := entity.User{
 			ID:                     strconv.Itoa(a.ID),
 			Name:                   a.UserName,
@@ -139,11 +147,9 @@ func (s service) getByID(ctx context.Context, id string) acl.Identity {
 	logger := s.logger.With(ctx, "id", id)
 
 	if id == s.user {
-		logger.Infof("token refresh successful")
 		return entity.User{ID: "100", Name: s.user}
 	}
 
-	logger.Infof("token refresh failed")
 	return nil
 }
 

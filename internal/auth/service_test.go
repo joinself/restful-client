@@ -33,9 +33,15 @@ func Test_service_Authenticate(t *testing.T) {
 
 func Test_service_authenticate(t *testing.T) {
 	logger, _ := log.NewForTest()
-	s := service{"test", 100, 100, "demo", "pass", &mock.AccountRepositoryMock{}, &mock.AppRepositoryMock{}, logger}
+	accountMock := mock.AccountRepositoryMock{}
+	s := service{"test", 100, 100, "demo", "pass", &accountMock, &mock.AppRepositoryMock{}, logger}
 	assert.Nil(t, s.authenticate(context.Background(), "unknown", "bad"))
 	assert.NotNil(t, s.authenticate(context.Background(), "demo", "pass"))
+	accountMock.Create(context.Background(), entity.Account{
+		UserName: "foooo",
+		Password: "baaar",
+	})
+	assert.Nil(t, s.authenticate(context.Background(), "foooo", "baaar"))
 }
 
 func Test_service_GenerateJWT(t *testing.T) {
