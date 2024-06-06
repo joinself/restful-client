@@ -146,10 +146,14 @@ func (s service) authenticate(ctx context.Context, username, password string) ac
 func (s service) getByID(ctx context.Context, id string) acl.Identity {
 	logger := s.logger.With(ctx, "id", id)
 
+	// Is the default configured user?
 	if id == s.user {
 		return entity.User{ID: "100", Name: s.user}
 	}
 
+	// TODO: Lookup for database users.
+
+	logger.With(ctx).Infof("user id not found")
 	return nil
 }
 
