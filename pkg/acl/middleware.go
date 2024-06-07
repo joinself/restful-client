@@ -23,8 +23,8 @@ func NewMiddleware(checker *filter.Checker) *Middleware {
 	}
 }
 
-// Process is the middleware function.
-func (s *Middleware) Process(next echo.HandlerFunc) echo.HandlerFunc {
+// TokenAndAccessCheckMiddleware is the middleware function.
+func (s *Middleware) TokenAndAccessCheckMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()

@@ -109,7 +109,7 @@ func TestGetSignatureAPIEndpointAsPlainWithPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{"GET /apps/app_id/*"}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -152,7 +152,7 @@ func TestGetSignatureAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -177,7 +177,7 @@ func TestListSignaturesAPIEndpointAsAdmin(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -229,7 +229,7 @@ func TestListSignaturesAPIEndpointAsPlain(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -254,7 +254,7 @@ func TestCreateSignatureAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -279,7 +279,7 @@ func TestCreateSignatureAPIEndpoint(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -331,7 +331,7 @@ func TestDeleteSignatureAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -356,7 +356,7 @@ func TestUpdateSignatureAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{

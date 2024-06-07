@@ -127,7 +127,7 @@ func TestGetFactAPIEndpointAsPlainWithPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{"GET /apps/app_id/connections/conn_id/facts/fact_id"}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -170,7 +170,7 @@ func TestGetFactAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -195,7 +195,7 @@ func TestListFactsAPIEndpointAsAdmin(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -247,7 +247,7 @@ func TestListFactsAPIEndpointAsPlain(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -272,7 +272,7 @@ func TestCreateFactAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -297,7 +297,7 @@ func TestCreateFactAPIEndpoint(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -358,7 +358,7 @@ func TestDeleteFactAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
@@ -383,7 +383,7 @@ func TestDeleteFactAPIEndpoint(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, mockConnectionService{}, logger)
 
 	tests := []test.APITestCase{
