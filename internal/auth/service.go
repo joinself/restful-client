@@ -24,6 +24,7 @@ type Service interface {
 
 type AccountGetter interface {
 	Get(ctx context.Context, username, password string) (entity.Account, error)
+	GetByUsername(ctx context.Context, username string) (entity.Account, error)
 }
 
 type service struct {
@@ -91,7 +92,7 @@ func (s service) Refresh(ctx context.Context, token string) (LoginResponse, erro
 	identity := s.getByID(ctx, id)
 	if identity == nil {
 		s.logger.With(ctx).Infof("error retrieving user %s by id", id)
-		return res, errors.Unauthorized("")
+		return res, errors.Unauthorized("account not found")
 	}
 
 	// Generate an auth token
@@ -146,15 +147,25 @@ func (s service) authenticate(ctx context.Context, username, password string) ac
 func (s service) getByID(ctx context.Context, id string) acl.Identity {
 	logger := s.logger.With(ctx, "id", id)
 
-	// Is the default configured user?
+	// Look up for the default configured user?
 	if id == s.user {
-		return entity.User{ID: "100", Name: s.user}
+		return entity.User{
+			ID:   "0",
+			Name: s.user,
+		}
 	}
 
-	// TODO: Lookup for database users.
+	// Look up for accounts on the database
+	account, err := s.accountRepo.GetByUsername(ctx, id)
+	if err != nil {
+		logger.With(ctx).Infof("account %s does not exist", id)
+		return nil
+	}
 
-	logger.With(ctx).Infof("user id not found")
-	return nil
+	return entity.User{
+		ID:   strconv.Itoa(account.ID),
+		Name: account.UserName,
+	}
 }
 
 // generateJWT generates a JWT that encodes an identity.

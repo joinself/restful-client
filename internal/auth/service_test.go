@@ -66,7 +66,10 @@ func Test_refresh_token(t *testing.T) {
 		Password:                      "pass",
 	}
 
-	s := NewService(&cfg, &mock.AccountRepositoryMock{}, &mock.AppRepositoryMock{}, logger)
+	accountMock := &mock.AccountRepositoryMock{}
+
+	s := NewService(&cfg, accountMock, &mock.AppRepositoryMock{}, logger)
+	// Config account
 	resp, err := s.Login(context.Background(), "demo", "pass")
 	assert.Nil(t, err)
 	assert.NotEmpty(t, resp.RefreshToken)
@@ -78,4 +81,22 @@ func Test_refresh_token(t *testing.T) {
 	assert.NotEmpty(t, resp.RefreshToken)
 	assert.NotEqual(t, resp.AccessToken, resp2.AccessToken)
 	assert.NotEqual(t, resp2.AccessToken, resp2.RefreshToken)
+
+	// DB based account
+	accountMock.Create(context.Background(), entity.Account{
+		UserName: "john",
+		Password: "smith",
+	})
+	resp3, err := s.Login(context.Background(), "john", "smith")
+	assert.Nil(t, err)
+	assert.NotEmpty(t, resp3.RefreshToken)
+	resp4, err := s.Refresh(context.Background(), resp3.RefreshToken)
+	assert.Nil(t, err)
+	assert.NotEqual(t, resp3.AccessToken, resp4.AccessToken)
+	assert.NotEqual(t, resp4.AccessToken, resp4.RefreshToken)
+
+	// Non existing account
+	accountMock.Items = []entity.Account{}
+	_, err = s.Refresh(context.Background(), resp3.RefreshToken)
+	assert.Error(t, errors.Unauthorized("account not found"))
 }
