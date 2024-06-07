@@ -15,8 +15,10 @@ import (
 )
 
 const (
-	ErrorUsername = "throw_error"
-	LongString    = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
+	ErrorUsername           = "Throw_1_error!"
+	LongString              = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
+	PasswordErrorMessage    = "password: password must be at least 8 characters long, include upper and lower case letters, numbers, and special characters."
+	NewPasswordErrorMessage = "new_password: password must be at least 8 characters long, include upper and lower case letters, numbers, and special characters."
 )
 
 type mockService struct{}
@@ -62,7 +64,7 @@ func (m mockService) Count(ctx context.Context) (int, error) {
 }
 
 func TestCreateAccountAPIEndpointAsAdmin(t *testing.T) {
-	var validPwd = "valid_password"
+	var validPwd = "Pass_larger_1!"
 	var validUsr = "valid_user"
 
 	logger, _ := log.NewForTest()
@@ -77,10 +79,10 @@ func TestCreateAccountAPIEndpointAsAdmin(t *testing.T) {
 			Name:         "success",
 			Method:       "POST",
 			URL:          "/accounts",
-			Body:         `{"username":"test_larger","password":"pass_larger","resources":[]}`,
+			Body:         `{"username":"` + validUsr + `","password":"` + validPwd + `","resources":[]}`,
 			Header:       nil,
 			WantStatus:   http.StatusCreated,
-			WantResponse: `{"requires_password_change":true, "resources":"", "user_name":"test_larger"}`,
+			WantResponse: `{"requires_password_change":true, "resources":"", "user_name":"` + validUsr + `"}`,
 		},
 		{
 			Name:         "invalid input",
@@ -116,7 +118,7 @@ func TestCreateAccountAPIEndpointAsAdmin(t *testing.T) {
 			Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, validUsr, LongString),
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: `{"details":"password: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+			WantResponse: `{"details":"` + PasswordErrorMessage + `", "error":"Invalid input", "status":400}`,
 		},
 		{
 			Name:         "username too short",
@@ -134,7 +136,7 @@ func TestCreateAccountAPIEndpointAsAdmin(t *testing.T) {
 			Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, validUsr, "a"),
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: `{"details":"password: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+			WantResponse: `{"details":"` + PasswordErrorMessage + `", "error":"Invalid input", "status":400}`,
 		},
 		{
 			Name:         "username blank",
@@ -252,7 +254,7 @@ func TestDeleteAccountAPIEndpointAsPlain(t *testing.T) {
 
 func OTestChangePasswordAPIEndpointAsAdmin(t *testing.T) {
 	var longString = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
-	var validPwd = "valid_password"
+	var validPwd = "Pass_larger_1!"
 	var validUsr = "valid_user"
 
 	logger, _ := log.NewForTest()
@@ -267,7 +269,7 @@ func OTestChangePasswordAPIEndpointAsAdmin(t *testing.T) {
 			Name:         "success",
 			Method:       "PUT",
 			URL:          "/accounts/username/password",
-			Body:         `{"new_password":"new_password","password":"pass_larger","resources":[]}`,
+			Body:         `{"new_password":"` + validPwd + `","password":"` + validPwd + `","resources":[]}`,
 			Header:       nil,
 			WantStatus:   http.StatusCreated,
 			WantResponse: `{"requires_password_change":false, "resources":"", "user_name":"test_larger"}`,
@@ -306,7 +308,7 @@ func OTestChangePasswordAPIEndpointAsAdmin(t *testing.T) {
 			Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, validUsr, longString),
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: `{"details":"password: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+			WantResponse: `{"details":"` + PasswordErrorMessage + `", "error":"Invalid input", "status":400}`,
 		},
 		{
 			Name:         "username too short",
@@ -324,7 +326,7 @@ func OTestChangePasswordAPIEndpointAsAdmin(t *testing.T) {
 			Body:         fmt.Sprintf(`{"username":"%s","password":"%s"}`, validUsr, "a"),
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: `{"details":"password: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+			WantResponse: `{"details":"` + PasswordErrorMessage + `", "error":"Invalid input", "status":400}`,
 		},
 		{
 			Name:         "username blank",
@@ -360,7 +362,7 @@ func OTestChangePasswordAPIEndpointAsAdmin(t *testing.T) {
 }
 
 func TestChangePasswordAPIEndpointAsPlain(t *testing.T) {
-	var validPwd = "password"
+	var validPwd = "Pass_larger_1!"
 
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
@@ -374,7 +376,7 @@ func TestChangePasswordAPIEndpointAsPlain(t *testing.T) {
 			Name:         "success",
 			Method:       "PUT",
 			URL:          "/accounts/john/password",
-			Body:         `{"new_password":"new_password","password":"old_password"}`,
+			Body:         `{"new_password":"` + validPwd + `","password":"old_password"}`,
 			Header:       nil,
 			WantStatus:   http.StatusOK,
 			WantResponse: ``,
@@ -395,7 +397,7 @@ func TestChangePasswordAPIEndpointAsPlain(t *testing.T) {
 			Body:         `{}`,
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: `{"details":"new_password: cannot be blank; password: cannot be blank.", "error":"Invalid input", "status":400}`,
+			WantResponse: `{"details":"new_password: password must be at least 8 characters long, include upper and lower case letters, numbers, and special characters; password: cannot be blank.", "error":"Invalid input", "status":400}`,
 		},
 		{
 			Name:         "new password too long",
@@ -404,7 +406,7 @@ func TestChangePasswordAPIEndpointAsPlain(t *testing.T) {
 			Body:         fmt.Sprintf(`{"new_password":"%s","password":"%s"}`, LongString, validPwd),
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: `{"details":"new_password: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+			WantResponse: `{"details":"` + NewPasswordErrorMessage + `", "error":"Invalid input", "status":400}`,
 		},
 		{
 			Name:         "new password too short",
@@ -413,7 +415,7 @@ func TestChangePasswordAPIEndpointAsPlain(t *testing.T) {
 			Body:         fmt.Sprintf(`{"new_password":"%s","password":"%s"}`, "o", validPwd),
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: `{"details":"new_password: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+			WantResponse: `{"details":"` + NewPasswordErrorMessage + `", "error":"Invalid input", "status":400}`,
 		},
 		{
 			Name:         "new password blank",
@@ -422,10 +424,10 @@ func TestChangePasswordAPIEndpointAsPlain(t *testing.T) {
 			Body:         fmt.Sprintf(`{"new_password":"%s","password":"%s"}`, "", validPwd),
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: `{"details":"new_password: cannot be blank.", "error":"Invalid input", "status":400}`,
+			WantResponse: `{"details":"` + NewPasswordErrorMessage + `", "error":"Invalid input", "status":400}`,
 		},
 		{
-			Name:         "error on creation",
+			Name:         "internal error on password change",
 			Method:       "PUT",
 			URL:          "/accounts/john/password",
 			Body:         fmt.Sprintf(`{"new_password":"%s","password":"%s"}`, ErrorUsername, validPwd),
