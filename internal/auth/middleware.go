@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Handler returns a JWT-based authentication middleware.
-func Handler(verificationKey string) echo.MiddlewareFunc {
+// JWTAuthMiddleware returns a JWT-based authentication middleware.
+func JWTAuthMiddleware(verificationKey string) echo.MiddlewareFunc {
 	config := echojwt.Config{
 		NewClaimsFunc: func(c echo.Context) jwt.Claims {
 			return new(acl.JWTCustomClaims)

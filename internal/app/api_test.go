@@ -56,7 +56,7 @@ func TestListAppsAPIEndpointAsAdmin(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -81,7 +81,7 @@ func TestListAppsAPIEndpointAsPlain(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -109,7 +109,7 @@ func TestCreateAppAPIEndpointAsAdmin(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -161,7 +161,7 @@ func TestCreateAppAPIEndpointAsPlain(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -186,7 +186,7 @@ func TestDeleteAppAPIEndpointAsAdmin(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -219,7 +219,7 @@ func TestDeleteAppAPIEndpointAsPlain(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{

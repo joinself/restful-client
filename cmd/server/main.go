@@ -161,12 +161,13 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	// TODO: preload all deleted pi keys
 	apikeyRepo.PreloadDeleted(context.Background())
 	aclMiddleware := acl.NewMiddleware(tokenChecker)
+	jwtAuthMiddleware := auth.JWTAuthMiddleware(cfg.JWTSigningKey)
 	rg := e.Group("/v1")
 
 	// App children handlers
 	appsGroup := rg.Group("/apps")
-	appsGroup.Use(auth.Handler(cfg.JWTSigningKey))
-	appsGroup.Use(aclMiddleware.Process)
+	appsGroup.Use(jwtAuthMiddleware)
+	appsGroup.Use(aclMiddleware.TokenAndAccessCheckMiddleware)
 	app.RegisterHandlers(appsGroup,
 		aService,
 		logger,
@@ -215,7 +216,7 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 
 	// accounts children handlers
 	accountsGroup := rg.Group("/accounts")
-	accountsGroup.Use(auth.Handler(cfg.JWTSigningKey))
+	accountsGroup.Use(jwtAuthMiddleware)
 	// accountsGroup.Use(aclMiddleware.Process)
 	account.RegisterHandlers(accountsGroup,
 		account.NewService(accountRepo, logger),

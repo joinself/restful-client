@@ -65,7 +65,7 @@ func testHasAccessToResource(t *testing.T) {
 }
 
 func TestHandler(t *testing.T) {
-	assert.NotNil(t, Handler("test"))
+	assert.NotNil(t, JWTAuthMiddleware("test"))
 }
 
 func buildJwt(identity acl.Identity) *jwt.Token {

@@ -77,7 +77,7 @@ func TestListApiKeysAPIEndpointAsAdmin(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -129,7 +129,7 @@ func TestListApiKeysAPIEndpointAsPlain(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -154,7 +154,7 @@ func TestGetApiKeyAPIEndpointAsPlainWithPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{"GET /apps/app_id/apikeys/1"}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -188,7 +188,7 @@ func TestGetApiKeyAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -213,7 +213,7 @@ func TestCreateApiKeyAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -238,7 +238,7 @@ func TestCreateApiKeyAPIEndpoint(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -290,7 +290,7 @@ func TestUpdateApiKeyAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -315,7 +315,7 @@ func TestUpdateApiKeyAPIEndpoint(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -367,7 +367,7 @@ func TestDeleteApiKeyAPIEndpointAsPlainWithoutPermissions(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsPlainMiddleware([]string{}))
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
@@ -392,7 +392,7 @@ func TestDeleteApiKeyAPIEndpoint(t *testing.T) {
 
 	rg := router.Group("/apps")
 	rg.Use(acl.AuthAsAdminMiddleware())
-	rg.Use(acl.NewMiddleware(filter.NewChecker()).Process)
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
 	RegisterHandlers(rg, mockService{}, logger)
 
 	tests := []test.APITestCase{
