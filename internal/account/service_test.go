@@ -10,7 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const longString = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
+const (
+	longString    = "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
+	validPassword = "Pass_larger_1!"
+)
 
 func TestCreateAccountRequest_Validate(t *testing.T) {
 	tests := []struct {
@@ -18,7 +21,7 @@ func TestCreateAccountRequest_Validate(t *testing.T) {
 		model     CreateAccountRequest
 		wantError bool
 	}{
-		{"success", CreateAccountRequest{Username: "username", Password: "password"}, false},
+		{"success", CreateAccountRequest{Username: "username", Password: validPassword}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -34,11 +37,11 @@ func TestChangePasswordRequest_Validate(t *testing.T) {
 		model     ChangePasswordRequest
 		wantError bool
 	}{
-		{"success", ChangePasswordRequest{NewPassword: "username", Password: "password"}, false},
+		{"success", ChangePasswordRequest{NewPassword: validPassword, Password: validPassword}, false},
 		{"required", ChangePasswordRequest{}, true},
-		{"too long new pwd", ChangePasswordRequest{NewPassword: longString, Password: "password"}, true},
+		{"too long new pwd", ChangePasswordRequest{NewPassword: longString, Password: validPassword}, true},
 		{"too long pwd", ChangePasswordRequest{NewPassword: "user", Password: longString}, true},
-		{"too short new pwd", ChangePasswordRequest{NewPassword: "", Password: "password"}, true},
+		{"too short new pwd", ChangePasswordRequest{NewPassword: "", Password: validPassword}, true},
 		{"too long pwd", ChangePasswordRequest{NewPassword: "user", Password: ""}, true},
 	}
 	for _, tt := range tests {
@@ -64,7 +67,7 @@ func Test_service_CRUD(t *testing.T) {
 	username := "selfid"
 	account, err := s.Create(ctx, CreateAccountRequest{
 		Username:  username,
-		Password:  "password",
+		Password:  validPassword,
 		Resources: []string{"appid"},
 	})
 	assert.Nil(t, err)
@@ -76,9 +79,9 @@ func Test_service_CRUD(t *testing.T) {
 	assert.Equal(t, 1, count)
 
 	// get
-	_, err = s.Get(ctx, "none", "password")
+	_, err = s.Get(ctx, "none", validPassword)
 	assert.NotNil(t, err)
-	account, err = s.Get(ctx, username, "password")
+	account, err = s.Get(ctx, username, validPassword)
 	assert.Nil(t, err)
 	rr := account.GetResources()
 	require.Equal(t, len(rr), 1)
@@ -98,7 +101,7 @@ func Test_service_CRUD(t *testing.T) {
 	f := false
 	account2, err := s.Create(ctx, CreateAccountRequest{
 		Username:               username2,
-		Password:               "password",
+		Password:               validPassword,
 		Resources:              []string{"appid"},
 		RequiresPasswordChange: &f,
 	})
