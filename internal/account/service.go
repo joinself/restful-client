@@ -108,6 +108,7 @@ func (s service) Count(ctx context.Context) (int, error) {
 	return s.repo.Count(ctx)
 }
 
+// List lists all the existing accounts.
 func (s service) List(ctx context.Context) []ExtAccount {
 	accounts, err := s.repo.List(ctx)
 	if err != nil {

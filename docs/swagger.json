@@ -29,7 +29,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieves and lists all the configured accounts for the restful client. You must be authenticated as an admin.",
+                "description": "This endpoint retrieves and lists all the accounts that have been configured in the system.",
                 "consumes": [
                     "application/json"
                 ],
@@ -40,9 +40,23 @@
                     "accounts"
                 ],
                 "summary": "Lists all configured accounts.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "The page number to retrieve. Defaults to 1 if not provided.",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "The number of accounts to retrieve per page. Defaults to 10 if not provided.",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Successful operation",
+                        "description": "Upon successful operation, a paginated list of accounts is returned.",
                         "schema": {
                             "$ref": "#/definitions/account.ExtListResponse"
                         }
@@ -61,7 +75,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new account and sends a request for public information. You must be authenticated as an admin.",
+                "description": "This endpoint creates a new account in the system and sends a request to gather public information associated with the account.",
                 "consumes": [
                     "application/json"
                 ],
@@ -74,7 +88,7 @@
                 "summary": "Creates a new account.",
                 "parameters": [
                     {
-                        "description": "query params",
+                        "description": "The request body must contain the account details in JSON format.",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -84,10 +98,28 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Upon successful account creation, the response will contain the username, resources associated with the account,",
                         "schema": {
                             "$ref": "#/definitions/account.CreateAccountResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "If the request body is invalid, a bad request error is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "If the user is not authenticated as an admin, a forbidden error is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "If there is any internal server error, a generic error is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -100,7 +132,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes an existing account and sends a request for public information and avoids incoming comms from that account. You must be authenticated as an admin.",
+                "description": "This endpoint deletes an existing account from the system.",
                 "consumes": [
                     "application/json"
                 ],
@@ -114,7 +146,7 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Username of the account to delete",
+                        "description": "The username of the account to be deleted.",
                         "name": "username",
                         "in": "path",
                         "required": true
@@ -122,13 +154,19 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content",
+                        "description": "Upon successful account deletion, a no content response is returned.",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "404": {
-                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "description": "If the account does not exist or the user is not authenticated as an admin, a not found error is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "If there is any internal server error, a generic error is returned.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
@@ -143,7 +181,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Changes the password for the current user. You must be authenticated.",
+                "description": "This endpoint changes the password for the provided username.",
                 "consumes": [
                     "application/json"
                 ],
@@ -157,13 +195,13 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Username of the account to change the password",
+                        "description": "The username of the account for which the password is to be changed.",
                         "name": "username",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Password change details",
+                        "description": "The request body must contain the current password and the new password in JSON format.",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -174,25 +212,25 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "No Content",
+                        "description": "Upon successful password change, an OK response is returned.",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Bad request - The provided body is not valid",
+                        "description": "If the request body is invalid or the current password is incorrect, a bad request error is returned.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
                     },
                     "404": {
-                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "description": "If the user does not exist or is not authenticated, a not found error is returned.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
                     },
                     "500": {
-                        "description": "Internal error - There was a problem with your request",
+                        "description": "If there is any internal server error, a generic error is returned.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
