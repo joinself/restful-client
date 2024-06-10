@@ -301,6 +301,23 @@ definitions:
         type: object
     type: object
   request.CreateRequest:
+    properties:
+      allowed_for:
+        type: integer
+      callback:
+        type: string
+      connection_self_id:
+        type: string
+      description:
+        type: string
+      facts:
+        items:
+          $ref: '#/definitions/request.FactRequest'
+        type: array
+      out_of_band:
+        type: boolean
+      type:
+        type: string
     type: object
   request.ExtRequest:
     properties:

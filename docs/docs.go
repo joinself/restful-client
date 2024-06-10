@@ -2073,7 +2073,33 @@ const docTemplate = `{
             }
         },
         "request.CreateRequest": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+                "allowed_for": {
+                    "type": "integer"
+                },
+                "callback": {
+                    "type": "string"
+                },
+                "connection_self_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "facts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/request.FactRequest"
+                    }
+                },
+                "out_of_band": {
+                    "type": "boolean"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
         },
         "request.ExtRequest": {
             "type": "object",
