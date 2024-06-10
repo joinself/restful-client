@@ -114,7 +114,7 @@ func (s service) Create(ctx context.Context, appID string, connection *entity.Co
 		Callback:    req.Callback,
 		Description: req.Description,
 		OutOfBand:   req.OutOfBand,
-		AllowedFor:  req.AllowedFor,
+		AllowedFor:  time.Duration(req.AllowedFor),
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
