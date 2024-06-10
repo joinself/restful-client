@@ -215,6 +215,8 @@ definitions:
     properties:
       body:
         type: string
+      options:
+        $ref: '#/definitions/message.MessageOptions'
     type: object
   message.ExtListResponse:
     properties:
@@ -253,6 +255,26 @@ definitions:
         type: string
       updated_at:
         type: string
+    type: object
+  message.MessageObject:
+    properties:
+      expires:
+        type: integer
+      key:
+        type: string
+      link:
+        type: string
+      mime:
+        type: string
+      name:
+        type: string
+    type: object
+  message.MessageOptions:
+    properties:
+      objects:
+        items:
+          $ref: '#/definitions/message.MessageObject'
+        type: array
     type: object
   message.UpdateMessageRequest:
     properties:

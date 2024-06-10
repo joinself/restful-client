@@ -28,6 +28,7 @@ import (
 	"github.com/joinself/restful-client/internal/message"
 	"github.com/joinself/restful-client/internal/metric"
 	"github.com/joinself/restful-client/internal/notification"
+	"github.com/joinself/restful-client/internal/object"
 	"github.com/joinself/restful-client/internal/request"
 	"github.com/joinself/restful-client/internal/self"
 	"github.com/joinself/restful-client/internal/signature"
@@ -211,6 +212,10 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config) http.
 	signature.RegisterHandlers(appsGroup,
 		sService,
 		cService,
+		logger,
+	)
+	object.RegisterHandlers(appsGroup,
+		object.NewService(runner, logger),
 		logger,
 	)
 

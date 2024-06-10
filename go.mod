@@ -13,7 +13,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/jasonlvhit/gocron v0.0.1
 	github.com/joho/godotenv v1.5.1
-	github.com/joinself/self-go-sdk v0.0.0-20240308120817-69c5d50cd154
+	github.com/joinself/self-go-sdk v0.0.0-20240530130859-b8056cf8e922
 	github.com/labstack/echo-jwt/v4 v4.1.0
 	github.com/labstack/echo/v4 v4.9.0
 	github.com/lib/pq v1.2.0

@@ -93,7 +93,7 @@ func (s service) Create(ctx context.Context, appID, selfID string, connection in
 	}
 
 	// Send the message to the connection.
-	m, err := s.sendMessage(appID, selfID, req.Body)
+	m, err := s.sendMessage(appID, selfID, req)
 	if err != nil {
 		return Message{}, err
 	}
@@ -190,13 +190,29 @@ func (s service) MarkAsReceived(ctx context.Context, appID, connection, jti stri
 	return nil
 }
 
-func (s service) sendMessage(appID, connection string, body string) (*chat.Message, error) {
+func (s service) sendMessage(appID, connection string, req CreateMessageRequest) (*chat.Message, error) {
 	client, ok := s.runner.Get(appID)
 	if !ok {
 		return nil, nil
 	}
 
-	return client.ChatService().Message([]string{connection}, body)
+	if len(req.Options.Objects) > 0 {
+		objects := make([]chat.MessageObject, len(req.Options.Objects))
+		for i, o := range req.Options.Objects {
+			objects[i] = chat.MessageObject{
+				Link:    o.Link,
+				Name:    o.Name,
+				Mime:    o.Mime,
+				Key:     o.Key,
+				Expires: o.Expires,
+			}
+		}
+
+		return client.ChatService().Message([]string{connection}, req.Body, chat.MessageOptions{
+			Objects: objects,
+		})
+	}
+	return client.ChatService().Message([]string{connection}, req.Body)
 }
 
 func (s service) updateMessage(appID, connection, jti, body string) {

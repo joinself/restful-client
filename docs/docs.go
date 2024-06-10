@@ -1901,6 +1901,9 @@ const docTemplate = `{
             "properties": {
                 "body": {
                     "type": "string"
+                },
+                "options": {
+                    "$ref": "#/definitions/message.MessageOptions"
                 }
             }
         },
@@ -1959,6 +1962,37 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "message.MessageObject": {
+            "type": "object",
+            "properties": {
+                "expires": {
+                    "type": "integer"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "link": {
+                    "type": "string"
+                },
+                "mime": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "message.MessageOptions": {
+            "type": "object",
+            "properties": {
+                "objects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/message.MessageObject"
+                    }
                 }
             }
         },
