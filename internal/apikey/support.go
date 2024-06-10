@@ -9,6 +9,14 @@ import (
 	"github.com/joinself/restful-client/pkg/response"
 )
 
+const (
+	RESOURCE_FULL      = "FULL"
+	RESOURCE_MESSAGING = "MESSAGING"
+	RESOURCE_REQUESTS  = "REQUESTS"
+	RESOURCE_METRICS   = "METRICS"
+	RESOURCE_CALLS     = "CALLS"
+)
+
 // ExtListResponse represents the json object returned when listing apikeys.
 type ExtListResponse struct {
 	Page       int         `json:"page"`
@@ -37,9 +45,9 @@ type CreateApiKeyRequest struct {
 // Validate validates the CreateApiKeyRequest fields.
 func (m CreateApiKeyRequest) Validate() *response.Error {
 	err := validation.ValidateStruct(&m,
-		validation.Field(&m.Name, validation.Required, validation.Length(0, 128)),
+		validation.Field(&m.Name, validation.Required, validation.Length(1, 128)),
 		validation.Field(&m.Scope, validation.Required, validation.Length(0, 128)),
-		validation.Field(&m.Scope, validation.In("FULL", "MESSAGING", "REQUESTS", "METRICS", "CALLS")),
+		validation.Field(&m.Scope, validation.In(RESOURCE_FULL, RESOURCE_MESSAGING, RESOURCE_REQUESTS, RESOURCE_METRICS, RESOURCE_CALLS)),
 	)
 	if err == nil {
 		return nil
@@ -53,21 +61,21 @@ func (m CreateApiKeyRequest) Validate() *response.Error {
 
 func (m CreateApiKeyRequest) GetResources(appID string) []string {
 	validResources := map[string][]string{
-		"FULL": {
+		RESOURCE_FULL: {
 			fmt.Sprintf("ANY /v1/apps/%s*", appID),
 		},
-		"MESSAGING": {
+		RESOURCE_MESSAGING: {
 			fmt.Sprintf("GET /v1/apps/%s/connections", appID),
 			fmt.Sprintf("ANY /v1/apps/%s/connections/*/messages*", appID),
 		},
-		"CALLS": {
+		RESOURCE_CALLS: {
 			fmt.Sprintf("GET /v1/apps/%s/connections", appID),
 			fmt.Sprintf("ANY /v1/apps/%s/connections/*/calls*", appID),
 		},
-		"REQUESTS": {
+		RESOURCE_REQUESTS: {
 			fmt.Sprintf("GET /v1/apps/%s/requests*", appID),
 		},
-		"METRICS": {
+		RESOURCE_METRICS: {
 			fmt.Sprintf("GET /v1/apps/%s/metrics*", appID),
 		},
 	}

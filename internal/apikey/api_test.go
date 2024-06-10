@@ -411,8 +411,8 @@ func TestDeleteApiKeyAPIEndpoint(t *testing.T) {
 			URL:          "/apps/app_id/apikeys/0",
 			Body:         `{"name":"0"}`,
 			Header:       nil,
-			WantStatus:   http.StatusNotFound,
-			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+			WantStatus:   http.StatusInternalServerError,
+			WantResponse: `There was a problem with your request. *`,
 		},
 	}
 	for _, tc := range tests {

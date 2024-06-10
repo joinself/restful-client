@@ -53,6 +53,48 @@ definitions:
       total_count:
         type: integer
     type: object
+  apikey.CreateApiKeyRequest:
+    properties:
+      name:
+        type: string
+      scope:
+        type: string
+    type: object
+  apikey.ExtApiKey:
+    properties:
+      app_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      token:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  apikey.ExtListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apikey.ExtApiKey'
+        type: array
+      page:
+        type: integer
+      page_count:
+        type: integer
+      per_page:
+        type: integer
+      total_count:
+        type: integer
+    type: object
+  apikey.UpdateApiKeyRequest:
+    properties:
+      name:
+        type: string
+    type: object
   app.CreateAppRequest:
     properties:
       callback:
@@ -615,6 +657,262 @@ paths:
       summary: Deletes an existing app.
       tags:
       - apps
+  /apps/{app_id}/apikeys:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of API keys for a specific app_id, matching
+        the specified filters.
+      parameters:
+      - description: Unique Identifier (UUID) for the App
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: The page number for pagination. If not provided, the default
+          is 1.
+        in: query
+        name: page
+        type: integer
+      - description: The number of API keys to return per page for pagination. If
+          not provided, the default is 10.
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upon successful operation, a paginated list of API keys is
+            returned.
+          schema:
+            $ref: '#/definitions/apikey.ExtListResponse'
+        "400":
+          description: If the app_id, page, or per_page parameters are not valid,
+            a bad request error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "403":
+          description: If the user does not have sufficient permissions to access
+            the API keys, a forbidden error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "404":
+          description: If the app does not exist, a not found error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: If there is any internal server error, a generic error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+      security:
+      - BearerAuth: []
+      summary: Retrieve a paginated list of API keys
+      tags:
+      - apikeys
+    post:
+      consumes:
+      - application/json
+      description: This API endpoint creates a new API key for a specific app.
+      parameters:
+      - description: Unique identifier of the app
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: 'Body containing details of the API key to be created. The source
+          should be one of the following types: FULL, MESSAGING, or REQUESTS.'
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/apikey.CreateApiKeyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Upon successful operation, the details of the new API key are
+            returned.
+          schema:
+            $ref: '#/definitions/apikey.ExtApiKey'
+        "400":
+          description: If the app_id or request body parameters are not valid, a bad
+            request error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "403":
+          description: If the user does not have sufficient permissions to create
+            an API key, a forbidden error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "404":
+          description: If the app does not exist, a not found error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: If there is any internal server error, a generic error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+      security:
+      - BearerAuth: []
+      summary: Create a new API key
+      tags:
+      - apikeys
+  /apps/{app_id}/apikeys/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: This endpoint deletes an existing API key using the provided app_id
+        and API key id.
+      parameters:
+      - description: Unique Identifier (UUID) for the Application. This is used to
+          ensure that the request is made within the context of a specific application.
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Unique Identifier for the API key that is to be deleted. This
+          allows the server to identify the specific API key that needs deleting.
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upon successful operation, the details of the deleted API key
+            are returned.
+          schema:
+            $ref: '#/definitions/apikey.ExtApiKey'
+        "400":
+          description: If the app_id or id parameters are not valid, a bad request
+            error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "403":
+          description: If the user does not have sufficient permissions to delete
+            the API key, a forbidden error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "404":
+          description: If the app or API key does not exist, a not found error is
+            returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: If there is any internal server error, a generic error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+      security:
+      - BearerAuth: []
+      summary: Delete an API key
+      tags:
+      - apikeys
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the specifics of an API key using the provided app_id
+        and API key id.
+      parameters:
+      - description: Unique Identifier (UUID) that represents a specific App
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Unique Identifier (integer) that represents a specific API key
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upon successful operation, the API key details are returned.
+          schema:
+            $ref: '#/definitions/apikey.ExtApiKey'
+        "400":
+          description: If the app_id or id parameters are not valid, a bad request
+            error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "403":
+          description: If the user does not have sufficient permissions to access
+            the API key details, a forbidden error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "404":
+          description: If the API key does not exist, a not found error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: If there is any internal server error, a generic error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+      security:
+      - BearerAuth: []
+      summary: Retrieve specific API key details
+      tags:
+      - apikeys
+    put:
+      consumes:
+      - application/json
+      description: This endpoint updates the properties of an existing API key for
+        a specific application.
+      parameters:
+      - description: Unique Identifier (UUID) for the Application. This is used to
+          ensure that the request is made within the context of a specific application.
+        in: path
+        name: app_id
+        required: true
+        type: string
+      - description: Unique Identifier for the API key that is to be updated. This
+          allows the server to identify the specific API key that needs updating.
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request body that must contain the updated details of the API
+          key. This includes any changes to the API key's attributes that are allowed
+          to be modified.
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/apikey.UpdateApiKeyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upon successful operation, the updated API key details are
+            returned.
+          schema:
+            $ref: '#/definitions/apikey.ExtApiKey'
+        "400":
+          description: If the app_id, id, or request body parameters are not valid,
+            a bad request error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "403":
+          description: If the user does not have sufficient permissions to update
+            the API key, a forbidden error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "404":
+          description: If the app or API key does not exist, a not found error is
+            returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: If there is any internal server error, a generic error is returned.
+          schema:
+            $ref: '#/definitions/response.Error'
+      security:
+      - BearerAuth: []
+      summary: Update an API key
+      tags:
+      - apikeys
   /apps/{app_id}/connections:
     get:
       consumes:

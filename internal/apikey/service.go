@@ -78,17 +78,20 @@ func (s service) Create(ctx context.Context, appid string, req CreateApiKeyReque
 		Resources:              req.GetResources(appid),
 	}, ak.ID, s.signingKey, GENERATED_TOKEN_EXPIRATION)
 	if err != nil {
+		s.logger.With(ctx).Infof("cannot generate a valid token %v", err)
 		return ApiKey{}, errors.New("cannot generate a valid token")
 	}
 
 	ak.Token = tok[:3] + "..." + tok[len(tok)-3:]
 	err = s.repo.Update(ctx, ak)
 	if err != nil {
+		s.logger.With(ctx).Infof("cannot generate a valid token %v", err)
 		return ApiKey{}, errors.New("cannot generate a valid token")
 	}
 
 	rak, err := s.Get(ctx, appid, ak.ID)
 	if err != nil {
+		s.logger.With(ctx).Infof("error getting api key %s from app %s %v", ak.ID, appid, err)
 		return ApiKey{}, err
 	}
 
@@ -100,12 +103,14 @@ func (s service) Create(ctx context.Context, appid string, req CreateApiKeyReque
 func (s service) Update(ctx context.Context, appid string, id int, req UpdateApiKeyRequest) (ApiKey, error) {
 	apikey, err := s.Get(ctx, appid, id)
 	if err != nil {
+		s.logger.With(ctx).Infof("error getting api key %s from app %s %v", id, appid, err)
 		return apikey, err
 	}
 	apikey.Name = req.Name
 	apikey.UpdatedAt = time.Now()
 
 	if err := s.repo.Update(ctx, apikey.Apikey); err != nil {
+		s.logger.With(ctx).Infof("error updating api key %s from app %s %v", apikey.ID, appid, err)
 		return apikey, err
 	}
 	return apikey, nil
@@ -115,10 +120,12 @@ func (s service) Update(ctx context.Context, appid string, id int, req UpdateApi
 func (s service) Delete(ctx context.Context, appid string, id int) (ApiKey, error) {
 	apikey, err := s.Get(ctx, appid, id)
 	if err != nil {
+		s.logger.With(ctx).Infof("error getting api key %s from app %s %v", id, appid, err)
 		return ApiKey{}, err
 	}
 
 	if err = s.repo.Delete(ctx, apikey.ID); err != nil {
+		s.logger.With(ctx).Infof("error deleting api key %s from app %s %v", apikey.ID, appid, err)
 		return ApiKey{}, err
 	}
 	return apikey, nil
@@ -133,6 +140,7 @@ func (s service) Count(ctx context.Context, appid string) (int, error) {
 func (s service) Query(ctx context.Context, appid string, offset, limit int) ([]ApiKey, error) {
 	items, err := s.repo.Query(ctx, appid, offset, limit)
 	if err != nil {
+		s.logger.With(ctx).Infof("error retrieving apikeys for app %s %v", appid, err)
 		return nil, err
 	}
 	result := []ApiKey{}
