@@ -928,20 +928,22 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieves a list of connections for a given app_id, matching the
-        specified filters. Pagination is supported with optional page and per_page
-        parameters.
+      description: Retrieves a list of connections associated with the given app_id,
+        matching the specified filters. Pagination is supported and can be controlled
+        via optional page and per_page parameters.
       parameters:
-      - description: Unique Identifier for the App
+      - description: The unique identifier (ID) of the application whose connections
+          are to be retrieved.
         in: path
         name: app_id
         required: true
         type: string
-      - description: Page number for pagination. Default is 1.
+      - description: The page number for pagination. Defaults to 1 if not specified.
         in: query
         name: page
         type: integer
-      - description: Number of elements per page for pagination. Default is 10.
+      - description: The number of elements to be displayed per page for pagination.
+          Defaults to 10 if not specified.
         in: query
         name: per_page
         type: integer
@@ -949,31 +951,35 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successful retrieval of connections list
+          description: Successful operation. The response contains a list of connections
+            associated with the specified application.
           schema:
             $ref: '#/definitions/connection.ExtListResponse'
         "500":
-          description: Internal server error occurred during the request
+          description: Internal Server Error - An error occurred while processing
+            the request.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Retrieve a list of connections
+      summary: List All Connections
       tags:
-      - connections
+      - Connections
     post:
       consumes:
       - application/json
-      description: This API endpoint creates a new connection by taking the application
-        ID and request body as input. It sends a request for public information once
-        the connection is created.
+      description: Creates a new connection for the specified application (app_id).
+        The details of the new connection are provided in the request body. Once the
+        connection is created, a request for public information is sent.
       parameters:
-      - description: Unique identifier of the application
+      - description: The unique identifier (ID) of the application for which the new
+          connection is to be created.
         in: path
         name: app_id
         required: true
         type: string
-      - description: Body containing details of the connection to be created
+      - description: The body of the request, containing the details of the new connection
+          to be created.
         in: body
         name: request
         required: true
@@ -983,23 +989,25 @@ paths:
       - application/json
       responses:
         "201":
-          description: Successfully created a new connection and returns the details
-            of the new connection
+          description: Successful operation. The response contains the details of
+            the newly created connection.
           schema:
             $ref: '#/definitions/connection.ExtConnection'
         "400":
-          description: Returns when the provided input is invalid
+          description: Bad Request - The body of the request is not valid or incorrectly
+            formatted.
           schema:
             $ref: '#/definitions/response.Error'
         "500":
-          description: Returns when there is an internal server error
+          description: Internal Server Error - An error occurred while processing
+            the request.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Create a new connection
+      summary: Create a New Connection
       tags:
-      - connections
+      - Connections
   /apps/{app_id}/connections/{connection_id}/facts:
     get:
       consumes:
@@ -1508,16 +1516,17 @@ paths:
     delete:
       consumes:
       - application/json
-      description: This endpoint deletes an existing connection using the provided
-        app_id and connection id. After deletion, it sends a request for public information
-        and stops incoming communications from that connection.
+      description: Deletes an existing connection, identified by the provided app_id
+        and connection id. Once the connection is deleted, a request for public information
+        is sent, and incoming communications from the deleted connection are stopped.
       parameters:
-      - description: Unique Identifier for the Application
+      - description: The unique identifier (ID) of the application associated with
+          the connection.
         in: path
         name: app_id
         required: true
         type: string
-      - description: Unique Identifier for the Connection to be deleted
+      - description: The unique identifier (ID) of the connection to be deleted.
         in: path
         name: id
         required: true
@@ -1526,32 +1535,35 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully deleted the connection and returns the deleted
-            connection details
+          description: Successful operation. The response contains the details of
+            the deleted connection.
           schema:
             $ref: '#/definitions/connection.ExtConnection'
         "404":
-          description: The requested resource could not be found or you don't have
-            permission to access it
+          description: Resource Not Found - The requested connection does not exist,
+            or the authenticated user does not have sufficient permissions to delete
+            it.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Delete a specific connection
+      summary: Delete a Connection
       tags:
-      - connections
+      - Connections
     get:
       consumes:
       - application/json
-      description: Retrieves the details of a connection using the given selfID and
-        app_id. Ensure you have sufficient permissions to access this information.
+      description: Retrieves the details of a specified connection, identified by
+        the provided selfID and app_id. User must be authenticated and have sufficient
+        permissions to access this information.
       parameters:
-      - description: Unique Identifier for the App
+      - description: The unique identifier (ID) of the application associated with
+          the connection.
         in: path
         name: app_id
         required: true
         type: string
-      - description: Unique Identifier for the connection
+      - description: The unique identifier (ID) of the connection to be retrieved.
         in: path
         name: id
         required: true
@@ -1560,36 +1572,41 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successful retrieval of connection details
+          description: Successful operation. The response contains the details of
+            the requested connection.
           schema:
             $ref: '#/definitions/connection.ExtConnection'
         "404":
-          description: Unable to find the requested resource or lack of permissions
-            to access it
+          description: Resource not found - The requested connection does not exist,
+            or the authenticated user does not have sufficient permissions to access
+            it.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Retrieve connection details
+      summary: Retrieve Connection Details
       tags:
-      - connections
+      - Connections
     put:
       consumes:
       - application/json
-      description: This endpoint updates the properties of an existing connection
-        using the provided app_id, connection id, and the request body.
+      description: Updates the properties of an existing connection, identified by
+        the provided app_id and connection id. The updates are passed in the request
+        body.
       parameters:
-      - description: Unique Identifier for the Application
+      - description: The unique identifier (ID) of the application associated with
+          the connection.
         in: path
         name: app_id
         required: true
         type: string
-      - description: Unique Identifier for the Connection to be updated
+      - description: The unique identifier (ID) of the connection to be updated.
         in: path
         name: id
         required: true
         type: string
-      - description: Body containing updated details of the connection
+      - description: The body of the request, containing the details of the connection
+          updates.
         in: body
         name: request
         required: true
@@ -1599,23 +1616,25 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully updated the connection and returns the updated
-            connection details
+          description: Successful operation. The response contains the details of
+            the updated connection.
           schema:
             $ref: '#/definitions/connection.ExtConnection'
         "400":
-          description: Returns when the provided input is invalid
+          description: Bad Request - The body of the request is not valid or incorrectly
+            formatted.
           schema:
             $ref: '#/definitions/response.Error'
         "500":
-          description: There was a problem with your request. Please try again
+          description: Internal Server Error - An error occurred while processing
+            the request.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Update a specific connection
+      summary: Update a Connection
       tags:
-      - connections
+      - Connections
   /apps/{app_id}/requests:
     post:
       consumes:

@@ -45,6 +45,7 @@ func NewService(repo Repository, runner support.SelfClientGetter, logger log.Log
 func (s service) Get(ctx context.Context, appid, selfid string) (Connection, error) {
 	connection, err := s.repo.Get(ctx, appid, selfid)
 	if err != nil {
+		s.logger.With(ctx).Infof("cannot get the app %v", err)
 		return Connection{}, err
 	}
 	return Connection{connection}, nil
@@ -66,6 +67,7 @@ func (s service) Create(ctx context.Context, appid string, req CreateConnectionR
 		UpdatedAt: now,
 	})
 	if err != nil {
+		s.logger.With(ctx).Infof("problem creating the requested app %v", err)
 		return Connection{}, err
 	}
 
@@ -78,12 +80,14 @@ func (s service) Create(ctx context.Context, appid string, req CreateConnectionR
 func (s service) Update(ctx context.Context, appid, selfid string, req UpdateConnectionRequest) (Connection, error) {
 	connection, err := s.Get(ctx, appid, selfid)
 	if err != nil {
+		s.logger.With(ctx).Infof("cannot get the app %v", err)
 		return connection, err
 	}
 	connection.Name = req.Name
 	connection.UpdatedAt = time.Now()
 
 	if err := s.repo.Update(ctx, connection.Connection); err != nil {
+		s.logger.With(ctx).Infof("problem updating the app %v", err)
 		return connection, err
 	}
 	return connection, nil
@@ -93,10 +97,12 @@ func (s service) Update(ctx context.Context, appid, selfid string, req UpdateCon
 func (s service) Delete(ctx context.Context, appid, selfid string) (Connection, error) {
 	connection, err := s.Get(ctx, appid, selfid)
 	if err != nil {
+		s.logger.With(ctx).Infof("cannot get the app %v", err)
 		return Connection{}, err
 	}
 
 	if err = s.repo.Delete(ctx, connection.ID); err != nil {
+		s.logger.With(ctx).Infof("problem deleting the app %v", err)
 		return Connection{}, err
 	}
 	return connection, nil
@@ -111,6 +117,7 @@ func (s service) Count(ctx context.Context, appid string) (int, error) {
 func (s service) Query(ctx context.Context, appid string, offset, limit int) ([]Connection, error) {
 	items, err := s.repo.Query(ctx, appid, offset, limit)
 	if err != nil {
+		s.logger.With(ctx).Infof("problem retrieving apps list %v", err)
 		return nil, err
 	}
 	result := []Connection{}
@@ -134,30 +141,30 @@ func (s service) requestPublicInfo(appid, selfid string) {
 		Expiry:      time.Minute * 5,
 	})
 	if err != nil {
-		s.logger.Errorf("failed to request public info: %v", err)
+		s.logger.Warnf("failed to request public info: %v", err)
 		return
 	}
 
 	if len(resp.Facts) != 1 {
-		s.logger.Errorf("unexpected fact response")
+		s.logger.Warnf("unexpected fact response", err)
 		return
 	}
 
 	connection, err := s.Get(context.Background(), appid, selfid)
 	if err != nil {
-		s.logger.Errorf("unexpected fact response")
+		s.logger.Warnf("unexpected fact response", err)
 		return
 	}
 	values := resp.Facts[0].AttestedValues()
 	if len(values) != 1 {
-		s.logger.Errorf("unexpected fact response")
+		s.logger.Warnf("unexpected fact response", err)
 		return
 	}
 
 	connection.Name = values[0]
 
 	if err := s.repo.Update(context.Background(), connection.Connection); err != nil {
-		s.logger.Errorf("unexpected fact response")
+		s.logger.Warnf("unexpected fact response", err)
 		return
 	}
 }

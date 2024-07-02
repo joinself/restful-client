@@ -34,7 +34,7 @@ type CreateConnectionRequest struct {
 // Validate validates the CreateConnectionRequest fields.
 func (m CreateConnectionRequest) Validate() *response.Error {
 	err := validation.ValidateStruct(&m,
-		validation.Field(&m.SelfID, validation.Required, validation.Length(0, 128)),
+		validation.Field(&m.SelfID, validation.Required, validation.Length(3, 128)),
 	)
 	if err == nil {
 		return nil
@@ -54,7 +54,7 @@ type UpdateConnectionRequest struct {
 // Validate validates the CreateConnectionRequest fields.
 func (m UpdateConnectionRequest) Validate() *response.Error {
 	err := validation.ValidateStruct(&m,
-		validation.Field(&m.Name, validation.Required, validation.Length(0, 128)),
+		validation.Field(&m.Name, validation.Required, validation.Length(3, 128)),
 	)
 	if err == nil {
 		return nil
