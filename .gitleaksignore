@@ -18,3 +18,6 @@ d44355c1a7f18848dab309668440e94c6ba35cd2:thunder-tests/thunderEnvironment.json:j
 d8c6a0a33591b5689c418aa6b212cb44ec5439b9:config/local.yml:self-secret-key:4
 dcf54be14a761a8bbb529f014dda366c526c047c:config/local.yml:self-secret-key:3
 786c97d2c79263042dce09a0f6a45f62c7272774:config/local.yml:self-secret-key:4
+53c0065c925661e0f5bce9b027120850cf764564:internal/app/api_test.go:self-secret-key:107
+6ce57e9fd247bb34f6d613c871b0a11895a3b6a5:.github/workflows/test.yml:generic-api-key:20
+fc9f086158639a53b4d49c7dab5164aea3ee1f58:docker-compose.yml:generic-api-key:12

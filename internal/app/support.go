@@ -1,9 +1,12 @@
 package app
 
 import (
+	"errors"
 	"net/http"
+	"regexp"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/google/uuid"
 	"github.com/joinself/restful-client/pkg/response"
 )
 
@@ -34,17 +37,43 @@ type CreateAppRequest struct {
 func (m CreateAppRequest) Validate() *response.Error {
 	err := validation.ValidateStruct(&m,
 		// TODO: Improve validations
-		validation.Field(&m.ID, validation.Required, validation.Length(5, 128)),
-		validation.Field(&m.Secret, validation.Required, validation.Length(5, 128)),
+		validation.Field(&m.ID, validation.Required, validation.By(m.uuidValidator())),
+		validation.Field(&m.Secret, validation.Required, validation.By(m.deviceKeyValidator())),
 		validation.Field(&m.Name, validation.Required, validation.Length(3, 50)),
 		validation.Field(&m.Env, validation.Required, validation.Length(0, 20)),
 	)
 	if err == nil {
 		return nil
 	}
+
 	return &response.Error{
 		Status:  http.StatusBadRequest,
 		Error:   "Invalid input",
 		Details: err.Error(),
+	}
+}
+
+func (m CreateAppRequest) uuidValidator() func(value interface{}) error {
+	return func(input interface{}) error {
+		_, err := uuid.Parse(input.(string))
+		if err == nil {
+			return nil
+		}
+
+		return errors.New("not valid UUID")
+	}
+}
+
+func (m CreateAppRequest) deviceKeyValidator() func(value interface{}) error {
+	return func(input interface{}) error {
+		pattern := `^sk_[A-Za-z0-9]+:[A-Za-z0-9]+$`
+		matched, err := regexp.MatchString(pattern, input.(string))
+		if err != nil {
+			return errors.New("not valid secret")
+		}
+		if !matched {
+			return errors.New("not valid secret")
+		}
+		return nil
 	}
 }
