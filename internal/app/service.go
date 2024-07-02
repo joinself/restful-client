@@ -45,6 +45,7 @@ func NewService(repo Repository, runner self.Runner, logger log.Logger) Service 
 func (s service) List(ctx context.Context) []entity.App {
 	apps, err := s.repo.List(ctx)
 	if err != nil {
+		s.logger.With(ctx).Infof("could not retrieve the list of apps %v", err)
 		return []entity.App{}
 	}
 
@@ -68,6 +69,7 @@ func (s service) ListByStatus(ctx context.Context, statuses []string) ([]entity.
 func (s service) Get(ctx context.Context, id string) (App, error) {
 	app, err := s.repo.Get(ctx, id)
 	if err != nil {
+		s.logger.With(ctx).Infof("could not get the requested app %v", err)
 		return App{}, err
 	}
 	return App{app}, nil
@@ -93,6 +95,7 @@ func (s service) Create(ctx context.Context, req CreateAppRequest) (App, error) 
 	}
 	err = s.repo.Create(ctx, app)
 	if err != nil {
+		s.logger.With(ctx).Infof("there is a problem creating the app %v", err)
 		return App{}, err
 	}
 
@@ -106,6 +109,7 @@ func (s service) Create(ctx context.Context, req CreateAppRequest) (App, error) 
 func (s service) Delete(ctx context.Context, id string) (App, error) {
 	app, err := s.Get(ctx, id)
 	if err != nil {
+		s.logger.With(ctx).Infof("error retrieving the app %v", err)
 		return App{}, err
 	}
 
@@ -113,6 +117,7 @@ func (s service) Delete(ctx context.Context, id string) (App, error) {
 	s.runner.Stop(id)
 
 	if err = s.repo.Delete(ctx, app.ID); err != nil {
+		s.logger.With(ctx).Infof("error deleting the app %v", err)
 		return App{}, err
 	}
 	return app, nil

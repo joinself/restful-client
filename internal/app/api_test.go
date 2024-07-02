@@ -29,7 +29,7 @@ func (m mockService) Get(ctx context.Context, id string) (App, error) {
 }
 
 func (m mockService) Create(ctx context.Context, input CreateAppRequest) (App, error) {
-	if input.ID == "errored" {
+	if input.ID == erroredUUID {
 		return App{}, errors.New("expected error")
 	}
 
@@ -100,10 +100,17 @@ func TestListAppsAPIEndpointAsPlain(t *testing.T) {
 	}
 }
 
-func TestCreateAppAPIEndpointAsAdmin(t *testing.T) {
-	var vInput = "valid_input"
-	var iInput = "o"
+const (
+	validUUID   = "00000000-0000-0000-0000-000000000000"
+	invalidUUID = "o"
+	erroredUUID = "11111111-1111-1111-1111-111111111111"
+	validKey    = "sk_1:0000000000000000000000000000000000000000000"
+	invalidKey  = "098120730129783"
+	validName   = "name"
+	validEnv    = "sandbox"
+)
 
+func TestCreateAppAPIEndpointAsAdmin(t *testing.T) {
 	logger, _ := log.NewForTest()
 	router := test.MockRouter(logger)
 
@@ -117,19 +124,28 @@ func TestCreateAppAPIEndpointAsAdmin(t *testing.T) {
 			Name:         "success",
 			Method:       "POST",
 			URL:          "/apps",
-			Body:         `{"id":"test_app","secret":"test_secret","name":"test_name","env":"test_env"}`,
+			Body:         fmt.Sprintf(`{"id":"%s","secret":"%s","name":"%s","env":"%s"}`, validUUID, validKey, validName, validEnv),
 			Header:       nil,
 			WantStatus:   http.StatusOK,
 			WantResponse: `{"env":"test", "id":"test", "name":"test", "status":"testing"}`,
 		},
 		{
-			Name:         "validation error",
+			Name:         "UUID validation error",
 			Method:       "POST",
 			URL:          "/apps",
-			Body:         fmt.Sprintf(`{"id":"%s","secret":"%s","name":"%s","env":"%s"}`, iInput, vInput, vInput, vInput),
+			Body:         fmt.Sprintf(`{"id":"%s","secret":"%s","name":"%s","env":"%s"}`, invalidUUID, validKey, validName, validEnv),
 			Header:       nil,
 			WantStatus:   http.StatusBadRequest,
-			WantResponse: `{"details":"id: the length must be between 5 and 128.", "error":"Invalid input", "status":400}`,
+			WantResponse: `{"details":"id: not valid UUID.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "Secret validation error",
+			Method:       "POST",
+			URL:          "/apps",
+			Body:         fmt.Sprintf(`{"id":"%s","secret":"%s","name":"%s","env":"%s"}`, validUUID, "foo", validName, validEnv),
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"secret: not valid secret.", "error":"Invalid input", "status":400}`,
 		},
 		{
 			Name:         "invalid input",
@@ -144,7 +160,7 @@ func TestCreateAppAPIEndpointAsAdmin(t *testing.T) {
 			Name:         "errored creation",
 			Method:       "POST",
 			URL:          "/apps",
-			Body:         `{"id":"errored","secret":"test_secret","name":"test_name","env":"test_env"}`,
+			Body:         fmt.Sprintf(`{"id":"%s","secret":"%s","name":"%s","env":"%s"}`, erroredUUID, validKey, validName, validEnv),
 			Header:       nil,
 			WantStatus:   http.StatusInternalServerError,
 			WantResponse: `There was a problem with your request. *`,

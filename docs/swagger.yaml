@@ -572,32 +572,35 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieves and lists all the configured apps for the restful client.
-        You must be authenticated as an admin.
+      description: Retrieves and lists all the configured applications accessible
+        to the authenticated user. This operation requires the user to be authenticated
+        with administrative privileges.
       produces:
       - application/json
       responses:
         "200":
-          description: Successful operation
+          description: The operation was successful. The response contains the details
+            of all the configured applications.
           schema:
             $ref: '#/definitions/app.ExtListResponse'
         "404":
-          description: Not found - The requested resource does not exist, or you don't
-            have permissions to access it
+          description: Resource Not Found - The requested resources do not exist,
+            or the authenticated user does not have sufficient permissions to access
+            them.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Lists all configured apps.
+      summary: List All Applications
       tags:
-      - apps
+      - Applications
     post:
       consumes:
       - application/json
-      description: Creates a new app with the given parameters. You must be authenticated
-        as an admin.
+      description: Creates a new application with the provided details. This operation
+        requires the user to be authenticated with administrative privileges.
       parameters:
-      - description: Details of the new app to create
+      - description: The details of the new application to be created.
         in: body
         name: request
         required: true
@@ -607,35 +610,41 @@ paths:
       - application/json
       responses:
         "201":
-          description: Successfully created app details
+          description: A successful response returns the details of the newly created
+            application.
           schema:
             $ref: '#/definitions/app.ExtApp'
         "400":
-          description: Bad request - The provided body is not valid
+          description: Bad Request - The body of the request is not valid or incorrectly
+            formatted.
           schema:
             $ref: '#/definitions/response.Error'
         "404":
-          description: Not found - The requested resource does not exist, or you don't
-            have permissions to access it
+          description: Resource Not Found - The requested resource does not exist,
+            or the authenticated user does not have sufficient permissions to access
+            it.
           schema:
             $ref: '#/definitions/response.Error'
         "500":
-          description: Internal error - There was a problem with your request
+          description: Internal Server Error - An error occurred while processing
+            the request.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Creates a new app.
+      summary: Create an Application
       tags:
-      - apps
+      - Applications
   /apps/{app_id}:
     delete:
       consumes:
       - application/json
-      description: Deletes an existing app and sends a request for public information
-        and avoids incoming comms from that app. You must be authenticated as an admin.
+      description: Deletes an existing application identified by the provided app_id.
+        This operation will also send a request to update public information and prevent
+        further communications from the deleted application. Only users authenticated
+        with administrative privileges can perform this operation.
       parameters:
-      - description: ID of the app to delete
+      - description: The unique identifier (ID) of the application to be deleted.
         in: path
         name: app_id
         required: true
@@ -644,19 +653,21 @@ paths:
       - application/json
       responses:
         "204":
-          description: No Content
+          description: Successful operation - the application has been deleted, and
+            no content is returned.
           schema:
             type: string
         "404":
-          description: Not found - The requested resource does not exist, or you don't
-            have permissions to access it
+          description: Resource not found - The requested application does not exist,
+            or the authenticated user does not have sufficient permissions to access
+            it.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Deletes an existing app.
+      summary: Delete an Application
       tags:
-      - apps
+      - Applications
   /apps/{app_id}/apikeys:
     get:
       consumes:
