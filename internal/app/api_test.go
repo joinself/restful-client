@@ -105,6 +105,7 @@ const (
 	invalidUUID = "o"
 	erroredUUID = "11111111-1111-1111-1111-111111111111"
 	validKey    = "sk_1:0000000000000000000000000000000000000000000"
+	validKey2   = "sk_1:0000000000000000000000000000000000000000001"
 	invalidKey  = "098120730129783"
 	validName   = "name"
 	validEnv    = "sandbox"
