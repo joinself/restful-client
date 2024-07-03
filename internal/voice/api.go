@@ -67,6 +67,7 @@ func (r resource) query(c echo.Context) error {
 	// Get the total of entries.
 	count, err := r.service.Count(ctx, aID, cID, callsSince)
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving total entries: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
@@ -74,6 +75,7 @@ func (r resource) query(c echo.Context) error {
 	pages := pagination.NewFromRequest(c.Request(), count)
 	messages, err := r.service.Query(ctx, aID, cID, callsSince, pages.Offset(), pages.Limit())
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving paginated list: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
@@ -101,14 +103,13 @@ func (r resource) get(c echo.Context) error {
 
 	_, err := r.cService.Get(ctx, aID, cID)
 	if err != nil {
-		println("connection does not exist")
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	call, err := r.service.Get(ctx, aID, cID, c.Param("id"))
 	if err != nil {
-		println("call does not exist")
-		println(c.Param("id"))
+		r.logger.With(ctx).Warnf("error retrieving call: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
@@ -131,24 +132,28 @@ func (r resource) get(c echo.Context) error {
 // @Failure 500 {object} response.Error "Internal server error. An unexpected error occurred on the server."
 // @Router /apps/{app_id}/connections/{connection_id}/calls/{id}/setup [post]
 func (r resource) setup(c echo.Context) error {
+	ctx := c.Request().Context()
 	var input SetupData
 	if err := c.Bind(&input); err != nil {
-		r.logger.With(c.Request().Context()).Info(err)
+		r.logger.With(ctx).Warnf("error processing input data: %s", err.Error())
 		return c.JSON(response.DefaultBadRequestError())
 	}
 
-	if reqErr := input.Validate(); reqErr != nil {
-		return c.JSON(reqErr.Status, reqErr)
+	if err := input.Validate(); err != nil {
+		r.logger.With(ctx).Warnf("invalid input: %s", err.Error)
+		return c.JSON(err.Status, err)
 	}
 
 	// Get the connection id
-	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	_, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving call: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	call, err := r.service.Setup(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), input.Name)
+	call, err := r.service.Setup(ctx, c.Param("app_id"), c.Param("connection_id"), input.Name)
 	if err != nil {
+		r.logger.With(ctx).Warnf("error setting up call: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
@@ -171,23 +176,26 @@ func (r resource) setup(c echo.Context) error {
 // @Failure 500 {object} response.Error "Internal server error. An unexpected error occurred on the server."
 // @Router /apps/{app_id}/connections/{connection_id}/calls/{id}/start [post]
 func (r resource) start(c echo.Context) error {
+	ctx := c.Request().Context()
 	var input ProceedData
 	if err := c.Bind(&input); err != nil {
-		r.logger.With(c.Request().Context()).Info(err)
+		r.logger.With(ctx).Warnf("error processing input data: %s", err.Error())
 		return c.JSON(response.DefaultBadRequestError())
 	}
 
-	if reqErr := input.Validate(); reqErr != nil {
-		return c.JSON(reqErr.Status, reqErr)
+	if err := input.Validate(); err != nil {
+		r.logger.With(ctx).Warnf("invalid input data: %s", err.Error)
+		return c.JSON(err.Status, err)
 	}
 
 	// Get the connection id
-	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	_, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	r.service.Start(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"), input)
+	r.service.Start(ctx, c.Param("app_id"), c.Param("connection_id"), c.Param("id"), input)
 
 	return c.JSON(http.StatusOK, ``)
 }
@@ -208,23 +216,29 @@ func (r resource) start(c echo.Context) error {
 // @Failure 500 {object} response.Error "Internal server error. An unexpected error occurred on the server."
 // @Router /apps/{app_id}/connections/{connection_id}/calls/{id}/accept [post]
 func (r resource) accept(c echo.Context) error {
+	ctx := c.Request().Context()
 	var input ProceedData
 	if err := c.Bind(&input); err != nil {
-		r.logger.With(c.Request().Context()).Info(err)
+		r.logger.With(ctx).Warnf("error processing input data: %s", err.Error())
 		return c.JSON(response.DefaultBadRequestError())
 	}
 
-	if reqErr := input.Validate(); reqErr != nil {
-		return c.JSON(reqErr.Status, reqErr)
+	if err := input.Validate(); err != nil {
+		r.logger.With(ctx).Warnf("validation error: %s", err.Error)
+		return c.JSON(err.Status, err)
 	}
 
 	// Get the connection id
-	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	_, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	r.service.Accept(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"), input)
+	if err := r.service.Accept(ctx, c.Param("app_id"), c.Param("connection_id"), c.Param("id"), input); err != nil {
+		r.logger.With(ctx).Warnf("error accepting call: %s", err.Error())
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
+	}
 
 	return c.JSON(http.StatusOK, c.Param("id"))
 }
@@ -245,13 +259,16 @@ func (r resource) accept(c echo.Context) error {
 // @Failure 500 {object} response.Error "Internal server error. An unexpected error occurred on the server."
 // @Router /apps/{app_id}/connections/{connection_id}/calls/{id}/stop [post]
 func (r resource) stop(c echo.Context) error {
-	// Get the connection id
-	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
-	if err != nil {
+	ctx := c.Request().Context()
+	if _, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id")); err != nil {
+		r.logger.With(ctx).Warnf("connection not found: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	r.service.Stop(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"))
+	if err := r.service.Stop(ctx, c.Param("app_id"), c.Param("connection_id"), c.Param("id")); err != nil {
+		r.logger.With(ctx).Warnf("error stopping call: %s", err.Error())
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
+	}
 
 	return c.JSON(http.StatusOK, c.Param("id"))
 }
@@ -272,13 +289,17 @@ func (r resource) stop(c echo.Context) error {
 // @Failure 500 {object} response.Error "Internal server error. An unexpected error occurred on the server."
 // @Router /apps/{app_id}/connections/{connection_id}/calls/{id}/busy [post]
 func (r resource) busy(c echo.Context) error {
-	// Get the connection id
-	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
-	if err != nil {
+	ctx := c.Request().Context()
+
+	if _, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id")); err != nil {
+		r.logger.With(ctx).Warnf("connection not found: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	r.service.Busy(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"))
+	if err := r.service.Busy(ctx, c.Param("app_id"), c.Param("connection_id"), c.Param("id")); err != nil {
+		r.logger.With(ctx).Warnf("error marking call as busy: %s", err.Error())
+		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
+	}
 
 	return c.JSON(http.StatusOK, c.Param("id"))
 }
