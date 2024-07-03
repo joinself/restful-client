@@ -245,7 +245,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieves and lists all the configured apps for the restful client. You must be authenticated as an admin.",
+                "description": "Retrieves and lists all the configured applications accessible to the authenticated user. This operation requires the user to be authenticated with administrative privileges.",
                 "consumes": [
                     "application/json"
                 ],
@@ -253,18 +253,18 @@
                     "application/json"
                 ],
                 "tags": [
-                    "apps"
+                    "Applications"
                 ],
-                "summary": "Lists all configured apps.",
+                "summary": "List All Applications",
                 "responses": {
                     "200": {
-                        "description": "Successful operation",
+                        "description": "The operation was successful. The response contains the details of all the configured applications.",
                         "schema": {
                             "$ref": "#/definitions/app.ExtListResponse"
                         }
                     },
                     "404": {
-                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "description": "Resource Not Found - The requested resources do not exist, or the authenticated user does not have sufficient permissions to access them.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
@@ -277,7 +277,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new app with the given parameters. You must be authenticated as an admin.",
+                "description": "Creates a new application with the provided details. This operation requires the user to be authenticated with administrative privileges.",
                 "consumes": [
                     "application/json"
                 ],
@@ -285,12 +285,12 @@
                     "application/json"
                 ],
                 "tags": [
-                    "apps"
+                    "Applications"
                 ],
-                "summary": "Creates a new app.",
+                "summary": "Create an Application",
                 "parameters": [
                     {
-                        "description": "Details of the new app to create",
+                        "description": "The details of the new application to be created.",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -301,25 +301,25 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully created app details",
+                        "description": "A successful response returns the details of the newly created application.",
                         "schema": {
                             "$ref": "#/definitions/app.ExtApp"
                         }
                     },
                     "400": {
-                        "description": "Bad request - The provided body is not valid",
+                        "description": "Bad Request - The body of the request is not valid or incorrectly formatted.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
                     },
                     "404": {
-                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "description": "Resource Not Found - The requested resource does not exist, or the authenticated user does not have sufficient permissions to access it.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
                     },
                     "500": {
-                        "description": "Internal error - There was a problem with your request",
+                        "description": "Internal Server Error - An error occurred while processing the request.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
@@ -334,7 +334,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes an existing app and sends a request for public information and avoids incoming comms from that app. You must be authenticated as an admin.",
+                "description": "Deletes an existing application identified by the provided app_id. This operation will also send a request to update public information and prevent further communications from the deleted application. Only users authenticated with administrative privileges can perform this operation.",
                 "consumes": [
                     "application/json"
                 ],
@@ -342,13 +342,13 @@
                     "application/json"
                 ],
                 "tags": [
-                    "apps"
+                    "Applications"
                 ],
-                "summary": "Deletes an existing app.",
+                "summary": "Delete an Application",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "ID of the app to delete",
+                        "description": "The unique identifier (ID) of the application to be deleted.",
                         "name": "app_id",
                         "in": "path",
                         "required": true
@@ -356,13 +356,13 @@
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content",
+                        "description": "Successful operation - the application has been deleted, and no content is returned.",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "404": {
-                        "description": "Not found - The requested resource does not exist, or you don't have permissions to access it",
+                        "description": "Resource not found - The requested application does not exist, or the authenticated user does not have sufficient permissions to access it.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
@@ -727,7 +727,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieves a list of connections for a given app_id, matching the specified filters. Pagination is supported with optional page and per_page parameters.",
+                "description": "Retrieves a list of connections associated with the given app_id, matching the specified filters. Pagination is supported and can be controlled via optional page and per_page parameters.",
                 "consumes": [
                     "application/json"
                 ],
@@ -735,39 +735,39 @@
                     "application/json"
                 ],
                 "tags": [
-                    "connections"
+                    "Connections"
                 ],
-                "summary": "Retrieve a list of connections",
+                "summary": "List All Connections",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique Identifier for the App",
+                        "description": "The unique identifier (ID) of the application whose connections are to be retrieved.",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Page number for pagination. Default is 1.",
+                        "description": "The page number for pagination. Defaults to 1 if not specified.",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Number of elements per page for pagination. Default is 10.",
+                        "description": "The number of elements to be displayed per page for pagination. Defaults to 10 if not specified.",
                         "name": "per_page",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful retrieval of connections list",
+                        "description": "Successful operation. The response contains a list of connections associated with the specified application.",
                         "schema": {
                             "$ref": "#/definitions/connection.ExtListResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal server error occurred during the request",
+                        "description": "Internal Server Error - An error occurred while processing the request.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
@@ -780,7 +780,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "This API endpoint creates a new connection by taking the application ID and request body as input. It sends a request for public information once the connection is created.",
+                "description": "Creates a new connection for the specified application (app_id). The details of the new connection are provided in the request body. Once the connection is created, a request for public information is sent.",
                 "consumes": [
                     "application/json"
                 ],
@@ -788,19 +788,19 @@
                     "application/json"
                 ],
                 "tags": [
-                    "connections"
+                    "Connections"
                 ],
-                "summary": "Create a new connection",
+                "summary": "Create a New Connection",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique identifier of the application",
+                        "description": "The unique identifier (ID) of the application for which the new connection is to be created.",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Body containing details of the connection to be created",
+                        "description": "The body of the request, containing the details of the new connection to be created.",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -811,19 +811,19 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Successfully created a new connection and returns the details of the new connection",
+                        "description": "Successful operation. The response contains the details of the newly created connection.",
                         "schema": {
                             "$ref": "#/definitions/connection.ExtConnection"
                         }
                     },
                     "400": {
-                        "description": "Returns when the provided input is invalid",
+                        "description": "Bad Request - The body of the request is not valid or incorrectly formatted.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
                     },
                     "500": {
-                        "description": "Returns when there is an internal server error",
+                        "description": "Internal Server Error - An error occurred while processing the request.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
@@ -1585,7 +1585,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieves the details of a connection using the given selfID and app_id. Ensure you have sufficient permissions to access this information.",
+                "description": "Retrieves the details of a specified connection, identified by the provided selfID and app_id. User must be authenticated and have sufficient permissions to access this information.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1593,20 +1593,20 @@
                     "application/json"
                 ],
                 "tags": [
-                    "connections"
+                    "Connections"
                 ],
-                "summary": "Retrieve connection details",
+                "summary": "Retrieve Connection Details",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique Identifier for the App",
+                        "description": "The unique identifier (ID) of the application associated with the connection.",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Unique Identifier for the connection",
+                        "description": "The unique identifier (ID) of the connection to be retrieved.",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1614,13 +1614,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful retrieval of connection details",
+                        "description": "Successful operation. The response contains the details of the requested connection.",
                         "schema": {
                             "$ref": "#/definitions/connection.ExtConnection"
                         }
                     },
                     "404": {
-                        "description": "Unable to find the requested resource or lack of permissions to access it",
+                        "description": "Resource not found - The requested connection does not exist, or the authenticated user does not have sufficient permissions to access it.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
@@ -1633,7 +1633,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "This endpoint updates the properties of an existing connection using the provided app_id, connection id, and the request body.",
+                "description": "Updates the properties of an existing connection, identified by the provided app_id and connection id. The updates are passed in the request body.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1641,26 +1641,26 @@
                     "application/json"
                 ],
                 "tags": [
-                    "connections"
+                    "Connections"
                 ],
-                "summary": "Update a specific connection",
+                "summary": "Update a Connection",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique Identifier for the Application",
+                        "description": "The unique identifier (ID) of the application associated with the connection.",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Unique Identifier for the Connection to be updated",
+                        "description": "The unique identifier (ID) of the connection to be updated.",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Body containing updated details of the connection",
+                        "description": "The body of the request, containing the details of the connection updates.",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1671,19 +1671,19 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully updated the connection and returns the updated connection details",
+                        "description": "Successful operation. The response contains the details of the updated connection.",
                         "schema": {
                             "$ref": "#/definitions/connection.ExtConnection"
                         }
                     },
                     "400": {
-                        "description": "Returns when the provided input is invalid",
+                        "description": "Bad Request - The body of the request is not valid or incorrectly formatted.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
                     },
                     "500": {
-                        "description": "There was a problem with your request. Please try again",
+                        "description": "Internal Server Error - An error occurred while processing the request.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }
@@ -1696,7 +1696,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "This endpoint deletes an existing connection using the provided app_id and connection id. After deletion, it sends a request for public information and stops incoming communications from that connection.",
+                "description": "Deletes an existing connection, identified by the provided app_id and connection id. Once the connection is deleted, a request for public information is sent, and incoming communications from the deleted connection are stopped.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1704,20 +1704,20 @@
                     "application/json"
                 ],
                 "tags": [
-                    "connections"
+                    "Connections"
                 ],
-                "summary": "Delete a specific connection",
+                "summary": "Delete a Connection",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique Identifier for the Application",
+                        "description": "The unique identifier (ID) of the application associated with the connection.",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Unique Identifier for the Connection to be deleted",
+                        "description": "The unique identifier (ID) of the connection to be deleted.",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1725,13 +1725,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successfully deleted the connection and returns the deleted connection details",
+                        "description": "Successful operation. The response contains the details of the deleted connection.",
                         "schema": {
                             "$ref": "#/definitions/connection.ExtConnection"
                         }
                     },
                     "404": {
-                        "description": "The requested resource could not be found or you don't have permission to access it",
+                        "description": "Resource Not Found - The requested connection does not exist, or the authenticated user does not have sufficient permissions to delete it.",
                         "schema": {
                             "$ref": "#/definitions/response.Error"
                         }

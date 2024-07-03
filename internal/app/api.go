@@ -25,15 +25,15 @@ type resource struct {
 }
 
 // ListApps godoc
-// @Summary        Lists all configured apps.
-// @Description    Retrieves and lists all the configured apps for the restful client. You must be authenticated as an admin.
-// @Tags           apps
-// @Accept         json
-// @Produce        json
-// @Security       BearerAuth
-// @Success        200 {object} ExtListResponse "Successful operation"
-// @Failure        404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
-// @Router         /apps [get]
+// @Summary         List All Applications
+// @Description     Retrieves and lists all the configured applications accessible to the authenticated user. This operation requires the user to be authenticated with administrative privileges.
+// @Tags            Applications
+// @Accept          json
+// @Produce         json
+// @Security        BearerAuth
+// @Success         200 {object} ExtListResponse "The operation was successful. The response contains the details of all the configured applications."
+// @Failure         404 {object} response.Error "Resource Not Found - The requested resources do not exist, or the authenticated user does not have sufficient permissions to access them."
+// @Router          /apps [get]
 func (r resource) list(c echo.Context) error {
 	apps := r.service.List(c.Request().Context())
 	pages := pagination.NewFromRequest(c.Request(), len(apps))
@@ -43,31 +43,33 @@ func (r resource) list(c echo.Context) error {
 }
 
 // CreateApp godoc
-// @Summary         Creates a new app.
-// @Description     Creates a new app with the given parameters. You must be authenticated as an admin.
-// @Tags            apps
+// @Summary         Create an Application
+// @Description     Creates a new application with the provided details. This operation requires the user to be authenticated with administrative privileges.
+// @Tags            Applications
 // @Accept          json
 // @Produce         json
 // @Security        BearerAuth
-// @Param           request body CreateAppRequest true "Details of the new app to create"
-// @Success         201  {object}  ExtApp "Successfully created app details"
-// @Failure         400 {object} response.Error "Bad request - The provided body is not valid"
-// @Failure         404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
-// @Failure         500 {object} response.Error "Internal error - There was a problem with your request"
+// @Param           request body CreateAppRequest true "The details of the new application to be created."
+// @Success         201  {object}  ExtApp "A successful response returns the details of the newly created application."
+// @Failure         400 {object} response.Error "Bad Request - The body of the request is not valid or incorrectly formatted."
+// @Failure         404 {object} response.Error "Resource Not Found - The requested resource does not exist, or the authenticated user does not have sufficient permissions to access it."
+// @Failure         500 {object} response.Error "Internal Server Error - An error occurred while processing the request."
 // @Router          /apps [post]
 func (r resource) create(c echo.Context) error {
 	var input CreateAppRequest
 	if err := c.Bind(&input); err != nil {
-		r.logger.With(c.Request().Context()).Info(err)
+		r.logger.With(c.Request().Context()).Warnf("invalid request: %s", err.Error())
 		return c.JSON(response.DefaultBadRequestError())
 	}
 
-	if reqErr := input.Validate(); reqErr != nil {
-		return c.JSON(reqErr.Status, reqErr)
+	if err := input.Validate(); err != nil {
+		r.logger.With(c.Request().Context()).Warnf("invalid request: %s", err.Details)
+		return c.JSON(err.Status, err)
 	}
 
 	a, err := r.service.Create(c.Request().Context(), input)
 	if err != nil {
+		r.logger.With(c.Request().Context()).Warnf("err creating app - %v", err)
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
@@ -80,23 +82,25 @@ func (r resource) create(c echo.Context) error {
 }
 
 // DeleteApp godoc
-// @Summary         Deletes an existing app.
-// @Description     Deletes an existing app and sends a request for public information and avoids incoming comms from that app. You must be authenticated as an admin.
-// @Tags            apps
+// @Summary         Delete an Application
+// @Description     Deletes an existing application identified by the provided app_id. This operation will also send a request to update public information and prevent further communications from the deleted application. Only users authenticated with administrative privileges can perform this operation.
+// @Tags            Applications
 // @Accept          json
 // @Produce         json
 // @Security        BearerAuth
-// @Param           app_id   path      int  true  "ID of the app to delete"
-// @Success         204  {string} string  "No Content"
-// @Failure         404 {object} response.Error "Not found - The requested resource does not exist, or you don't have permissions to access it"
+// @Param           app_id   path   int  true  "The unique identifier (ID) of the application to be deleted."
+// @Success         204  {string} string  "Successful operation - the application has been deleted, and no content is returned."
+// @Failure         404 {object} response.Error "Resource not found - The requested application does not exist, or the authenticated user does not have sufficient permissions to access it."
 // @Router          /apps/{app_id} [delete]
 func (r resource) delete(c echo.Context) error {
 	user := acl.CurrentUser(c)
 	if user == nil || !user.IsAdmin() {
+		r.logger.With(c.Request().Context()).Info("insufficient permissions for deleting an app")
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	if _, err := r.service.Delete(c.Request().Context(), c.Param("id")); err != nil {
+		r.logger.With(c.Request().Context()).Warnf("err deleting an api key - %v", err)
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
