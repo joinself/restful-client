@@ -1012,33 +1012,34 @@ paths:
     get:
       consumes:
       - application/json
-      description: This endpoint retrieves a list of facts using the provided app_id,
-        connection_id, and other optional filters. The results can be paginated using
-        page and per_page parameters.
+      description: Retrieves a list of facts for a specific connection, identified
+        by the app_id and connection_id, with optional filters for pagination, source,
+        and fact.
       parameters:
-      - description: Unique Identifier for the Application
+      - description: The unique identifier (ID) of the application associated with
+          the connection.
         in: path
         name: app_id
         required: true
         type: string
-      - description: Unique Identifier for the Connection
+      - description: The unique identifier (ID) of the connection.
         in: path
         name: connection_id
         required: true
         type: string
-      - description: Page number for the results pagination
+      - description: Page number for the results pagination.
         in: query
         name: page
         type: integer
-      - description: Number of results per page
+      - description: Number of results per page.
         in: query
         name: per_page
         type: integer
-      - description: Filter by source of the fact
+      - description: Filter by the source of the fact.
         in: query
         name: source
         type: string
-      - description: Filter by fact
+      - description: Filter by the fact.
         in: query
         name: fact
         type: string
@@ -1046,40 +1047,44 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved the list of facts
+          description: Successfully retrieved the list of facts.
           schema:
             $ref: '#/definitions/fact.ExtListResponse'
         "404":
-          description: The requested resource could not be found or you don't have
-            permission to access it
+          description: Not Found - The requested resource does not exist, or the authenticated
+            user does not have the necessary permissions.
           schema:
             $ref: '#/definitions/response.Error'
         "500":
-          description: There was a problem with your request. Please try again
+          description: Internal Server Error - An error occurred while processing
+            the request.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Retrieve facts based on filters
+      summary: Retrieve Facts with Filters
       tags:
-      - facts
+      - Facts
     post:
       consumes:
       - application/json
-      description: This endpoint issues a new fact to a specific connection using
-        the provided app_id, connection_id and the request body.
+      description: Issues a new fact to a specific connection, identified by the app_id
+        and connection_id, using the details provided in the request body.
       parameters:
-      - description: Unique Identifier for the Application
+      - description: The unique identifier (ID) of the application associated with
+          the connection.
         in: path
         name: app_id
         required: true
         type: string
-      - description: Unique Identifier for the Connection
+      - description: The unique identifier (ID) of the connection to which the fact
+          will be issued.
         in: path
         name: connection_id
         required: true
         type: string
-      - description: Body containing the details of the fact to be issued
+      - description: The body of the request, containing the details of the fact to
+          be issued.
         in: body
         name: request
         required: true
@@ -1089,46 +1094,50 @@ paths:
       - application/json
       responses:
         "201":
-          description: Fact successfully issued
+          description: Fact successfully issued.
           schema:
             type: string
         "400":
-          description: Invalid input - the provided body is not valid
+          description: Bad Request - The body of the request is not valid or incorrectly
+            formatted.
           schema:
             $ref: '#/definitions/response.Error'
         "404":
-          description: Not found - the requested resource does not exist, or you don't
-            have permissions to access it
+          description: Not Found - The requested resource does not exist, or the authenticated
+            user does not have the necessary permissions.
           schema:
             $ref: '#/definitions/response.Error'
         "500":
-          description: Internal error - there was a problem with your request. Please
-            try again
+          description: Internal Server Error - An error occurred while processing
+            the request.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Issue a new fact to a connection
+      summary: Issue a New Fact
       tags:
-      - facts
+      - Facts
   /apps/{app_id}/connections/{connection_id}/facts/{id}:
     delete:
       consumes:
       - application/json
-      description: Deletes an existing fact for a specific connection identified by
-        app_id, connection_id and the id of the fact to be deleted.
+      description: Deletes an existing fact for a specific connection, identified
+        by the app_id, connection_id, and the fact's id. The fact is permanently removed
+        from the system.
       parameters:
-      - description: Unique Identifier for the Application
+      - description: The unique identifier (ID) of the application associated with
+          the connection.
         in: path
         name: app_id
         required: true
         type: string
-      - description: Unique Identifier for the Connection
+      - description: The unique identifier (ID) of the connection associated with
+          the fact.
         in: path
         name: connection_id
         required: true
         type: string
-      - description: Unique Identifier for the Fact to be deleted
+      - description: The unique identifier (ID) of the fact to be deleted.
         in: path
         name: id
         required: true
@@ -1137,36 +1146,38 @@ paths:
       - application/json
       responses:
         "204":
-          description: Fact successfully deleted
+          description: No Content - The fact was successfully deleted.
           schema:
             type: string
         "404":
-          description: The requested resource does not exist, or you don't have permissions
-            to access it
+          description: Not Found - The requested resource does not exist, or the authenticated
+            user does not have the necessary permissions.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Deletes a fact
+      summary: Delete a Fact
       tags:
-      - facts
+      - Facts
     get:
       consumes:
       - application/json
-      description: This endpoint retrieves the details of a specific fact using the
-        provided app_id, connection_id and fact request id.
+      description: Retrieves the details of a specific fact, identified by the app_id,
+        connection_id, and fact id.
       parameters:
-      - description: Unique Identifier for the Application
+      - description: The unique identifier (ID) of the application associated with
+          the connection.
         in: path
         name: app_id
         required: true
         type: string
-      - description: Unique Identifier for the Connection
+      - description: The unique identifier (ID) of the connection associated with
+          the fact.
         in: path
         name: connection_id
         required: true
         type: string
-      - description: Unique Identifier for the Fact Request
+      - description: The unique identifier (ID) of the fact to be retrieved.
         in: path
         name: id
         required: true
@@ -1175,19 +1186,19 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successfully retrieved the fact details
+          description: Successfully retrieved the fact details.
           schema:
             $ref: '#/definitions/fact.ExtFact'
         "404":
-          description: The requested fact could not be found or you don't have permission
-            to access it
+          description: Not Found - The requested fact does not exist, or the authenticated
+            user does not have the necessary permissions.
           schema:
             $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Retrieve specific fact details
+      summary: Retrieve Fact Details
       tags:
-      - facts
+      - Facts
   /apps/{app_id}/connections/{connection_id}/messages:
     get:
       consumes:

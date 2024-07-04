@@ -72,12 +72,7 @@ func (m CreateFactRequest) Validate() *response.Error {
 	}
 
 	for _, f := range m.Facts {
-		err := validation.ValidateStruct(&f,
-			validation.Field(&f.Key, validation.Required, validation.Length(3, 128)),
-			validation.Field(&f.Value, validation.Required, validation.Length(3, 128)),
-			//validation.Field(&f.Source, validation.Required, validation.Length(0, 128)),
-		)
-		if err != nil {
+		if err := validateIssuedFact(f); err != nil {
 			return &response.Error{
 				Status:  http.StatusBadRequest,
 				Error:   "Invalid input",
@@ -106,4 +101,37 @@ func (m UpdateFactRequest) Validate() *response.Error {
 		Error:   "Invalid input",
 		Details: err.Error(),
 	}
+}
+
+func validateIssuedFact(f FactToIssue) error {
+	err := validation.ValidateStruct(&f,
+		validation.Field(&f.Key, validation.Required, validation.Length(3, 128)),
+		validation.Field(&f.Value, validation.Required, validation.Length(3, 128)),
+		validation.Field(&f.Source, validation.Length(0, 128)),
+		validation.Field(&f.Type, validation.Length(0, 128)),
+	)
+	if err != nil {
+		return validation.NewError("validation_fact_to_issue", err.Error())
+	}
+
+	if f.Group != nil {
+		err := validation.ValidateStruct(f.Group,
+			validation.Field(&f.Group.Name, validation.Required, validation.Length(3, 128)),
+			validation.Field(&f.Group.Icon, validation.Length(0, 128)),
+		)
+		if err != nil {
+			return validation.NewError("validation_fact_to_issue", err.Error())
+		}
+	}
+
+	if f.Type != "" {
+		err := validation.ValidateStruct(&f,
+			validation.Field(&f.Type, validation.In("string", "password", "delegation_certificate")),
+		)
+		if err != nil {
+			return validation.NewError("validation_fact_to_issue", err.Error())
+		}
+	}
+
+	return nil
 }
