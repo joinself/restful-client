@@ -46,6 +46,7 @@ func (s service) Setup(ctx context.Context, appID, recipient, name string) (*ent
 
 	callID, err := uuid.NewV4()
 	if err != nil {
+		s.logger.With(ctx).Infof("could not generate a uuid %v", err)
 		return nil, errors.New("error generating uuid")
 	}
 
@@ -57,6 +58,7 @@ func (s service) Setup(ctx context.Context, appID, recipient, name string) (*ent
 
 	err = s.repo.Create(ctx, &call)
 	if err != nil {
+		s.logger.With(ctx).Infof("error creating the app %v", err)
 		return nil, errors.New("error creating the app : " + err.Error())
 	}
 
@@ -64,90 +66,22 @@ func (s service) Setup(ctx context.Context, appID, recipient, name string) (*ent
 }
 
 func (s service) Start(ctx context.Context, appID, recipient, callID string, data ProceedData) error {
-	c, ok := s.runner.Get(appID)
-	if !ok {
-		return errors.New("app not configured or started")
-	}
-
-	call, err := s.repo.Get(ctx, appID, recipient, callID)
-	if err != nil {
-		return errors.New("app does not exist : " + err.Error())
-	}
-
-	call.Status = "started"
-	call.PeerInfo = data.PeerInfo
-
-	err = s.repo.Update(ctx, call)
-	if err != nil {
-		return errors.New("error updating the call : " + err.Error())
-	}
-
-	cid, err := uuid.NewV4()
-	if err != nil {
-		return errors.New("error generating cid")
-	}
-
-	return c.VoiceService().Start(recipient, cid.String(), callID, data.PeerInfo, map[string]interface{}{
-		"name": data.Name,
-	})
+	return s.update(ctx, appID, recipient, callID, "started", &data)
 }
 
 func (s service) Accept(ctx context.Context, appID, recipient, callID string, data ProceedData) error {
-	c, ok := s.runner.Get(appID)
-	if !ok {
-		return errors.New("app not configured or started")
-	}
-
-	call, err := s.repo.Get(ctx, appID, recipient, callID)
-	if err != nil {
-		return errors.New("app does not exist : " + err.Error())
-	}
-
-	call.Status = "accepted"
-	call.PeerInfo = data.PeerInfo
-
-	err = s.repo.Update(ctx, call)
-	if err != nil {
-		return errors.New("error updating the call : " + err.Error())
-	}
-
-	cid, err := uuid.NewV4()
-	if err != nil {
-		return errors.New("error generating cid")
-	}
-
-	return c.VoiceService().Accept(recipient, cid.String(), callID, data.PeerInfo, map[string]interface{}{
-		"name": data.Name,
-	})
+	return s.update(ctx, appID, recipient, callID, "accepted", &data)
 }
 
 func (s service) Busy(ctx context.Context, appID, recipient, callID string) error {
-	c, ok := s.runner.Get(appID)
-	if !ok {
-		return errors.New("app not configured or started")
-	}
-
-	call, err := s.repo.Get(ctx, appID, recipient, callID)
-	if err != nil {
-		return errors.New("app does not exist : " + err.Error())
-	}
-
-	call.Status = "busy"
-
-	err = s.repo.Update(ctx, call)
-	if err != nil {
-		return errors.New("error updating the call : " + err.Error())
-	}
-
-	cid, err := uuid.NewV4()
-	if err != nil {
-		return errors.New("error generating cid")
-	}
-
-	return c.VoiceService().Stop(recipient, cid.String(), callID)
+	return s.update(ctx, appID, recipient, callID, "busy", nil)
 }
 
 func (s service) Stop(ctx context.Context, appID, recipient, callID string) error {
+	return s.update(ctx, appID, recipient, callID, "ended", nil)
+}
+
+func (s service) update(ctx context.Context, appID, recipient, callID, status string, data *ProceedData) error {
 	c, ok := s.runner.Get(appID)
 	if !ok {
 		return errors.New("app not configured or started")
@@ -155,22 +89,39 @@ func (s service) Stop(ctx context.Context, appID, recipient, callID string) erro
 
 	call, err := s.repo.Get(ctx, appID, recipient, callID)
 	if err != nil {
+		s.logger.With(ctx).Infof("error retrieving the app %v", err)
 		return errors.New("app does not exist : " + err.Error())
 	}
 
-	call.Status = "ended"
+	call.Status = status
 
 	err = s.repo.Update(ctx, call)
 	if err != nil {
+		s.logger.With(ctx).Infof("error updating the app %v", err)
 		return errors.New("error updating the call : " + err.Error())
 	}
 
 	cid, err := uuid.NewV4()
 	if err != nil {
+		s.logger.With(ctx).Infof("error generating uuid %v", err)
 		return errors.New("error generating cid")
 	}
 
-	return c.VoiceService().Stop(recipient, cid.String(), callID)
+	switch status {
+	case "started":
+		return c.VoiceService().Start(recipient, cid.String(), callID, data.PeerInfo, map[string]interface{}{
+			"name": data.Name,
+		})
+	case "accepted":
+		return c.VoiceService().Accept(recipient, cid.String(), callID, data.PeerInfo, map[string]interface{}{
+			"name": data.Name,
+		})
+	case "busy":
+		return c.VoiceService().Stop(recipient, cid.String(), callID)
+	case "ended":
+		return c.VoiceService().Stop(recipient, cid.String(), callID)
+	}
+	return nil
 }
 
 // Count returns the number of calls.
