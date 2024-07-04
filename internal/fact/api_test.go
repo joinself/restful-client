@@ -53,9 +53,6 @@ func (m mockService) Create(ctx context.Context, appID, selfID string, connectio
 	}
 	return nil
 }
-func (m mockService) Update(ctx context.Context, connID int, id string, input UpdateFactRequest) (Fact, error) {
-	return Fact{}, nil
-}
 func (m mockService) Delete(ctx context.Context, connID int, id string) error {
 	if id == "error" {
 		return errors.New("error!")

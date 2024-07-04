@@ -48,24 +48,6 @@ func TestCreateFactRequest_Validate(t *testing.T) {
 	}
 }
 
-func TestUpdateFactRequest_Validate(t *testing.T) {
-	tests := []struct {
-		name      string
-		model     UpdateFactRequest
-		wantError bool
-	}{
-		{"success", UpdateFactRequest{Body: "test"}, false},
-		{"required", UpdateFactRequest{Body: ""}, true},
-		{"too long", UpdateFactRequest{Body: "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"}, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.model.Validate()
-			assert.Equal(t, tt.wantError, err != nil)
-		})
-	}
-}
-
 func Test_service_CRUD(t *testing.T) {
 	logger, _ := log.NewForTest()
 	runner := mock.NewRunnerMock()
