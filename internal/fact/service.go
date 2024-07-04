@@ -17,7 +17,6 @@ type Service interface {
 	Query(ctx context.Context, conn int, source, fact string, offset, limit int) ([]Fact, error)
 	Count(ctx context.Context, conn int, source, fact string) (int, error)
 	Create(ctx context.Context, appID, selfID string, connection int, input CreateFactRequest) error
-	Update(ctx context.Context, connID int, id string, input UpdateFactRequest) (Fact, error)
 	Delete(ctx context.Context, connID int, id string) error
 }
 
@@ -74,25 +73,9 @@ func (s service) Get(ctx context.Context, connectionID int, id string) (Fact, er
 
 // Create creates a new fact.
 func (s service) Create(ctx context.Context, appID, selfID string, connection int, req CreateFactRequest) error {
-	// Issue the fact and send it to the user
 	s.issueFact(req, appID, selfID)
 
 	return nil
-}
-
-// Update updates the fact with the specified ID.
-func (s service) Update(ctx context.Context, connID int, id string, req UpdateFactRequest) (Fact, error) {
-	fact, err := s.Get(ctx, connID, id)
-	if err != nil {
-		return fact, err
-	}
-	fact.Body = req.Body
-	fact.UpdatedAt = time.Now()
-
-	if err := s.repo.Update(ctx, fact.Fact); err != nil {
-		return fact, err
-	}
-	return fact, nil
 }
 
 // Delete deletes the fact with the specified ID.

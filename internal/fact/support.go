@@ -83,26 +83,6 @@ func (m CreateFactRequest) Validate() *response.Error {
 	return nil
 }
 
-// UpdateFactRequest represents an fact update request.
-type UpdateFactRequest struct {
-	Body string `json:"body"`
-}
-
-// Validate validates the CreateFactRequest fields.
-func (m UpdateFactRequest) Validate() *response.Error {
-	err := validation.ValidateStruct(&m,
-		validation.Field(&m.Body, validation.Required, validation.Length(0, 128)),
-	)
-	if err == nil {
-		return nil
-	}
-	return &response.Error{
-		Status:  http.StatusBadRequest,
-		Error:   "Invalid input",
-		Details: err.Error(),
-	}
-}
-
 func validateIssuedFact(f FactToIssue) error {
 	err := validation.ValidateStruct(&f,
 		validation.Field(&f.Key, validation.Required, validation.Length(3, 128)),
