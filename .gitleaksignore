@@ -21,3 +21,6 @@ dcf54be14a761a8bbb529f014dda366c526c047c:config/local.yml:self-secret-key:3
 53c0065c925661e0f5bce9b027120850cf764564:internal/app/api_test.go:self-secret-key:107
 6ce57e9fd247bb34f6d613c871b0a11895a3b6a5:.github/workflows/test.yml:generic-api-key:20
 fc9f086158639a53b4d49c7dab5164aea3ee1f58:docker-compose.yml:generic-api-key:12
+45a19bb2275585428640240d6b7ecd3c941c8aa0:internal/app/api_test.go:self-secret-key:109
+a22ce57007e203433557b54a6dd34f5e75fe5aad:internal/app/api_test.go:self-secret-key:108
+f525d4b788c1fa7feca16e960a1fef9acbad4491:internal/app/api_test.go:self-secret-key:107
