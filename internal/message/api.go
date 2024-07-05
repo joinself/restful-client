@@ -50,12 +50,15 @@ type resource struct {
 // @Router       /apps/{app_id}/connections/{connection_id}/messages/{id} [get]
 func (r resource) get(c echo.Context) error {
 	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	ctx := c.Request().Context()
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	message, err := r.service.Get(c.Request().Context(), conn.ID, c.Param("id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving message: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
@@ -84,17 +87,20 @@ func (r resource) query(c echo.Context) error {
 	// Get the connection id
 	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	messagesSince, err := strconv.Atoi(c.Request().URL.Query().Get(LastMessage))
 	if err != nil {
+		r.logger.With(ctx).Infof("error getting the since input value, defaulting to 0 : ", err.Error())
 		messagesSince = 0
 	}
 
 	// Get the total of entries.
 	count, err := r.service.Count(ctx, conn.ID, messagesSince)
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving total messages: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
@@ -102,6 +108,7 @@ func (r resource) query(c echo.Context) error {
 	pages := pagination.NewFromRequest(c.Request(), count)
 	messages, err := r.service.Query(ctx, conn.ID, messagesSince, pages.Offset(), pages.Limit())
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving paginated list: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
@@ -125,25 +132,30 @@ func (r resource) query(c echo.Context) error {
 // @Failure       500  {object}  response.Error "Internal server error"
 // @Router        /apps/{app_id}/connections/{connection_id}/messages [post]
 func (r resource) create(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	var input CreateMessageRequest
 	if err := c.Bind(&input); err != nil {
-		r.logger.With(c.Request().Context()).Info(err)
+		r.logger.With(ctx).Warnf("invalid input for creating a message: %s", err.Error())
 		return c.JSON(response.DefaultBadRequestError())
 	}
 
-	if reqErr := input.Validate(); reqErr != nil {
-		return c.JSON(reqErr.Status, reqErr)
+	if err := input.Validate(); err != nil {
+		r.logger.With(ctx).Warnf("error validating input for creating a message: %s", err.Error)
+		return c.JSON(err.Status, err)
 	}
 
 	// Get the connection id
 	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	// Create the message
 	message, err := r.service.Create(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), connection.ID, input)
 	if err != nil {
+		r.logger.With(ctx).Warnf("error creating a message: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
@@ -167,30 +179,34 @@ func (r resource) create(c echo.Context) error {
 // @Failure       500  {object}  response.Error "Internal server error"
 // @Router        /apps/{app_id}/connections/{connection_id}/messages/{id} [put]
 func (r resource) update(c echo.Context) error {
+	ctx := c.Request().Context()
 	var input UpdateMessageRequest
 	if err := c.Bind(&input); err != nil {
-		r.logger.With(c.Request().Context()).Info(err)
+		r.logger.With(ctx).Warnf("invalid input for updating a message: %s", err.Error())
 		return c.JSON(response.DefaultBadRequestError())
 	}
 
-	if reqErr := input.Validate(); reqErr != nil {
-		return c.JSON(reqErr.Status, reqErr)
+	if err := input.Validate(); err != nil {
+		r.logger.With(ctx).Warnf("error validating input for updating a message: %s", err.Error)
+		return c.JSON(err.Status, err)
 	}
 
 	// Get the connection id
-	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	connection, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	message, err := r.service.Update(
-		c.Request().Context(),
+		ctx,
 		c.Param("app_id"),
 		connection.ID,
 		c.Param("connection_id"),
 		c.Param("id"),
 		input)
 	if err != nil {
+		r.logger.With(ctx).Warnf("error updating a message: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
@@ -209,12 +225,15 @@ func (r resource) update(c echo.Context) error {
 // @Failure         404  {object}  response.Error "Resource not found or unauthorized access"
 // @Router          /apps/{app_id}/connections/{connection_id}/messages/{id} [delete]
 func (r resource) delete(c echo.Context) error {
-	conn, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	ctx := c.Request().Context()
+	conn, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
-	err = r.service.Delete(c.Request().Context(), conn.ID, c.Param("id"))
+	err = r.service.Delete(ctx, conn.ID, c.Param("id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error deleting message: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
@@ -236,13 +255,16 @@ func (r resource) delete(c echo.Context) error {
 // @Failure         500  {object}  response.Error "An error occurred while processing your request. Please try again."
 // @Router          /apps/{app_id}/connections/{connection_id}/messages/{id}/read [post]
 func (r resource) read(c echo.Context) error {
-	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	ctx := c.Request().Context()
+	connection, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	r.service.MarkAsRead(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"), connection.ID)
+	r.service.MarkAsRead(ctx, c.Param("app_id"), c.Param("connection_id"), c.Param("id"), connection.ID)
 	if err != nil {
+		r.logger.With(ctx).Warnf("error marking message as read: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
@@ -262,13 +284,16 @@ func (r resource) read(c echo.Context) error {
 // @Failure         500  {object}  response.Error "Internal server error while processing your request"
 // @Router          /apps/{app_id}/connections/{connection_id}/messages/{id}/received [post]
 func (r resource) received(c echo.Context) error {
-	connection, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
+	ctx := c.Request().Context()
+	connection, err := r.cService.Get(ctx, c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	err = r.service.MarkAsReceived(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), c.Param("id"), connection.ID)
+	err = r.service.MarkAsReceived(ctx, c.Param("app_id"), c.Param("connection_id"), c.Param("id"), connection.ID)
 	if err != nil {
+		r.logger.With(ctx).Warnf("error marking message as received: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
