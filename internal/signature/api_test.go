@@ -1,107 +1,14 @@
 package signature
 
 import (
-	"context"
-	"errors"
 	"net/http"
 	"testing"
 
-	"github.com/joinself/restful-client/internal/connection"
-	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/test"
 	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/filter"
 	"github.com/joinself/restful-client/pkg/log"
 )
-
-type mockService struct{}
-
-func (m mockService) Get(ctx context.Context, aID, cID, id string) (ExtSignature, error) {
-	if id == "not_found_id" {
-		return ExtSignature{}, errors.New("not found")
-	}
-
-	return ExtSignature{
-		Description: "body",
-	}, nil
-}
-
-func (m mockService) Query(ctx context.Context, aID, cID string, signaturesSince int, offset, limit int) ([]ExtSignature, error) {
-	if signaturesSince == 98 {
-		return []ExtSignature{}, errors.New("expected error")
-	}
-	return []ExtSignature{}, nil
-}
-func (m mockService) Count(ctx context.Context, aID, cID string, signaturesSince int) (int, error) {
-	if signaturesSince == 99 {
-		return 0, errors.New("expected count error")
-	}
-	return 0, nil
-}
-func (m mockService) Create(ctx context.Context, appID, connectionID string, input CreateSignatureRequest) (ExtSignature, error) {
-	if input.Description == "error" {
-		return ExtSignature{}, errors.New("error!")
-	}
-	return ExtSignature{}, nil
-}
-
-type mockConnectionService struct{}
-
-func (m mockConnectionService) Get(ctx context.Context, appid, selfid string) (connection.Connection, error) {
-	if selfid == "not_found_id" {
-		return connection.Connection{}, errors.New("expected not found")
-	}
-	return connection.Connection{
-		entity.Connection{
-			SelfID: "selfid",
-			AppID:  appid,
-			Name:   "name",
-		},
-	}, nil
-}
-
-func (m mockConnectionService) Query(ctx context.Context, appid string, offset, limit int) ([]connection.Connection, error) {
-	conns := []connection.Connection{}
-	if appid == "query_error" {
-		return []connection.Connection{}, errors.New("expected_error_query")
-	}
-	conns = append(conns, connection.Connection{
-		entity.Connection{
-			SelfID: "selfid",
-			AppID:  appid,
-			Name:   "name",
-		},
-	})
-	return conns, nil
-}
-
-func (m mockConnectionService) Count(ctx context.Context, appid string) (int, error) {
-	if appid == "count_error" {
-		return 0, errors.New("expected_error_count")
-	}
-	return 1, nil
-}
-
-func (m mockConnectionService) Create(ctx context.Context, appid string, input connection.CreateConnectionRequest) (connection.Connection, error) {
-	if input.SelfID == "controlled_error" {
-		return connection.Connection{}, errors.New("controlled error")
-	}
-	return connection.Connection{}, nil
-}
-
-func (m mockConnectionService) Update(ctx context.Context, appid, selfid string, input connection.UpdateConnectionRequest) (connection.Connection, error) {
-	if input.Name == "controlled_error" {
-		return connection.Connection{}, errors.New("controlled error")
-	}
-	return connection.Connection{}, nil
-}
-
-func (m mockConnectionService) Delete(ctx context.Context, appid, selfid string) (connection.Connection, error) {
-	if selfid == "controlled_error" {
-		return connection.Connection{}, errors.New("controlled error")
-	}
-	return connection.Connection{}, nil
-}
 
 func TestGetSignatureAPIEndpointAsPlainWithPermissions(t *testing.T) {
 	logger, _ := log.NewForTest()
@@ -318,6 +225,33 @@ func TestCreateSignatureAPIEndpoint(t *testing.T) {
 			Header:       nil,
 			WantStatus:   http.StatusNotFound,
 			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+		},
+		{
+			Name:         "success-with-objects",
+			Method:       "POST",
+			URL:          "/apps/app_id/connections/conn_id/signatures",
+			Body:         `{"description":"hello","objects":[{"title":"yolo","data_uri":"data:text/plain;charset=utf-8;base64,SGVsbG8gd29ybGQ="}]}`,
+			Header:       nil,
+			WantStatus:   http.StatusOK,
+			WantResponse: ``,
+		},
+		{
+			Name:         "object-title-validation-error",
+			Method:       "POST",
+			URL:          "/apps/app_id/connections/conn_id/signatures",
+			Body:         `{"description":"hello","objects":[{"title":"y","data_uri":"data:text/plain;charset=utf-8;base64,SGVsbG8gd29ybGQ="}]}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"title: the length must be between 3 and 128.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "object-data-uri-validation-error",
+			Method:       "POST",
+			URL:          "/apps/app_id/connections/conn_id/signatures",
+			Body:         `{"description":"hello","objects":[{"title":"yolo","data_uri":"randomtext"}]}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"data_uri: must be in a valid format.", "error":"Invalid input", "status":400}`,
 		},
 	}
 	for _, tc := range tests {

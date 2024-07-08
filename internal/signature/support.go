@@ -3,6 +3,7 @@ package signature
 import (
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -16,6 +17,14 @@ type Object struct {
 	Title   string `json:"title"`
 }
 
+func (o Object) Validate() error {
+	dataURLPattern := `^data:([a-zA-Z0-9!#$&^_-]+/[a-zA-Z0-9!#$&^_-]+)?(;charset=[a-zA-Z0-9!#$&^_-]+)?(;base64)?,.*$`
+	return validation.ValidateStruct(&o,
+		validation.Field(&o.Title, validation.Required, validation.Length(3, 128)),
+		validation.Field(&o.DataURI, validation.Required, validation.Match(regexp.MustCompile(dataURLPattern))),
+	)
+}
+
 type CreateSignatureRequest struct {
 	Description string
 	Objects     []Object
@@ -26,14 +35,26 @@ func (m CreateSignatureRequest) Validate() *response.Error {
 	err := validation.ValidateStruct(&m,
 		validation.Field(&m.Description, validation.Required, validation.Length(0, 128)),
 	)
-	if err == nil {
-		return nil
+	if err != nil {
+		return &response.Error{
+			Status:  http.StatusBadRequest,
+			Error:   "Invalid input",
+			Details: err.Error(),
+		}
 	}
-	return &response.Error{
-		Status:  http.StatusBadRequest,
-		Error:   "Invalid input",
-		Details: err.Error(),
+	if len(m.Objects) > 0 {
+		for _, o := range m.Objects {
+			if err := o.Validate(); err != nil {
+				return &response.Error{
+					Status:  http.StatusBadRequest,
+					Error:   "Invalid input",
+					Details: err.Error(),
+				}
+			}
+		}
 	}
+
+	return nil
 }
 
 type ExtSignature struct {
