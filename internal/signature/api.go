@@ -32,8 +32,8 @@ type resource struct {
 }
 
 // GetSignatures godoc
-// @Summary Retrieves a paginated list of signatures
-// @Description Retrieves a list of signatures based on the provided Application ID and Connection ID, starting from the signature defined in the query parameter 'lastSignature'. The list is paginated.
+// @Summary Retrieves a paginated list of sent document signatures
+// @Description Retrieves a list of document signatures sent based on the provided Application ID and Connection ID, starting from the signature defined in the query parameter 'lastSignature'. The list is paginated.
 // @Tags signatures
 // @Accept json
 // @Produce json
@@ -52,6 +52,7 @@ func (r resource) query(c echo.Context) error {
 	// Get the connection id
 	_, err := r.cService.Get(ctx, aID, cID)
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
@@ -63,6 +64,7 @@ func (r resource) query(c echo.Context) error {
 	// Get the total of entries.
 	count, err := r.service.Count(ctx, aID, cID, signaturesSince)
 	if err != nil {
+		r.logger.With(ctx).Warnf("error total signatures: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
@@ -70,6 +72,7 @@ func (r resource) query(c echo.Context) error {
 	pages := pagination.NewFromRequest(c.Request(), count)
 	messages, err := r.service.Query(ctx, aID, cID, signaturesSince, pages.Offset(), pages.Limit())
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving paginated list: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
@@ -78,8 +81,8 @@ func (r resource) query(c echo.Context) error {
 }
 
 // GetSignature godoc
-// @Summary Retrieve a specific signature's details
-// @Description Retrieves detailed information about a specific signature based on the provided Application ID, Connection ID, and Signature ID.
+// @Summary Retrieve a specific document signature's details
+// @Description Retrieves detailed information about a specific document signature based on the provided Application ID, Connection ID, and Signature ID.
 // @Tags signatures
 // @Accept json
 // @Produce json
@@ -97,14 +100,13 @@ func (r resource) get(c echo.Context) error {
 
 	_, err := r.cService.Get(ctx, aID, cID)
 	if err != nil {
-		println("connection does not exist")
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	signature, err := r.service.Get(ctx, aID, cID, c.Param("id"))
 	if err != nil {
-		println("signature does not exist")
-		println(c.Param("id"))
+		r.logger.With(ctx).Warnf("error retrieving signature: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
@@ -112,8 +114,8 @@ func (r resource) get(c echo.Context) error {
 }
 
 // CreateSignature godoc
-// @Summary Create a new signature request
-// @Description Create a new signature request and send it to the specific connection to initiate the signature process
+// @Summary Create a new document signature request
+// @Description Create a new document signature request and send it to the specific connection to initiate the signature process
 // @Tags signatures
 // @Accept  json
 // @Produce  json
@@ -128,11 +130,11 @@ func (r resource) get(c echo.Context) error {
 // @Failure 500 {object} response.Error "Internal server error. An unexpected error occurred on the server."
 // @Router /apps/{app_id}/connections/{connection_id}/signatures/{id}/setup [post]
 func (r resource) create(c echo.Context) error {
-	// Source
+	ctx := c.Request().Context()
 
 	var input CreateSignatureRequest
 	if err := c.Bind(&input); err != nil {
-		r.logger.With(c.Request().Context()).Info(err)
+		r.logger.With(ctx).Warnf("error processing input: %s", err.Error())
 		return c.JSON(response.DefaultBadRequestError())
 	}
 
@@ -140,14 +142,15 @@ func (r resource) create(c echo.Context) error {
 		return c.JSON(reqErr.Status, reqErr)
 	}
 
-	// Get the connection id
 	_, err := r.cService.Get(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"))
 	if err != nil {
+		r.logger.With(ctx).Warnf("error retrieving connection: %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	signature, err := r.service.Create(c.Request().Context(), c.Param("app_id"), c.Param("connection_id"), input)
 	if err != nil {
+		r.logger.With(ctx).Warnf("error creating signature: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
