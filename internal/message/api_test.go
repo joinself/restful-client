@@ -1,128 +1,14 @@
 package message
 
 import (
-	"context"
-	"errors"
 	"net/http"
 	"testing"
 
-	"github.com/joinself/restful-client/internal/connection"
-	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/test"
 	"github.com/joinself/restful-client/pkg/acl"
 	"github.com/joinself/restful-client/pkg/filter"
 	"github.com/joinself/restful-client/pkg/log"
 )
-
-type mockService struct{}
-
-func (m mockService) Get(ctx context.Context, connectionID int, jti string) (Message, error) {
-	if jti == "not_found_id" {
-		return Message{}, errors.New("not found")
-	}
-
-	return Message{
-		Body:         "body",
-		ConnectionID: "iss",
-		CID:          "cid",
-	}, nil
-}
-
-func (m mockService) Query(ctx context.Context, connection int, messagesSince int, offset, limit int) ([]Message, error) {
-	if messagesSince == 98 {
-		return []Message{}, errors.New("expected error")
-	}
-	return []Message{}, nil
-}
-func (m mockService) Count(ctx context.Context, connectionID, messagesSince int) (int, error) {
-	if messagesSince == 99 {
-		return 0, errors.New("expected count error")
-	}
-	return 0, nil
-}
-func (m mockService) Create(ctx context.Context, appID, connectionID string, connection int, input CreateMessageRequest) (Message, error) {
-	if input.Body == "error" {
-		return Message{}, errors.New("error!")
-	}
-	return Message{}, nil
-}
-func (m mockService) Update(ctx context.Context, appID string, connectionID int, selfID string, jti string, req UpdateMessageRequest) (Message, error) {
-	if req.Body == "error" {
-		return Message{}, errors.New("error!")
-	}
-	return Message{}, nil
-
-}
-func (m mockService) Delete(ctx context.Context, connectionID int, jti string) error {
-	if jti == "error" {
-		return errors.New("error!")
-	}
-	return nil
-}
-func (m mockService) MarkAsRead(ctx context.Context, appID, connection, jti string, connectionID int) error {
-	return nil
-}
-func (m mockService) MarkAsReceived(ctx context.Context, appID, connection, jti string, connectionID int) error {
-	return nil
-}
-
-type mockConnectionService struct{}
-
-func (m mockConnectionService) Get(ctx context.Context, appid, selfid string) (connection.Connection, error) {
-	if selfid == "not_found_id" {
-		return connection.Connection{}, errors.New("expected not found")
-	}
-	return connection.Connection{
-		entity.Connection{
-			SelfID: "selfid",
-			AppID:  appid,
-			Name:   "name",
-		},
-	}, nil
-}
-
-func (m mockConnectionService) Query(ctx context.Context, appid string, offset, limit int) ([]connection.Connection, error) {
-	conns := []connection.Connection{}
-	if appid == "query_error" {
-		return []connection.Connection{}, errors.New("expected_error_query")
-	}
-	conns = append(conns, connection.Connection{
-		entity.Connection{
-			SelfID: "selfid",
-			AppID:  appid,
-			Name:   "name",
-		},
-	})
-	return conns, nil
-}
-
-func (m mockConnectionService) Count(ctx context.Context, appid string) (int, error) {
-	if appid == "count_error" {
-		return 0, errors.New("expected_error_count")
-	}
-	return 1, nil
-}
-
-func (m mockConnectionService) Create(ctx context.Context, appid string, input connection.CreateConnectionRequest) (connection.Connection, error) {
-	if input.SelfID == "controlled_error" {
-		return connection.Connection{}, errors.New("controlled error")
-	}
-	return connection.Connection{}, nil
-}
-
-func (m mockConnectionService) Update(ctx context.Context, appid, selfid string, input connection.UpdateConnectionRequest) (connection.Connection, error) {
-	if input.Name == "controlled_error" {
-		return connection.Connection{}, errors.New("controlled error")
-	}
-	return connection.Connection{}, nil
-}
-
-func (m mockConnectionService) Delete(ctx context.Context, appid, selfid string) (connection.Connection, error) {
-	if selfid == "controlled_error" {
-		return connection.Connection{}, errors.New("controlled error")
-	}
-	return connection.Connection{}, nil
-}
 
 func TestGetMessageAPIEndpointAsPlainWithPermissions(t *testing.T) {
 	logger, _ := log.NewForTest()
@@ -348,6 +234,51 @@ func TestCreateMessageAPIEndpoint(t *testing.T) {
 			Header:       nil,
 			WantStatus:   http.StatusInternalServerError,
 			WantResponse: `There was a problem with your request. *`,
+		},
+		{
+			Name:         "success-with-objects",
+			Method:       "POST",
+			URL:          "/apps/app_id/connections/conn_id/messages",
+			Body:         `{"body":"hello", "options": {"objects": [{"link":"http://lol.com/me.png","mime":"image/png","name":"test", "expires":122344455,"key": "randomkeyhere"}]}}`,
+			Header:       nil,
+			WantStatus:   http.StatusAccepted,
+			WantResponse: ``,
+		},
+		{
+			Name:         "invalid-object-mime",
+			Method:       "POST",
+			URL:          "/apps/app_id/connections/conn_id/messages",
+			Body:         `{"body":"hello", "options": {"objects": [{"link":"http://lol.com/me.png","mime":"osos","name":"test", "expires":122344455,"key": "randomkeyhere"}]}}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"mime: must be in a valid format.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "invalid-object-name",
+			Method:       "POST",
+			URL:          "/apps/app_id/connections/conn_id/messages",
+			Body:         `{"body":"hello", "options": {"objects": [{"link":"http://lol.com/me.png","mime":"image/png","name":"", "expires":122344455,"key": "randomkeyhere"}]}}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"name: cannot be blank.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "invalid-object-link",
+			Method:       "POST",
+			URL:          "/apps/app_id/connections/conn_id/messages",
+			Body:         `{"body":"hello", "options": {"objects": [{"link":"invalid","mime":"image/png","name":"test", "expires":122344455,"key": "randomkeyhere"}]}}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"link: must be a valid URL.", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "invalid-object-key",
+			Method:       "POST",
+			URL:          "/apps/app_id/connections/conn_id/messages",
+			Body:         `{"body":"hello", "options": {"objects": [{"link":"http://lol.com/me.png","mime":"image/png","name":"test","key": ""}]}}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"key: cannot be blank.", "error":"Invalid input", "status":400}`,
 		},
 	}
 	for _, tc := range tests {
