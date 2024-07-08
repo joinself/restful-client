@@ -1650,14 +1650,15 @@ paths:
     post:
       consumes:
       - application/json
-      description: Sends a request request to the specified self user.
+      description: This endpoint allows you to send a fact or authentication request
+        to a specified self user.
       parameters:
-      - description: App id
+      - description: Application ID
         in: path
         name: app_id
         required: true
         type: string
-      - description: query params
+      - description: Request Body
         in: body
         name: request
         required: true
@@ -1667,26 +1668,34 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successful Response
           schema:
             $ref: '#/definitions/request.ExtRequest'
+        "400":
+          description: Invalid Request
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Sends a request request.
+      summary: Send a fact or authentication request
       tags:
-      - requests
+      - Requests
   /apps/{app_id}/requests/{id}:
     get:
       consumes:
       - application/json
-      description: Get request details by request request id.
+      description: Get detailed information about a request using the request ID.
       parameters:
-      - description: App id
+      - description: Application ID
         in: path
         name: app_id
         required: true
         type: string
-      - description: Request request id
+      - description: Request ID
         in: path
         name: id
         required: true
@@ -1695,14 +1704,22 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successful Response
           schema:
             $ref: '#/definitions/request.ExtRequest'
+        "404":
+          description: Request Not Found
+          schema:
+            $ref: '#/definitions/response.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Error'
       security:
       - BearerAuth: []
-      summary: Get request details.
+      summary: Retrieve request details
       tags:
-      - requests
+      - Requests
   /auth/login:
     post:
       consumes:

@@ -25,19 +25,22 @@ type resource struct {
 }
 
 // GetConnection godoc
-// @Summary      Get request details.
-// @Description  Get request details by request request id.
-// @Tags         requests
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        app_id   path      string  true  "App id"
-// @Param        id   path      int  true  "Request request id"
-// @Success      200  {object}  ExtRequest
-// @Router       /apps/{app_id}/requests/{id} [get]
+// @Summary         Retrieve request details
+// @Description     Get detailed information about a request using the request ID.
+// @Tags            Requests
+// @Accept          json
+// @Produce         json
+// @Security        BearerAuth
+// @Param           app_id  path      string  true  "Application ID"
+// @Param           id      path      int     true  "Request ID"
+// @Success         200     {object}  ExtRequest       "Successful Response"
+// @Failure         404     {object}  response.Error    "Request Not Found"
+// @Failure         500     {object}  response.Error    "Internal Server Error"
+// @Router          /apps/{app_id}/requests/{id} [get]
 func (r resource) get(c echo.Context) error {
 	request, err := r.service.Get(c.Request().Context(), c.Param("app_id"), c.Param("id"))
 	if err != nil {
+		r.logger.With(c.Request().Context()).Warnf("error retrieving request : %s", err.Error())
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
@@ -46,25 +49,29 @@ func (r resource) get(c echo.Context) error {
 }
 
 // CreateConnection godoc
-// @Summary         Sends a request request.
-// @Description  	Sends a request request to the specified self user.
-// @Tags            requests
+// @Summary         Send a fact or authentication request
+// @Description     This endpoint allows you to send a fact or authentication request to a specified self user.
+// @Tags            Requests
 // @Accept          json
 // @Produce         json
 // @Security        BearerAuth
-// @Param           app_id   path      string  true  "App id"
-// @Param           request body CreateRequest true "query params"
-// @Success         200  {object}  ExtRequest
+// @Param           app_id   path      string           true  "Application ID"
+// @Param           request  body      CreateRequest    true  "Request Body"
+// @Success         200      {object}  ExtRequest       "Successful Response"
+// @Failure         400      {object}  response.Error    "Invalid Request"
+// @Failure         500      {object}  response.Error    "Internal Server Error"
 // @Router          /apps/{app_id}/requests [post]
 func (r resource) create(c echo.Context) error {
+	ctx := c.Request().Context()
 	var input CreateRequest
 	if err := c.Bind(&input); err != nil {
-		r.logger.With(c.Request().Context()).Info(err)
+		r.logger.With(ctx).Warnf("error invalid input: %s", err.Error())
 		return c.JSON(response.DefaultBadRequestError())
 	}
 
-	if reqErr := input.Validate(); reqErr != nil {
-		return c.JSON(reqErr.Status, reqErr)
+	if err := input.Validate(); err != nil {
+		r.logger.With(ctx).Infof("error invalid input: %s", err.Error)
+		return c.JSON(err.Status, err)
 	}
 
 	// Get the connection id
@@ -79,6 +86,7 @@ func (r resource) create(c echo.Context) error {
 
 	request, err := r.service.Create(c.Request().Context(), c.Param("app_id"), &co, input)
 	if err != nil {
+		r.logger.With(ctx).Warnf("error creating request: %s", err.Error())
 		return c.JSON(response.DefaultInternalError(c, r.logger, err.Error()))
 	}
 
