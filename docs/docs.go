@@ -1748,7 +1748,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Sends a request request to the specified self user.",
+                "description": "This endpoint allows you to send a fact or authentication request to a specified self user.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1756,19 +1756,19 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "requests"
+                    "Requests"
                 ],
-                "summary": "Sends a request request.",
+                "summary": "Send a fact or authentication request",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Application ID",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "query params",
+                        "description": "Request Body",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1779,9 +1779,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successful Response",
                         "schema": {
                             "$ref": "#/definitions/request.ExtRequest"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
@@ -1794,7 +1806,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get request details by request request id.",
+                "description": "Get detailed information about a request using the request ID.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1802,20 +1814,20 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "requests"
+                    "Requests"
                 ],
-                "summary": "Get request details.",
+                "summary": "Retrieve request details",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "App id",
+                        "description": "Application ID",
                         "name": "app_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Request request id",
+                        "description": "Request ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1823,9 +1835,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successful Response",
                         "schema": {
                             "$ref": "#/definitions/request.ExtRequest"
+                        }
+                    },
+                    "404": {
+                        "description": "Request Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Error"
                         }
                     }
                 }
