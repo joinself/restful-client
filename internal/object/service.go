@@ -38,8 +38,7 @@ func (s service) BuildObject(ctx context.Context, appID string, o Object) (*ExtO
 	content, err := base64.RawStdEncoding.DecodeString(b64data)
 	mime := input[strings.IndexByte(input, ':')+1 : strings.Index(input, ";")]
 
-	obj := client.ChatService().NewObject()
-	err = obj.BuildFromData(content, "object", mime)
+	obj, err := client.NewObject(content, "object", mime)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, errors.New("problem building object from data")

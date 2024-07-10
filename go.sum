@@ -94,6 +94,10 @@ github.com/joinself/self-go-sdk v0.0.0-20240530095525-e39642d38019 h1:kIu4CvdWyd
 github.com/joinself/self-go-sdk v0.0.0-20240530095525-e39642d38019/go.mod h1:QW00jZB17HJVeIHzY6/wg9kSCctmZVHgh034lWiJVDE=
 github.com/joinself/self-go-sdk v0.0.0-20240530130859-b8056cf8e922 h1:Jbz5HuiOQO2vJLThL81svTXjRdPxAE8aE3UA4QdzaVM=
 github.com/joinself/self-go-sdk v0.0.0-20240530130859-b8056cf8e922/go.mod h1:QW00jZB17HJVeIHzY6/wg9kSCctmZVHgh034lWiJVDE=
+github.com/joinself/self-go-sdk v0.0.0-20240618133633-14c8264557be h1:DVVZNnLRURrmgII0Fg3sNJ5zfuQkAjtc+xPe/iCU9Pw=
+github.com/joinself/self-go-sdk v0.0.0-20240618133633-14c8264557be/go.mod h1:QW00jZB17HJVeIHzY6/wg9kSCctmZVHgh034lWiJVDE=
+github.com/joinself/self-go-sdk v0.0.0-20240710063345-7ed9a2edf42d h1:ecZVgykUyr7PLQZ+eGJytjtnrPvyjzKDIKJv2GcedPU=
+github.com/joinself/self-go-sdk v0.0.0-20240710063345-7ed9a2edf42d/go.mod h1:QW00jZB17HJVeIHzY6/wg9kSCctmZVHgh034lWiJVDE=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/jtolds/gls v4.20.0+incompatible/go.mod h1:QJZ7F/aHp+rZTRtaJ1ow/lLfFfVYBRgL+9YlvaHOwJU=
