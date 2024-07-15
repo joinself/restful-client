@@ -11,6 +11,7 @@ type SelfClient interface {
 	SelfAppID() string
 	MessagingService() MessagingService
 	ChatService() ChatService
+	FactService() FactService
 	Stop()
 	Get() *selfsdk.Client
 }
@@ -31,6 +32,9 @@ func (s *selfClient) MessagingService() MessagingService {
 func (s *selfClient) ChatService() ChatService {
 	return s.client.ChatService()
 }
+func (s *selfClient) FactService() FactService {
+	return s.client.FactService()
+}
 func (s *selfClient) Stop() {
 	s.client.Close()
 }
@@ -47,6 +51,7 @@ type MessagingService interface {
 }
 
 type ChatService interface{}
+type FactService interface{}
 
 type SelfClientGetter interface {
 	Get(id string) (*selfsdk.Client, bool)

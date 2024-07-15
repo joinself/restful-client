@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
@@ -23,6 +24,7 @@ import (
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/chat"
 	selffact "github.com/joinself/self-go-sdk/fact"
+	selfsdkfact "github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/messaging"
 )
 
@@ -202,16 +204,8 @@ func (s *service) processIssuedFacts(body []byte, payload map[string]interface{}
 }
 
 func (s *service) processFactsQueryResp(body []byte, payload map[string]interface{}) error {
-	var resp struct {
-		*selffact.FactResponse
-		CID string `json:"cid"`
-	}
 	iss := payload["iss"].(string)
-	err := json.Unmarshal(body, &resp)
-	if err != nil {
-		return err
-	}
-	facts := resp.Facts
+	sub := payload["sub"].(string)
 
 	conn, err := s.getOrCreateConnection(iss, "-")
 	if err != nil {
@@ -219,13 +213,34 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 		return err
 	}
 
-	req, err := s.rRepo.GetByID(context.Background(), resp.CID)
+	var fs *selfsdkfact.Service
+	if fcs := s.client.FactService(); fcs != nil {
+		fs = fcs.(*selfsdkfact.Service)
+	}
+	facts, err := fs.FactResponse(iss, sub, body)
+	for _, f := range facts {
+		if f.Fact == selffact.FactDisplayName {
+			values := f.AttestedValues()
+			if len(values) > 0 {
+				conn.Name = values[0]
+				s.cRepo.Update(context.TODO(), conn)
+			}
+		}
+	}
+
+	req, err := s.rRepo.GetByID(context.Background(), payload["cid"].(string))
 	if err != nil {
 		req = entity.Request{
 			ConnectionID: &conn.ID,
 		}
 	} else {
-		req.Status = resp.Status
+		if payload["status"].(string) == "rejected" {
+			req.Status = entity.STATUS_REJECTED
+		} else if len(facts) != 1 && req.Type == "fact" {
+			req.Status = entity.STATUS_REJECTED
+		} else {
+			req.Status = "responded"
+		}
 		req.UpdatedAt = time.Now()
 		err = s.rRepo.Update(context.Background(), req)
 		if err != nil {
@@ -234,6 +249,7 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 		}
 	}
 	createdFacts := s.rService.CreateFactsFromResponse(conn, req, facts)
+
 	// Return the created facts entity URI.
 	for i, _ := range createdFacts {
 		createdFacts[i].URL = createdFacts[i].URI(s.selfID)
@@ -267,6 +283,23 @@ func (s *service) processConnectionResp(payload map[string]interface{}) error {
 	if err != nil {
 		s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
 		return err
+	}
+
+	// request public info
+	var fs *selfsdkfact.Service
+	if fcs := s.client.FactService(); fcs != nil {
+		fs = fcs.(*selfsdkfact.Service)
+	}
+
+	err = fs.RequestAsync(&selfsdkfact.FactRequestAsync{
+		CID:         uuid.New().String(),
+		SelfID:      iss,
+		Description: "info",
+		Facts:       []selfsdkfact.Fact{{Fact: selfsdkfact.FactDisplayName, Sources: []string{selfsdkfact.SourceUserSpecified}}},
+		Expiry:      time.Minute * 5,
+	})
+	if err != nil {
+		s.logger.Warnf("failed to request public info: %v", err)
 	}
 
 	return s.w.Post(webhook.WebhookPayload{

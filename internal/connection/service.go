@@ -134,7 +134,7 @@ func (s service) requestPublicInfo(appid, selfid string) {
 		return
 	}
 
-	resp, err := client.FactService().Request(&fact.FactRequest{
+	err := client.FactService().RequestAsync(&fact.FactRequestAsync{
 		SelfID:      selfid,
 		Description: "info",
 		Facts:       []fact.Fact{{Fact: fact.FactDisplayName, Sources: []string{fact.SourceUserSpecified}}},
@@ -142,29 +142,6 @@ func (s service) requestPublicInfo(appid, selfid string) {
 	})
 	if err != nil {
 		s.logger.Warnf("failed to request public info: %v", err)
-		return
-	}
-
-	if len(resp.Facts) != 1 {
-		s.logger.Warnf("unexpected fact response", err)
-		return
-	}
-
-	connection, err := s.Get(context.Background(), appid, selfid)
-	if err != nil {
-		s.logger.Warnf("unexpected fact response", err)
-		return
-	}
-	values := resp.Facts[0].AttestedValues()
-	if len(values) != 1 {
-		s.logger.Warnf("unexpected fact response", err)
-		return
-	}
-
-	connection.Name = values[0]
-
-	if err := s.repo.Update(context.Background(), connection.Connection); err != nil {
-		s.logger.Warnf("unexpected fact response", err)
 		return
 	}
 }
