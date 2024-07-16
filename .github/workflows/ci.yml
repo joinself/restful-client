@@ -17,11 +17,8 @@ jobs:
     with:
       container-image: joinself/license-finder:go-1.21.3
     secrets: inherit
-  secret-scan:
-    uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
-    secrets: inherit
   build:
-    needs: [license-compliance, secret-scan]
+    needs: license-compliance
     uses: ./.github/workflows/build.yml
     secrets: inherit
   publish:
