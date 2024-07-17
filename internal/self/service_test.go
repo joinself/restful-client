@@ -66,6 +66,8 @@ func TestProcessFactsQueryResp(t *testing.T) {
 	body := []byte(`{"facts":[]}`)
 	payload := map[string]interface{}{
 		"iss": "ISS",
+		"sub": "SUB",
+		"cid": "CID",
 	}
 	var ExportProcessQueryResp = (Service).processFactsQueryResp
 	err := ExportProcessQueryResp(s, body, payload)
@@ -200,6 +202,8 @@ func TestProcessIncomingMessage(t *testing.T) {
 		payload, err := json.Marshal(map[string]interface{}{
 			"typ":    typ,
 			"iss":    "ISS",
+			"cid":    "CID",
+			"sub":    "SUB",
 			"msg":    "MSG",
 			"jti":    "JTI",
 			"aud":    "AUD",

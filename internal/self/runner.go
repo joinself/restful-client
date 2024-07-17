@@ -71,6 +71,7 @@ func NewRunner(config RunnerConfig) Runner {
 		aRepo:      config.AppRepo,
 		metRepo:    config.MetricRepo,
 		vRepo:      config.VoiceRepo,
+		sRepo:      config.SignatureRepo,
 		logger:     config.Logger,
 		rService:   config.RequestService,
 		storageKey: config.StorageKey,
@@ -109,6 +110,7 @@ func (r *runner) Run(app entity.App) error {
 		RequestService: r.rService,
 		MetricRepo:     r.metRepo,
 		VoiceRepo:      r.vRepo,
+		SignRepo:       r.sRepo,
 		SelfClient:     support.NewSelfClient(client),
 		Poster:         webhook.NewWebhook(app.Callback),
 	})
