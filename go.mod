@@ -6,6 +6,7 @@ toolchain go1.21.3
 
 require (
 	github.com/bits-and-blooms/bloom/v3 v3.6.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/go-ozzo/ozzo-dbx v1.5.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.1.0
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -13,7 +14,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/jasonlvhit/gocron v0.0.1
 	github.com/joho/godotenv v1.5.1
-	github.com/joinself/self-go-sdk v0.0.0-20240710063345-7ed9a2edf42d
+	github.com/joinself/self-go-sdk v0.0.0-20240716150319-2384e918fde1
 	github.com/labstack/echo-jwt/v4 v4.1.0
 	github.com/labstack/echo/v4 v4.9.0
 	github.com/lib/pq v1.2.0
@@ -30,7 +31,6 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/beevik/ntp v0.2.0 // indirect
 	github.com/bits-and-blooms/bitset v1.10.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-openapi/jsonpointer v0.20.2 // indirect
 	github.com/go-openapi/jsonreference v0.20.4 // indirect
 	github.com/go-openapi/spec v0.20.13 // indirect

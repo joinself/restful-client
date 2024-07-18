@@ -3,6 +3,7 @@ package support
 import (
 	"github.com/joinself/restful-client/pkg/webhook"
 	selfsdk "github.com/joinself/self-go-sdk"
+	"github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/messaging"
 )
 
@@ -11,6 +12,7 @@ type SelfClient interface {
 	SelfAppID() string
 	MessagingService() MessagingService
 	ChatService() ChatService
+	FactService() FactService
 	Stop()
 	Get() *selfsdk.Client
 }
@@ -31,6 +33,9 @@ func (s *selfClient) MessagingService() MessagingService {
 func (s *selfClient) ChatService() ChatService {
 	return s.client.ChatService()
 }
+func (s *selfClient) FactService() FactService {
+	return s.client.FactService()
+}
 func (s *selfClient) Stop() {
 	s.client.Close()
 }
@@ -47,6 +52,10 @@ type MessagingService interface {
 }
 
 type ChatService interface{}
+type FactService interface {
+	FactResponse(issuer, subject string, response []byte) ([]fact.Fact, error)
+	RequestAsync(req *fact.FactRequestAsync) error
+}
 
 type SelfClientGetter interface {
 	Get(id string) (*selfsdk.Client, bool)

@@ -9,12 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/joinself/restful-client/internal/connection"
 	"github.com/joinself/restful-client/internal/entity"
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/internal/message"
 	"github.com/joinself/restful-client/internal/metric"
 	"github.com/joinself/restful-client/internal/request"
+	"github.com/joinself/restful-client/internal/signature"
 	"github.com/joinself/restful-client/internal/voice"
 	"github.com/joinself/restful-client/pkg/helper"
 	"github.com/joinself/restful-client/pkg/log"
@@ -22,7 +24,9 @@ import (
 	"github.com/joinself/restful-client/pkg/webhook"
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/chat"
+	"github.com/joinself/self-go-sdk/documents"
 	selffact "github.com/joinself/self-go-sdk/fact"
+	selfsdkfact "github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/messaging"
 )
 
@@ -59,6 +63,7 @@ type Config struct {
 	RequestRepo    request.Repository
 	MetricRepo     metric.Repository
 	VoiceRepo      voice.Repository
+	SignRepo       signature.Repository
 	Logger         log.Logger
 	Poster         webhook.Poster
 	RequestService request.Service
@@ -71,6 +76,7 @@ type service struct {
 	rRepo     request.Repository
 	metRepo   metric.Repository
 	voiceRepo voice.Repository
+	signRepo  signature.Repository
 	logger    log.Logger
 	selfID    string
 	w         webhook.Poster
@@ -87,6 +93,7 @@ func NewService(c Config) Service {
 		rRepo:     c.RequestRepo,
 		metRepo:   c.MetricRepo,
 		voiceRepo: c.VoiceRepo,
+		signRepo:  c.SignRepo,
 		logger:    c.Logger,
 		selfID:    c.SelfClient.SelfAppID(),
 		rService:  c.RequestService,
@@ -150,7 +157,6 @@ func (s *service) processIncomingMessage(m *messaging.Message) {
 		s.logger.With(context.Background(), "self").Infof("failed to decode message payload: %s", err.Error())
 		return
 	}
-	println(" ----> " + payload["typ"].(string))
 
 	switch payload["typ"].(string) {
 	case "chat.message":
@@ -184,7 +190,40 @@ func (s *service) processIncomingMessage(m *messaging.Message) {
 	case "chat.voice.busy":
 		_ = s.processChatVoiceBusy(payload)
 
+	case "document.sign.resp":
+		_ = s.processDocumentSignResp(m.Payload, payload)
+
 	}
+}
+
+func (s *service) processDocumentSignResp(body []byte, payload map[string]interface{}) error {
+	appID := s.selfID
+	connection := payload["iss"].(string)
+	sigID := payload["cid"].(string)
+
+	var resp documents.Response
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return err
+	}
+
+	r, err := s.signRepo.Get(context.Background(), appID, connection, sigID)
+	if err != nil {
+		return err
+	}
+
+	if resp.Status == "accepted" {
+		r.Status = entity.SIGNATURE_ACCEPTED_STATUS
+		data, err := json.Marshal(resp.SignedObjects)
+		if err == nil {
+			// TODO: log the error
+			println("TODO: Log this error !!!!")
+			r.Data = data
+		}
+		r.Signature = string(body)
+	} else {
+		r.Status = entity.SIGNATURE_REJECTED_STATUS
+	}
+	return s.signRepo.Update(context.Background(), r)
 }
 
 func (s *service) processIssuedFacts(body []byte, payload map[string]interface{}) error {
@@ -202,16 +241,8 @@ func (s *service) processIssuedFacts(body []byte, payload map[string]interface{}
 }
 
 func (s *service) processFactsQueryResp(body []byte, payload map[string]interface{}) error {
-	var resp struct {
-		*selffact.FactResponse
-		CID string `json:"cid"`
-	}
 	iss := payload["iss"].(string)
-	err := json.Unmarshal(body, &resp)
-	if err != nil {
-		return err
-	}
-	facts := resp.Facts
+	sub := payload["sub"].(string)
 
 	conn, err := s.getOrCreateConnection(iss, "-")
 	if err != nil {
@@ -219,13 +250,34 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 		return err
 	}
 
-	req, err := s.rRepo.GetByID(context.Background(), resp.CID)
+	facts, err := s.client.FactService().FactResponse(iss, sub, body)
+	if err != nil {
+		s.logger.With(context.Background(), "self").Info("error processing incoming facts " + err.Error())
+		return err
+	}
+	for _, f := range facts {
+		if f.Fact == selffact.FactDisplayName {
+			values := f.AttestedValues()
+			if len(values) > 0 {
+				conn.Name = values[0]
+				s.cRepo.Update(context.TODO(), conn)
+			}
+		}
+	}
+
+	req, err := s.rRepo.GetByID(context.Background(), payload["cid"].(string))
 	if err != nil {
 		req = entity.Request{
 			ConnectionID: &conn.ID,
 		}
 	} else {
-		req.Status = resp.Status
+		if payload["status"].(string) == "rejected" {
+			req.Status = entity.STATUS_REJECTED
+		} else if len(facts) != 1 && req.Type == "fact" {
+			req.Status = entity.STATUS_REJECTED
+		} else {
+			req.Status = "responded"
+		}
 		req.UpdatedAt = time.Now()
 		err = s.rRepo.Update(context.Background(), req)
 		if err != nil {
@@ -234,6 +286,7 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 		}
 	}
 	createdFacts := s.rService.CreateFactsFromResponse(conn, req, facts)
+
 	// Return the created facts entity URI.
 	for i, _ := range createdFacts {
 		createdFacts[i].URL = createdFacts[i].URI(s.selfID)
@@ -267,6 +320,18 @@ func (s *service) processConnectionResp(payload map[string]interface{}) error {
 	if err != nil {
 		s.logger.With(context.Background(), "self").Info("error creating connection " + err.Error())
 		return err
+	}
+
+	// request public info
+	err = s.client.FactService().RequestAsync(&selfsdkfact.FactRequestAsync{
+		CID:         uuid.New().String(),
+		SelfID:      iss,
+		Description: "info",
+		Facts:       []selfsdkfact.Fact{{Fact: selfsdkfact.FactDisplayName, Sources: []string{selfsdkfact.SourceUserSpecified}}},
+		Expiry:      time.Minute * 5,
+	})
+	if err != nil {
+		s.logger.Warnf("failed to request public info: %v", err)
 	}
 
 	return s.w.Post(webhook.WebhookPayload{

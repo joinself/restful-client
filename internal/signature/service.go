@@ -3,7 +3,6 @@ package signature
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"strings"
 	"time"
 
@@ -76,8 +75,14 @@ func (s service) Create(ctx context.Context, appID, selfID string, req CreateSig
 	}
 	go func() {
 		// Send the signature to the connection.
-		err := s.requestSignature(appID, selfID, sig, req)
+		err := s.requestSignature(cid, appID, selfID, req)
 		if err != nil {
+			println(".....")
+
+			println("marking as errored")
+			println(err.Error())
+
+			println(".....")
 			s.markAsErrored(appID, selfID, sig.ID)
 			return
 		}
@@ -104,7 +109,7 @@ func (s service) Query(ctx context.Context, aID, cID string, signaturesSince int
 	return result, nil
 }
 
-func (s service) requestSignature(appID, connection string, sig entity.Signature, req CreateSignatureRequest) error {
+func (s service) requestSignature(cid, appID, connection string, req CreateSignatureRequest) error {
 	client, ok := s.runner.Get(appID)
 	if !ok {
 		return nil
@@ -112,7 +117,10 @@ func (s service) requestSignature(appID, connection string, sig entity.Signature
 
 	input := req.Objects[0].DataURI
 	b64data := input[strings.IndexByte(input, ',')+1:]
-	content, err := base64.RawStdEncoding.DecodeString(b64data)
+	content, err := base64.StdEncoding.DecodeString(b64data)
+	if err != nil {
+		return err
+	}
 	mime := input[strings.IndexByte(input, ':')+1 : strings.Index(input, ";")]
 
 	objects := make([]documents.InputObject, 0)
@@ -122,27 +130,7 @@ func (s service) requestSignature(appID, connection string, sig entity.Signature
 		Mime: mime,
 	})
 
-	resp, err := client.DocsService().RequestSignature(connection, "Read and sign this documents", objects)
-	if err != nil {
-		return err
-	}
-	r, err := s.repo.Get(context.Background(), appID, connection, sig.ID)
-	if err != nil {
-		return err
-	}
-
-	if resp.Status == "accepted" {
-		r.Status = entity.SIGNATURE_ACCEPTED_STATUS
-		data, err := json.Marshal(resp.SignedObjects)
-		if err == nil {
-			// TODO: log the error
-			r.Data = data
-		}
-		r.Signature = resp.Signature
-	} else {
-		r.Status = entity.SIGNATURE_REJECTED_STATUS
-	}
-	return s.repo.Update(context.Background(), r)
+	return client.DocsService().RequestSignatureAsync(cid, connection, "Read and sign this documents", objects)
 }
 
 func (s service) markAsErrored(appID, connection, id string) error {

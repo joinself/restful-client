@@ -180,34 +180,17 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 	}
 
 	// Build a valid Self Fact Request from the given entity.
-	r, err := s.buildSelfFactRequest(selfID, req)
+	r, err := s.buildSelfFactRequestAsync(selfID, req)
 	if err != nil {
 		s.logger.Debug("error building Self Fact Request")
 		return
 	}
 
 	// Send the request.
-	resp, err := client.FactService().Request(r)
+	err = client.FactService().RequestAsync(r)
 	if err != nil {
 		s.markRequestAs(req.ID, entity.STATUS_ERRORED)
-	} else if resp.Status == "rejected" {
-		s.markRequestAs(req.ID, entity.STATUS_REJECTED)
-	} else if len(resp.Facts) != 1 && req.Type == "fact" {
-		s.markRequestAs(req.ID, entity.STATUS_REJECTED)
-	} else {
-		// Save the received facts.
-		if req.Type == "fact" || req.Type == "auth" {
-			conn := entity.Connection{
-				ID:     *req.ConnectionID,
-				SelfID: selfID,
-			}
-			s.CreateFactsFromResponse(conn, req, resp.Facts)
-		}
-		s.markRequestAs(req.ID, "responded")
 	}
-
-	// TODO: send the current status to the callback function if exists
-	go s.sendCallback(appid, selfID, req)
 }
 
 func (s service) sendCallback(appID, selfID string, req entity.Request) {
@@ -233,8 +216,8 @@ func (s service) sendCallback(appID, selfID string, req entity.Request) {
 	}
 }
 
-// buildSelfFactRequest builds a fact request from a given entity.Request
-func (s service) buildSelfFactRequest(selfID string, req entity.Request) (*selffact.FactRequest, error) {
+// buildSelfFactRequestAsync builds a fact request from a given entity.Request
+func (s service) buildSelfFactRequestAsync(selfID string, req entity.Request) (*selffact.FactRequestAsync, error) {
 	var incomingFacts []entity.RequestFacts
 	err := json.Unmarshal(req.Facts, &incomingFacts)
 	if err != nil {
@@ -250,7 +233,8 @@ func (s service) buildSelfFactRequest(selfID string, req entity.Request) (*selff
 		}
 	}
 
-	r := &selffact.FactRequest{
+	r := &selffact.FactRequestAsync{
+		CID:         req.ID,
 		SelfID:      selfID,
 		Description: req.Description,
 		Facts:       facts,
