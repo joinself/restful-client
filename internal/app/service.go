@@ -17,6 +17,7 @@ type Service interface {
 	ListByStatus(ctx context.Context, statuses []string) ([]entity.App, error)
 	Get(ctx context.Context, id string) (App, error)
 	Create(ctx context.Context, input CreateAppRequest) (App, error)
+	Update(ctx context.Context, id string, input UpdateAppRequest) (App, error)
 	Delete(ctx context.Context, id string) (App, error)
 }
 
@@ -57,6 +58,11 @@ func (s service) List(ctx context.Context) []entity.App {
 		})
 	}
 
+	// Cleanup secrets
+	for i, _ := range apps {
+		apps[i].CallbackSecret = ""
+	}
+
 	return apps
 }
 
@@ -84,14 +90,15 @@ func (s service) Create(ctx context.Context, req CreateAppRequest) (App, error) 
 
 	now := time.Now()
 	app := entity.App{
-		ID:           req.ID,
-		DeviceSecret: req.Secret,
-		Name:         req.Name,
-		Env:          req.Env,
-		Status:       entity.APP_CREATED_STATUS,
-		Callback:     req.Callback,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ID:             req.ID,
+		DeviceSecret:   req.Secret,
+		Name:           req.Name,
+		Env:            req.Env,
+		Status:         entity.APP_CREATED_STATUS,
+		Callback:       req.Callback,
+		CallbackSecret: req.CallbackSecret,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 	err = s.repo.Create(ctx, app)
 	if err != nil {
@@ -103,6 +110,35 @@ func (s service) Create(ctx context.Context, req CreateAppRequest) (App, error) 
 	s.runner.Run(app)
 
 	return s.Get(ctx, req.ID)
+}
+
+// Update updates an existing app
+func (s service) Update(ctx context.Context, id string, req UpdateAppRequest) (App, error) {
+	existing, err := s.repo.Get(ctx, id)
+	if err != nil {
+		return App{}, err
+	}
+
+	now := time.Now()
+	existing.UpdatedAt = now
+	if len(req.Callback) > 0 {
+		existing.Callback = req.Callback
+	}
+	if len(req.CallbackSecret) > 0 {
+		existing.CallbackSecret = req.CallbackSecret
+	}
+	err = s.repo.Update(ctx, existing)
+	if err != nil {
+		s.logger.With(ctx).Infof("there is a problem updating the app %v", err)
+		return App{}, err
+	}
+	err = s.runner.SetApp(existing)
+	if err != nil {
+		s.logger.With(ctx).Infof("error updating runner app %v", err)
+		return App{}, err
+	}
+
+	return s.Get(ctx, id)
 }
 
 // Delete deletes the app with the specified ID.

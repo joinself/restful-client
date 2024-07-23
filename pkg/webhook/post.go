@@ -2,6 +2,9 @@ package webhook
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -38,43 +41,61 @@ type WebhookPayload struct {
 }
 
 type Poster interface {
-	Post(p WebhookPayload) error
+	Post(url, secret string, p WebhookPayload) error
 }
-type Webhook struct {
-	callbackURL string
+type Webhook struct{}
+
+func NewWebhook() *Webhook {
+	return &Webhook{}
 }
 
-func NewWebhook(url string) *Webhook {
-	return &Webhook{
-		callbackURL: url,
-	}
-}
-
-func (w Webhook) Post(p WebhookPayload) error {
-	return w.post(p)
-}
-
-func (w Webhook) post(m interface{}) error {
+func (w Webhook) Post(url, secret string, p WebhookPayload) error {
 	var postBody []byte
 	var err error
 
 	//Encode the data
-	switch pb := m.(type) {
-	case []byte:
-		postBody = pb
-	default:
-		postBody, err = json.Marshal(m)
-		if err != nil {
-			return fmt.Errorf("error marshalling request: %v", err)
-		}
-	}
-
-	responseBody := bytes.NewBuffer(postBody)
-
-	//Leverage Go's HTTP Post function to make request
-	_, err = http.Post(w.callbackURL, "application/json", responseBody)
+	postBody, err = json.Marshal(p)
 	if err != nil {
-		return fmt.Errorf("error when calling callback webhook %v", err)
+		return fmt.Errorf("error marshalling request: %v", err)
 	}
+
+	w.sendRequest(url, secret, postBody)
+	return nil
+}
+
+// Function to compute HMAC hex digest
+func (w Webhook) computeHMAC256(message, secret string) string {
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(message))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func (w Webhook) sendRequest(callbackURL, secret string, responseBody []byte) error {
+	println(":......")
+	println(string(responseBody))
+	println(":......")
+	// Create a new HTTP request
+	req, err := http.NewRequest("POST", callbackURL, bytes.NewBuffer(responseBody))
+	if err != nil {
+		return fmt.Errorf("error creating request: %v", err)
+	}
+
+	// Set the content header
+	req.Header.Set("Content-Type", "application/json")
+
+	// Set the HMAC hex digest signature header
+	if len(secret) > 0 {
+		signature := w.computeHMAC256(string(responseBody), secret)
+		req.Header.Set("X-Hub-Signature-256", fmt.Sprintf("sha256=%s", signature))
+	}
+
+	// Send the request using an HTTP client
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("error when calling callback webhook: %v", err)
+	}
+	defer resp.Body.Close()
+
 	return nil
 }

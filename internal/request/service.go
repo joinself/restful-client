@@ -3,7 +3,6 @@ package request
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	b64 "encoding/base64"
@@ -14,7 +13,6 @@ import (
 	"github.com/joinself/restful-client/internal/fact"
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/support"
-	"github.com/joinself/restful-client/pkg/webhook"
 	selffact "github.com/joinself/self-go-sdk/fact"
 )
 
@@ -190,29 +188,6 @@ func (s service) sendRequest(req entity.Request, appid, selfID string) {
 	err = client.FactService().RequestAsync(r)
 	if err != nil {
 		s.markRequestAs(req.ID, entity.STATUS_ERRORED)
-	}
-}
-
-func (s service) sendCallback(appID, selfID string, req entity.Request) {
-	resp, err := s.Get(context.Background(), appID, req.ID)
-	if err != nil {
-		s.logger.Info("error getting request: %v", err)
-		return
-	}
-
-	w, ok := s.runner.Poster(appID)
-	if !ok {
-		s.logger.Info("error calling back: %v not setup", appID)
-		return
-	}
-
-	err = w.Post(webhook.WebhookPayload{
-		Type: webhook.TYPE_REQUEST,
-		URI:  fmt.Sprintf("/apps/%s/connections/%s/requests/%s", appID, selfID, req.ID),
-		Data: resp,
-	})
-	if err != nil {
-		s.logger.Info(err)
 	}
 }
 

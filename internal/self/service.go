@@ -36,6 +36,7 @@ type Service interface {
 	Stop()
 	Get() *selfsdk.Client
 	Poster() webhook.Poster
+	SetApp(app entity.App)
 	processFactsQueryResp(body []byte, payload map[string]interface{}) error
 	processChatMessage(payload map[string]interface{}) error
 	processConnectionResp(payload map[string]interface{}) error
@@ -67,6 +68,7 @@ type Config struct {
 	Logger         log.Logger
 	Poster         webhook.Poster
 	RequestService request.Service
+	App            entity.App
 }
 type service struct {
 	client    support.SelfClient
@@ -81,6 +83,7 @@ type service struct {
 	selfID    string
 	w         webhook.Poster
 	rService  request.Service
+	app       entity.App
 }
 
 // NewService creates a new fact service.
@@ -98,6 +101,7 @@ func NewService(c Config) Service {
 		selfID:    c.SelfClient.SelfAppID(),
 		rService:  c.RequestService,
 		w:         c.Poster,
+		app:       c.App,
 	}
 	s.SetupHooks()
 
@@ -139,6 +143,10 @@ func (s *service) Poster() webhook.Poster {
 
 func (s *service) SetupHooks() {
 	s.onMessageHook()
+}
+
+func (s *service) SetApp(app entity.App) {
+	s.app = app
 }
 
 func (s *service) onMessageHook() {
@@ -215,8 +223,7 @@ func (s *service) processDocumentSignResp(body []byte, payload map[string]interf
 		r.Status = entity.SIGNATURE_ACCEPTED_STATUS
 		data, err := json.Marshal(resp.SignedObjects)
 		if err == nil {
-			// TODO: log the error
-			println("TODO: Log this error !!!!")
+			s.logger.With(context.Background()).Info("error marshalling signed objects ", err.Error())
 			r.Data = data
 		}
 		r.Signature = string(body)
@@ -293,7 +300,7 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 	}
 
 	// Callback the client webhook
-	return s.w.Post(webhook.WebhookPayload{
+	return s.post(webhook.WebhookPayload{
 		Type: webhook.TYPE_FACT_RESPONSE,
 		URI:  "",
 		Data: entity.Response{
@@ -334,7 +341,7 @@ func (s *service) processConnectionResp(payload map[string]interface{}) error {
 		s.logger.Warnf("failed to request public info: %v", err)
 	}
 
-	return s.w.Post(webhook.WebhookPayload{
+	return s.post(webhook.WebhookPayload{
 		Type: webhook.TYPE_CONNECTION,
 		URI:  fmt.Sprintf("/apps/%s/connections/%s", s.selfID, conn.SelfID),
 		Data: conn})
@@ -371,7 +378,7 @@ func (s *service) processChatMessage(payload map[string]interface{}) error {
 		return err
 	}
 
-	return s.w.Post(webhook.WebhookPayload{
+	return s.post(webhook.WebhookPayload{
 		Type: webhook.TYPE_MESSAGE,
 		URI:  fmt.Sprintf("/apps/%s/connections/%s/messages/%s", s.selfID, c.SelfID, msg.JTI),
 		Data: msg})
@@ -414,7 +421,7 @@ func (s *service) processChatMessageDelivered(payload map[string]interface{}) er
 }
 
 func (s *service) processChatVoiceSetup(payload map[string]interface{}) error {
-	return s.w.Post(webhook.WebhookPayload{
+	return s.post(webhook.WebhookPayload{
 		Type:    webhook.TYPE_VOICE_SETUP,
 		URI:     "",
 		Payload: payload,
@@ -433,11 +440,11 @@ func (s *service) processChatVoiceStart(payload map[string]interface{}) error {
 	})
 
 	if err != nil {
-		println(err.Error())
+		s.logger.With(context.Background()).Info("error creating voice event ", err.Error())
 		return err
 	}
 
-	return s.w.Post(webhook.WebhookPayload{
+	return s.post(webhook.WebhookPayload{
 		Type:    webhook.TYPE_VOICE_START,
 		URI:     "",
 		Payload: payload,
@@ -459,7 +466,7 @@ func (s *service) processChatVoiceAccept(payload map[string]interface{}) error {
 		return err
 	}
 
-	return s.w.Post(webhook.WebhookPayload{
+	return s.post(webhook.WebhookPayload{
 		Type:    webhook.TYPE_VOICE_ACCEPT,
 		URI:     "",
 		Payload: payload,
@@ -481,7 +488,7 @@ func (s *service) processChatVoiceStop(payload map[string]interface{}) error {
 		return err
 	}
 
-	return s.w.Post(webhook.WebhookPayload{
+	return s.post(webhook.WebhookPayload{
 		Type:    webhook.TYPE_VOICE_STOP,
 		URI:     "",
 		Payload: payload,
@@ -503,7 +510,7 @@ func (s *service) processChatVoiceBusy(payload map[string]interface{}) error {
 		return err
 	}
 
-	return s.w.Post(webhook.WebhookPayload{
+	return s.post(webhook.WebhookPayload{
 		Type:    webhook.TYPE_VOICE_BUSY,
 		URI:     "",
 		Payload: payload,
@@ -536,4 +543,13 @@ func (s *service) createConnection(selfID, name string) (entity.Connection, erro
 	}
 
 	return s.cRepo.Get(context.Background(), s.selfID, selfID)
+}
+
+func (s *service) post(p webhook.WebhookPayload) error {
+	// Callback the client webhook
+	err := s.w.Post(s.app.Callback, s.app.CallbackSecret, p)
+	if err != nil {
+		s.logger.With(context.Background()).Info("error calling back ", err.Error())
+	}
+	return err
 }
