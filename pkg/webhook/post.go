@@ -71,9 +71,6 @@ func (w Webhook) computeHMAC256(message, secret string) string {
 }
 
 func (w Webhook) sendRequest(callbackURL, secret string, responseBody []byte) error {
-	println(":......")
-	println(string(responseBody))
-	println(":......")
 	// Create a new HTTP request
 	req, err := http.NewRequest("POST", callbackURL, bytes.NewBuffer(responseBody))
 	if err != nil {
