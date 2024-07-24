@@ -25,6 +25,9 @@ func (m mockService) ListByStatus(ctx context.Context, statuses []string) ([]ent
 }
 
 func (m mockService) Get(ctx context.Context, id string) (App, error) {
+	if id == erroredUUID {
+		return App{}, errors.New("expected error")
+	}
 	return App{}, nil
 }
 
@@ -44,6 +47,13 @@ func (m mockService) Create(ctx context.Context, input CreateAppRequest) (App, e
 }
 
 func (m mockService) Delete(ctx context.Context, id string) (App, error) {
+	if id == "error" {
+		return App{}, errors.New("expected error")
+	}
+	return App{}, nil
+}
+
+func (m mockService) Update(ctx context.Context, id string, input UpdateAppRequest) (App, error) {
 	if id == "error" {
 		return App{}, errors.New("expected error")
 	}
@@ -243,6 +253,177 @@ func TestDeleteAppAPIEndpointAsPlain(t *testing.T) {
 			Name:         "success",
 			Method:       "DELETE",
 			URL:          "/apps/app",
+			Body:         ``,
+			Header:       nil,
+			WantStatus:   http.StatusNotFound,
+			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+		},
+	}
+	for _, tc := range tests {
+		test.Endpoint(t, router, tc)
+	}
+}
+
+func TestUpdateAppAPIEndpointAsAdmin(t *testing.T) {
+	logger, _ := log.NewForTest()
+	router := test.MockRouter(logger)
+
+	rg := router.Group("/apps")
+	rg.Use(acl.AuthAsAdminMiddleware())
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
+	RegisterHandlers(rg, mockService{}, logger)
+
+	tests := []test.APITestCase{
+		{
+			Name:         "success",
+			Method:       "PUT",
+			URL:          "/apps/app",
+			Body:         `{"callback":"http://localhost","callback_secret":"secret"}`,
+			Header:       nil,
+			WantStatus:   http.StatusOK,
+			WantResponse: ``,
+		},
+		{
+			Name:         "invalid-body",
+			Method:       "PUT",
+			URL:          "/apps/app",
+			Body:         `[}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"The provided body is not valid", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "error updating",
+			Method:       "PUT",
+			URL:          "/apps/error",
+			Body:         `{"callback":"http://localhost","callback_secret":"secret"}`,
+			Header:       nil,
+			WantStatus:   http.StatusNotFound,
+			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+		},
+	}
+	for _, tc := range tests {
+		test.Endpoint(t, router, tc)
+	}
+}
+
+func TestUpdateAppAPIEndpointAsPlain(t *testing.T) {
+	logger, _ := log.NewForTest()
+	router := test.MockRouter(logger)
+
+	rg := router.Group("/apps")
+	rg.Use(acl.AuthAsPlainMiddleware([]string{"PUT /apps/app_id"}))
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
+	RegisterHandlers(rg, mockService{}, logger)
+
+	tests := []test.APITestCase{
+		{
+			Name:         "success",
+			Method:       "PUT",
+			URL:          "/apps/app_id",
+			Body:         `{"callback":"http://localhost","callback_secret":"secret"}`,
+			Header:       nil,
+			WantStatus:   http.StatusOK,
+			WantResponse: ``,
+		},
+		{
+			Name:         "unaccessible-resource",
+			Method:       "PUT",
+			URL:          "/apps/unaccessible",
+			Body:         `{"callback":"http://localhost","callback_secret":"secret"}`,
+			Header:       nil,
+			WantStatus:   http.StatusNotFound,
+			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+		},
+		{
+			Name:         "invalid-body",
+			Method:       "PUT",
+			URL:          "/apps/app_id",
+			Body:         `[}`,
+			Header:       nil,
+			WantStatus:   http.StatusBadRequest,
+			WantResponse: `{"details":"The provided body is not valid", "error":"Invalid input", "status":400}`,
+		},
+		{
+			Name:         "error updating",
+			Method:       "PUT",
+			URL:          "/apps/error",
+			Body:         `{"callback":"http://localhost","callback_secret":"secret"}`,
+			Header:       nil,
+			WantStatus:   http.StatusNotFound,
+			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+		},
+	}
+	for _, tc := range tests {
+		test.Endpoint(t, router, tc)
+	}
+}
+
+func TestGetAppAPIEndpointAsAdmin(t *testing.T) {
+	logger, _ := log.NewForTest()
+	router := test.MockRouter(logger)
+
+	rg := router.Group("/apps")
+	rg.Use(acl.AuthAsAdminMiddleware())
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
+	RegisterHandlers(rg, mockService{}, logger)
+
+	tests := []test.APITestCase{
+		{
+			Name:         "success",
+			Method:       "GET",
+			URL:          "/apps/app",
+			Body:         ``,
+			Header:       nil,
+			WantStatus:   http.StatusOK,
+			WantResponse: ``,
+		},
+		{
+			Name:         "error getting",
+			Method:       "GET",
+			URL:          "/apps/" + erroredUUID,
+			Body:         ``,
+			Header:       nil,
+			WantStatus:   http.StatusNotFound,
+			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+		},
+	}
+	for _, tc := range tests {
+		test.Endpoint(t, router, tc)
+	}
+}
+func TestGetAppAPIEndpointAsPlain(t *testing.T) {
+	logger, _ := log.NewForTest()
+	router := test.MockRouter(logger)
+
+	rg := router.Group("/apps")
+	rg.Use(acl.AuthAsPlainMiddleware([]string{"GET /apps/app_id"}))
+	rg.Use(acl.NewMiddleware(filter.NewChecker()).TokenAndAccessCheckMiddleware)
+	RegisterHandlers(rg, mockService{}, logger)
+
+	tests := []test.APITestCase{
+		{
+			Name:         "success",
+			Method:       "GET",
+			URL:          "/apps/app_id",
+			Body:         `{"callback":"http://localhost","callback_secret":"secret"}`,
+			Header:       nil,
+			WantStatus:   http.StatusOK,
+			WantResponse: ``,
+		},
+		{
+			Name:         "unaccessible-resource",
+			Method:       "GET",
+			URL:          "/apps/unaccessible",
+			Body:         `{"callback":"http://localhost","callback_secret":"secret"}`,
+			Header:       nil,
+			WantStatus:   http.StatusNotFound,
+			WantResponse: `{"status":404,"error":"Not found","details":"The requested resource does not exist, or you don't have permissions to access it"}`,
+		},
+		{
+			Name:         "error getting",
+			Method:       "GET",
+			URL:          "/apps/error",
 			Body:         ``,
 			Header:       nil,
 			WantStatus:   http.StatusNotFound,

@@ -8,7 +8,7 @@ type PosterMock struct {
 	History []webhook.WebhookPayload
 }
 
-func (p *PosterMock) Post(payload webhook.WebhookPayload) error {
+func (p *PosterMock) Post(url, secret string, payload webhook.WebhookPayload) error {
 	p.History = append(p.History, payload)
 	return nil
 }

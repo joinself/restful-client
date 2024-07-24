@@ -38,3 +38,7 @@ func (m RunnerMock) Get(id string) (*selfsdk.Client, bool) {
 func (m RunnerMock) Poster(id string) (webhook.Poster, bool) {
 	return nil, false
 }
+
+func (m RunnerMock) SetApp(app entity.App) error {
+	return nil
+}

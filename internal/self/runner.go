@@ -2,6 +2,7 @@ package self
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/joinself/restful-client/internal/connection"
@@ -20,6 +21,7 @@ import (
 
 type Runner interface {
 	Run(app entity.App) error
+	SetApp(app entity.App) error
 	Stop(id string)
 	StopAll()
 	Get(id string) (*selfsdk.Client, bool)
@@ -27,6 +29,7 @@ type Runner interface {
 }
 
 type appStatusSetter interface {
+	Get(ctx context.Context, appID string) (entity.App, error)
 	SetStatus(ctx context.Context, id, status string) error
 }
 
@@ -112,7 +115,8 @@ func (r *runner) Run(app entity.App) error {
 		VoiceRepo:      r.vRepo,
 		SignRepo:       r.sRepo,
 		SelfClient:     support.NewSelfClient(client),
-		Poster:         webhook.NewWebhook(app.Callback),
+		Poster:         webhook.NewWebhook(),
+		App:            app,
 	})
 	r.logger.Infof("trying to start %s", app.ID)
 	err = r.runners[app.ID].Run()
@@ -129,6 +133,14 @@ func (r *runner) Run(app entity.App) error {
 
 func (r *runner) Stop(id string) {
 	r.runners[id].Stop()
+}
+
+func (r *runner) SetApp(app entity.App) error {
+	if _, ok := r.runners[app.ID]; !ok {
+		return errors.New("runner not found")
+	}
+	r.runners[app.ID].SetApp(app)
+	return nil
 }
 
 // StopAll stops all runners.

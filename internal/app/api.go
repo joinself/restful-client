@@ -16,7 +16,9 @@ func RegisterHandlers(r *echo.Group, s Service, logger log.Logger) {
 
 	r.GET("", res.list)
 	r.POST("", res.create)
-	r.DELETE("/:id", res.delete)
+	r.PUT("/:app_id", res.update)
+	r.DELETE("/:app_id", res.delete)
+	r.GET("/:app_id", res.get)
 }
 
 type resource struct {
@@ -99,10 +101,78 @@ func (r resource) delete(c echo.Context) error {
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
-	if _, err := r.service.Delete(c.Request().Context(), c.Param("id")); err != nil {
+	if _, err := r.service.Delete(c.Request().Context(), c.Param("app_id")); err != nil {
 		r.logger.With(c.Request().Context()).Warnf("err deleting an api key - %v", err)
 		return c.JSON(response.DefaultNotFoundError())
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+// UpdateApp godoc
+// @Summary         Updates an Application
+// @Description     Updates an application with the provided details.
+// @Tags            Applications
+// @Accept          json
+// @Produce         json
+// @Security        BearerAuth
+// @Param           request body UpdateAppRequest true "The details of the new application to be updated."
+// @Success         201  {object}  ExtApp "A successful response returns the details of the newly updated application."
+// @Failure         400 {object} response.Error "Bad Request - The body of the request is not valid or incorrectly formatted."
+// @Failure         404 {object} response.Error "Resource Not Found - The requested resource does not exist, or the authenticated user does not have sufficient permissions to access it."
+// @Failure         500 {object} response.Error "Internal Server Error - An error occurred while processing the request."
+// @Router          /apps [post]
+func (r resource) update(c echo.Context) error {
+	var input UpdateAppRequest
+	if err := c.Bind(&input); err != nil {
+		r.logger.With(c.Request().Context()).Warnf("invalid request: %s", err.Error())
+		return c.JSON(response.DefaultBadRequestError())
+	}
+
+	if err := input.Validate(); err != nil {
+		r.logger.With(c.Request().Context()).Warnf("invalid request: %s", err.Details)
+		return c.JSON(err.Status, err)
+	}
+
+	a, err := r.service.Update(c.Request().Context(), c.Param("app_id"), input)
+	if err != nil {
+		r.logger.With(c.Request().Context()).Warnf("err creating app - %v", err)
+		return c.JSON(response.DefaultNotFoundError())
+	}
+
+	return c.JSON(http.StatusOK, ExtApp{
+		ID:     a.ID,
+		Name:   a.Name,
+		Status: a.Status,
+		Env:    a.Env,
+	})
+}
+
+// GetApp godoc
+// @Summary         Updates an Application
+// @Description     Updates an application with the provided details.
+// @Tags            Applications
+// @Accept          json
+// @Produce         json
+// @Security        BearerAuth
+// @Param           request body UpdateAppRequest true "The details of the new application to be updated."
+// @Success         201  {object}  ExtApp "A successful response returns the details of the newly updated application."
+// @Failure         400 {object} response.Error "Bad Request - The body of the request is not valid or incorrectly formatted."
+// @Failure         404 {object} response.Error "Resource Not Found - The requested resource does not exist, or the authenticated user does not have sufficient permissions to access it."
+// @Failure         500 {object} response.Error "Internal Server Error - An error occurred while processing the request."
+// @Router          /apps [post]
+func (r resource) get(c echo.Context) error {
+	a, err := r.service.Get(c.Request().Context(), c.Param("app_id"))
+	if err != nil {
+		r.logger.With(c.Request().Context()).Warnf("err creating app - %v", err)
+		return c.JSON(response.DefaultNotFoundError())
+	}
+
+	return c.JSON(http.StatusOK, ExtApp{
+		ID:       a.ID,
+		Name:     a.Name,
+		Status:   a.Status,
+		Env:      a.Env,
+		Callback: a.Callback,
+	})
 }
