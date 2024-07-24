@@ -180,7 +180,6 @@ func (s *service) processIncomingMessage(m *messaging.Message) {
 		_ = s.processIssuedFacts(m.Payload, payload)
 
 	case "chat.message.read":
-		// TODO: do something
 		_ = s.processChatMessageRead(payload)
 
 	case "chat.voice.setup":
@@ -222,7 +221,7 @@ func (s *service) processDocumentSignResp(body []byte, payload map[string]interf
 	if resp.Status == "accepted" {
 		r.Status = entity.SIGNATURE_ACCEPTED_STATUS
 		data, err := json.Marshal(resp.SignedObjects)
-		if err == nil {
+		if err != nil {
 			s.logger.With(context.Background()).Info("error marshalling signed objects ", err.Error())
 			r.Data = data
 		}
@@ -230,7 +229,16 @@ func (s *service) processDocumentSignResp(body []byte, payload map[string]interf
 	} else {
 		r.Status = entity.SIGNATURE_REJECTED_STATUS
 	}
-	return s.signRepo.Update(context.Background(), r)
+
+	err = s.signRepo.Update(context.Background(), r)
+	if err != nil {
+		return err
+	}
+
+	return s.post(webhook.WebhookPayload{
+		Type: webhook.TYPE_SIGNATURE,
+		URI:  fmt.Sprintf("/apps/%s/connections/%s/signatures/%s", s.selfID, r.SelfID, r.ID),
+		Data: r})
 }
 
 func (s *service) processIssuedFacts(body []byte, payload map[string]interface{}) error {

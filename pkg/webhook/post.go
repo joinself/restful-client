@@ -25,6 +25,7 @@ const (
 	TYPE_VOICE_STOP   = "voice_stop"
 	TYPE_VOICE_ACCEPT = "voice_accept"
 	TYPE_VOICE_SETUP  = "voice_setup"
+	TYPE_SIGNATURE    = "signature"
 )
 
 // WebhookPayload represents a the payload that will be resent to the
