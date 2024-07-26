@@ -1,10 +1,13 @@
 package support
 
 import (
+	"context"
+
 	"github.com/joinself/restful-client/pkg/webhook"
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/fact"
 	"github.com/joinself/self-go-sdk/messaging"
+	"github.com/maragudk/goqite"
 )
 
 type SelfClient interface {
@@ -60,4 +63,8 @@ type FactService interface {
 type SelfClientGetter interface {
 	Get(id string) (*selfsdk.Client, bool)
 	Poster(id string) (webhook.Poster, bool)
+}
+
+type QueueSender interface {
+	Send(context.Context, goqite.Message) error
 }

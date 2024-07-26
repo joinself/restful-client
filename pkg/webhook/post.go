@@ -60,8 +60,7 @@ func (w Webhook) Post(url, secret string, p WebhookPayload) error {
 		return fmt.Errorf("error marshalling request: %v", err)
 	}
 
-	w.sendRequest(url, secret, postBody)
-	return nil
+	return w.sendRequest(url, secret, postBody)
 }
 
 // Function to compute HMAC hex digest
@@ -95,5 +94,8 @@ func (w Webhook) sendRequest(callbackURL, secret string, responseBody []byte) er
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("callback responded with %d status code", resp.StatusCode)
+	}
 	return nil
 }

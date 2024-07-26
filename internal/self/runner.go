@@ -16,7 +16,9 @@ import (
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/restful-client/pkg/webhook"
+	"github.com/joinself/restful-client/pkg/worker"
 	selfsdk "github.com/joinself/self-go-sdk"
+	"github.com/maragudk/goqite"
 )
 
 type Runner interface {
@@ -47,6 +49,7 @@ type runner struct {
 	rService   request.Service
 	storageKey string
 	storageDir string
+	wp         *worker.CallbackWorkerPool
 }
 
 type RunnerConfig struct {
@@ -62,9 +65,12 @@ type RunnerConfig struct {
 	RequestService request.Service
 	StorageKey     string
 	StorageDir     string
+	Queue          *goqite.Queue
 }
 
 func NewRunner(config RunnerConfig) Runner {
+	wp := worker.NewCallbackWorkerPool(config.Queue, config.Logger, 3)
+	wp.Start()
 	return &runner{
 		runners:    map[string]Service{},
 		cRepo:      config.ConnectionRepo,
@@ -79,6 +85,7 @@ func NewRunner(config RunnerConfig) Runner {
 		rService:   config.RequestService,
 		storageKey: config.StorageKey,
 		storageDir: config.StorageDir,
+		wp:         wp,
 	}
 }
 
@@ -105,18 +112,19 @@ func (r *runner) Run(app entity.App) error {
 	}
 
 	r.runners[app.ID] = NewService(Config{
-		ConnectionRepo: r.cRepo,
-		FactRepo:       r.fRepo,
-		MessageRepo:    r.mRepo,
-		RequestRepo:    r.rRepo,
-		Logger:         r.logger,
-		RequestService: r.rService,
-		MetricRepo:     r.metRepo,
-		VoiceRepo:      r.vRepo,
-		SignRepo:       r.sRepo,
-		SelfClient:     support.NewSelfClient(client),
-		Poster:         webhook.NewWebhook(),
-		App:            app,
+		ConnectionRepo:     r.cRepo,
+		FactRepo:           r.fRepo,
+		MessageRepo:        r.mRepo,
+		RequestRepo:        r.rRepo,
+		Logger:             r.logger,
+		RequestService:     r.rService,
+		MetricRepo:         r.metRepo,
+		VoiceRepo:          r.vRepo,
+		SignRepo:           r.sRepo,
+		SelfClient:         support.NewSelfClient(client),
+		Poster:             webhook.NewWebhook(),
+		App:                app,
+		CallbackWorkerPool: r.wp,
 	})
 	r.logger.Infof("trying to start %s", app.ID)
 	err = r.runners[app.ID].Run()
@@ -133,6 +141,7 @@ func (r *runner) Run(app entity.App) error {
 
 func (r *runner) Stop(id string) {
 	r.runners[id].Stop()
+	r.wp.Stop()
 }
 
 func (r *runner) SetApp(app entity.App) error {

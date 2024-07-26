@@ -6,7 +6,6 @@ toolchain go1.21.3
 
 require (
 	github.com/bits-and-blooms/bloom/v3 v3.6.0
-	github.com/davecgh/go-spew v1.1.1
 	github.com/go-ozzo/ozzo-dbx v1.5.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.1.0
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -18,7 +17,8 @@ require (
 	github.com/labstack/echo-jwt/v4 v4.1.0
 	github.com/labstack/echo/v4 v4.9.0
 	github.com/lib/pq v1.2.0
-	github.com/mattn/go-sqlite3 v1.14.17
+	github.com/maragudk/goqite v0.2.3
+	github.com/mattn/go-sqlite3 v1.14.19
 	github.com/qiangxue/go-env v1.0.0
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggo/echo-swagger v1.3.5
@@ -31,6 +31,7 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/beevik/ntp v0.2.0 // indirect
 	github.com/bits-and-blooms/bitset v1.10.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-openapi/jsonpointer v0.20.2 // indirect
 	github.com/go-openapi/jsonreference v0.20.4 // indirect
 	github.com/go-openapi/spec v0.20.13 // indirect
@@ -49,6 +50,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20191027152451-9434209cb086 // indirect
 	github.com/square/go-jose v2.4.1+incompatible // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a // indirect
 	github.com/tidwall/gjson v1.9.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
