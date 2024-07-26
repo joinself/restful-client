@@ -10,6 +10,7 @@ import (
 	"github.com/joinself/restful-client/pkg/webhook"
 	"github.com/joinself/self-go-sdk/messaging"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type config struct {
@@ -20,6 +21,7 @@ type config struct {
 	sMock  *mock.SelfMock
 	rRepo  *mock.RequestRepositoryMock
 	rsMock *RequestServiceMock
+	cwMock *mock.CallbackWorkerPoolMock
 }
 
 func buildService(c *config) Service {
@@ -45,16 +47,20 @@ func buildService(c *config) Service {
 	if c.rsMock == nil {
 		c.rsMock = &RequestServiceMock{}
 	}
+	if c.cwMock == nil {
+		c.cwMock = &mock.CallbackWorkerPoolMock{}
+	}
 
 	return NewService(Config{
-		SelfClient:     c.sMock,
-		ConnectionRepo: c.cRepo,
-		FactRepo:       c.fRepo,
-		MessageRepo:    c.mRepo,
-		RequestRepo:    c.rRepo,
-		Logger:         logger,
-		Poster:         c.wMock,
-		RequestService: c.rsMock,
+		SelfClient:         c.sMock,
+		ConnectionRepo:     c.cRepo,
+		FactRepo:           c.fRepo,
+		MessageRepo:        c.mRepo,
+		RequestRepo:        c.rRepo,
+		Logger:             logger,
+		Poster:             c.wMock,
+		RequestService:     c.rsMock,
+		CallbackWorkerPool: c.cwMock,
 	})
 
 }
@@ -62,6 +68,10 @@ func buildService(c *config) Service {
 func TestProcessFactsQueryResp(t *testing.T) {
 	c := config{}
 	s := buildService(&c)
+	s.SetApp(entity.App{
+		ID:       "id",
+		Callback: "http://localhost",
+	})
 
 	body := []byte(`{"facts":[]}`)
 	payload := map[string]interface{}{
@@ -71,9 +81,9 @@ func TestProcessFactsQueryResp(t *testing.T) {
 	}
 	var ExportProcessQueryResp = (Service).processFactsQueryResp
 	err := ExportProcessQueryResp(s, body, payload)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	last := c.wMock.History[len(c.wMock.History)-1]
+	last := c.cwMock.History[len(c.cwMock.History)-1]
 	assert.Equal(t, webhook.TYPE_FACT_RESPONSE, last.Type)
 	assert.Equal(t, "", last.URI)
 	resp := last.Data.(entity.Response)
@@ -83,6 +93,10 @@ func TestProcessFactsQueryResp(t *testing.T) {
 func TestProcessChatMessage(t *testing.T) {
 	c := config{}
 	s := buildService(&c)
+	s.SetApp(entity.App{
+		ID:       "id",
+		Callback: "http://localhost",
+	})
 
 	payload := map[string]interface{}{
 		"iss": "ISS",
@@ -93,7 +107,7 @@ func TestProcessChatMessage(t *testing.T) {
 	var ExportProcessChatMessage = (Service).processChatMessage
 	ExportProcessChatMessage(s, payload)
 
-	last := c.wMock.History[len(c.wMock.History)-1]
+	last := c.cwMock.History[len(c.cwMock.History)-1]
 	assert.Equal(t, webhook.TYPE_MESSAGE, last.Type)
 	assert.Equal(t, "/apps/test/connections/ISS/messages/JTI", last.URI)
 	data := last.Data.(entity.Message)
@@ -126,6 +140,10 @@ func TestProcessChatMessage(t *testing.T) {
 func TestProcessConnectionResp(t *testing.T) {
 	c := config{}
 	s := buildService(&c)
+	s.SetApp(entity.App{
+		ID:       "id",
+		Callback: "http://localhost",
+	})
 
 	payload := map[string]interface{}{
 		"iss": "ISS",
@@ -136,7 +154,7 @@ func TestProcessConnectionResp(t *testing.T) {
 	var ExportProcessConnectionResp = (Service).processConnectionResp
 	ExportProcessConnectionResp(s, payload)
 
-	last := c.wMock.History[len(c.wMock.History)-1]
+	last := c.cwMock.History[len(c.cwMock.History)-1]
 	assert.Equal(t, webhook.TYPE_CONNECTION, last.Type)
 	assert.Equal(t, "/apps/test/connections/ISS", last.URI)
 	data := last.Data.(entity.Connection)
@@ -157,6 +175,10 @@ func TestProcessConnectionResp(t *testing.T) {
 func TestProcessConnectionRespWithName(t *testing.T) {
 	c := config{}
 	s := buildService(&c)
+	s.SetApp(entity.App{
+		ID:       "id",
+		Callback: "http://localhost",
+	})
 
 	payload := map[string]interface{}{
 		"iss": "ISS",
@@ -170,7 +192,7 @@ func TestProcessConnectionRespWithName(t *testing.T) {
 	var ExportProcessConnectionResp = (Service).processConnectionResp
 	ExportProcessConnectionResp(s, payload)
 
-	last := c.wMock.History[len(c.wMock.History)-1]
+	last := c.cwMock.History[len(c.cwMock.History)-1]
 	assert.Equal(t, webhook.TYPE_CONNECTION, last.Type)
 	assert.Equal(t, "/apps/test/connections/ISS", last.URI)
 	data := last.Data.(entity.Connection)
@@ -191,6 +213,10 @@ func TestProcessConnectionRespWithName(t *testing.T) {
 func TestProcessIncomingMessage(t *testing.T) {
 	c := config{}
 	s := buildService(&c)
+	s.SetApp(entity.App{
+		ID:       "id",
+		Callback: "http://localhost",
+	})
 
 	tests := map[string]string{
 		"chat.message":                webhook.TYPE_MESSAGE,
@@ -218,7 +244,7 @@ func TestProcessIncomingMessage(t *testing.T) {
 		var ExportProcessIncomingMessage = (Service).processIncomingMessage
 		ExportProcessIncomingMessage(s, &m)
 
-		last := c.wMock.History[len(c.wMock.History)-1]
+		last := c.cwMock.History[len(c.cwMock.History)-1]
 		assert.Equal(t, result, last.Type)
 	}
 

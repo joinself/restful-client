@@ -69,9 +69,7 @@ type RunnerConfig struct {
 }
 
 func NewRunner(config RunnerConfig) Runner {
-	wp := worker.NewCallbackWorkerPool(config.Queue, config.Logger, 3)
-	wp.Start()
-	return &runner{
+	r := runner{
 		runners:    map[string]Service{},
 		cRepo:      config.ConnectionRepo,
 		fRepo:      config.FactRepo,
@@ -85,8 +83,14 @@ func NewRunner(config RunnerConfig) Runner {
 		rService:   config.RequestService,
 		storageKey: config.StorageKey,
 		storageDir: config.StorageDir,
-		wp:         wp,
 	}
+
+	wp := worker.NewCallbackWorkerPool(config.Queue, config.Logger, &r, 3)
+	wp.Start()
+
+	r.wp = wp
+
+	return &r
 }
 
 func (r *runner) Get(id string) (*selfsdk.Client, bool) {
@@ -150,6 +154,13 @@ func (r *runner) SetApp(app entity.App) error {
 	}
 	r.runners[app.ID].SetApp(app)
 	return nil
+}
+
+func (r *runner) SendCallback(appID string, payload webhook.WebhookPayload) error {
+	if _, ok := r.runners[appID]; !ok {
+		return errors.New("runner not found")
+	}
+	return r.runners[appID].SendCallback(payload)
 }
 
 // StopAll stops all runners.

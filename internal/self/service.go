@@ -38,7 +38,7 @@ type Service interface {
 	Get() *selfsdk.Client
 	Poster() webhook.Poster
 	SetApp(app entity.App)
-	Post(webhook.WebhookPayload) error
+	SendCallback(webhook.WebhookPayload) error
 	processFactsQueryResp(body []byte, payload map[string]interface{}) error
 	processChatMessage(payload map[string]interface{}) error
 	processConnectionResp(payload map[string]interface{}) error
@@ -58,6 +58,10 @@ type WebhookPayload struct {
 	Data interface{} `json:"data"`
 }
 
+type Callbacker interface {
+	Send(qm worker.CallbackTask) error
+}
+
 type Config struct {
 	SelfClient         support.SelfClient
 	ConnectionRepo     connection.Repository
@@ -71,7 +75,7 @@ type Config struct {
 	Poster             webhook.Poster
 	RequestService     request.Service
 	App                entity.App
-	CallbackWorkerPool *worker.CallbackWorkerPool
+	CallbackWorkerPool Callbacker
 }
 type service struct {
 	client    support.SelfClient
@@ -87,7 +91,7 @@ type service struct {
 	w         webhook.Poster
 	rService  request.Service
 	app       entity.App
-	wp        *worker.CallbackWorkerPool
+	wp        Callbacker
 }
 
 // NewService creates a new fact service.
@@ -275,6 +279,7 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 		s.logger.With(context.Background(), "self").Info("error processing incoming facts " + err.Error())
 		return err
 	}
+
 	for _, f := range facts {
 		if f.Fact == selffact.FactDisplayName {
 			values := f.AttestedValues()
@@ -559,14 +564,17 @@ func (s *service) createConnection(selfID, name string) (entity.Connection, erro
 }
 
 func (s *service) post(p webhook.WebhookPayload) error {
-	return s.wp.Send(worker.QueuedMessage{
+	// Skip if callback is not configured.
+	if len(s.app.Callback) == 0 {
+		return nil
+	}
+
+	return s.wp.Send(worker.CallbackTask{
 		AppID:          s.selfID,
-		Callback:       s.app.Callback,
-		CallbackSecret: s.app.CallbackSecret,
 		WebhookPayload: p,
 	})
 }
 
-func (s *service) Post(p webhook.WebhookPayload) error {
+func (s *service) SendCallback(p webhook.WebhookPayload) error {
 	return s.w.Post(s.app.Callback, s.app.CallbackSecret, p)
 }
