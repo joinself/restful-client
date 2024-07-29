@@ -14,17 +14,25 @@ const (
 	extendTimeout = 5 * time.Minute
 )
 
+type QueueManager interface {
+	Receive(context.Context) (*goqite.Message, error)
+	Delete(ctx context.Context, id goqite.ID) error
+	Extend(ctx context.Context, id goqite.ID, delay time.Duration) error
+	Send(ctx context.Context, m goqite.Message) error
+}
+
 // Worker represents a single worker
 type CallbackWorker struct {
 	id             int
-	queue          *goqite.Queue
+	queue          QueueManager
 	logger         log.Logger
 	callbackSender CallbackSender
 	quit           chan bool
+	wg             *sync.WaitGroup
 }
 
 // NewCallbackWorker creates a new worker
-func NewCallbackWorker(id int, queue *goqite.Queue, logger log.Logger, callbackSender CallbackSender) CallbackWorker {
+func NewCallbackWorker(id int, queue QueueManager, logger log.Logger, callbackSender CallbackSender) CallbackWorker {
 	return CallbackWorker{
 		id:             id,
 		queue:          queue,
@@ -56,9 +64,7 @@ func (w CallbackWorker) Start(wg *sync.WaitGroup) {
 
 // Stop signals the worker to stop
 func (w CallbackWorker) Stop() {
-	go func() {
-		w.quit <- true
-	}()
+	close(w.quit)
 }
 
 func (w *CallbackWorker) processTask(m *goqite.Message) error {

@@ -16,7 +16,7 @@ type CallbackSender interface {
 
 // CallbackWorkerPool manages the task queue and worker pool
 type CallbackWorkerPool struct {
-	queue          *goqite.Queue
+	queue          QueueManager
 	logger         log.Logger
 	workers        []CallbackWorker
 	wg             sync.WaitGroup
@@ -24,7 +24,7 @@ type CallbackWorkerPool struct {
 }
 
 // NewCallbackWorkerPool creates a new worker pool
-func NewCallbackWorkerPool(queue *goqite.Queue, logger log.Logger, callbackSender CallbackSender, numWorkers int) *CallbackWorkerPool {
+func NewCallbackWorkerPool(queue QueueManager, logger log.Logger, callbackSender CallbackSender, numWorkers int) *CallbackWorkerPool {
 	return &CallbackWorkerPool{
 		queue:          queue,
 		logger:         logger,
