@@ -22,6 +22,7 @@ import (
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/restful-client/pkg/webhook"
+	"github.com/joinself/restful-client/pkg/worker"
 	selfsdk "github.com/joinself/self-go-sdk"
 	"github.com/joinself/self-go-sdk/chat"
 	"github.com/joinself/self-go-sdk/documents"
@@ -37,6 +38,7 @@ type Service interface {
 	Get() *selfsdk.Client
 	Poster() webhook.Poster
 	SetApp(app entity.App)
+	SendCallback(webhook.WebhookPayload) error
 	processFactsQueryResp(body []byte, payload map[string]interface{}) error
 	processChatMessage(payload map[string]interface{}) error
 	processConnectionResp(payload map[string]interface{}) error
@@ -56,19 +58,24 @@ type WebhookPayload struct {
 	Data interface{} `json:"data"`
 }
 
+type Callbacker interface {
+	Send(qm worker.CallbackTask) error
+}
+
 type Config struct {
-	SelfClient     support.SelfClient
-	ConnectionRepo connection.Repository
-	FactRepo       fact.Repository
-	MessageRepo    message.Repository
-	RequestRepo    request.Repository
-	MetricRepo     metric.Repository
-	VoiceRepo      voice.Repository
-	SignRepo       signature.Repository
-	Logger         log.Logger
-	Poster         webhook.Poster
-	RequestService request.Service
-	App            entity.App
+	SelfClient         support.SelfClient
+	ConnectionRepo     connection.Repository
+	FactRepo           fact.Repository
+	MessageRepo        message.Repository
+	RequestRepo        request.Repository
+	MetricRepo         metric.Repository
+	VoiceRepo          voice.Repository
+	SignRepo           signature.Repository
+	Logger             log.Logger
+	Poster             webhook.Poster
+	RequestService     request.Service
+	App                entity.App
+	CallbackWorkerPool Callbacker
 }
 type service struct {
 	client    support.SelfClient
@@ -84,6 +91,7 @@ type service struct {
 	w         webhook.Poster
 	rService  request.Service
 	app       entity.App
+	wp        Callbacker
 }
 
 // NewService creates a new fact service.
@@ -102,6 +110,7 @@ func NewService(c Config) Service {
 		rService:  c.RequestService,
 		w:         c.Poster,
 		app:       c.App,
+		wp:        c.CallbackWorkerPool,
 	}
 	s.SetupHooks()
 
@@ -270,6 +279,7 @@ func (s *service) processFactsQueryResp(body []byte, payload map[string]interfac
 		s.logger.With(context.Background(), "self").Info("error processing incoming facts " + err.Error())
 		return err
 	}
+
 	for _, f := range facts {
 		if f.Fact == selffact.FactDisplayName {
 			values := f.AttestedValues()
@@ -554,10 +564,17 @@ func (s *service) createConnection(selfID, name string) (entity.Connection, erro
 }
 
 func (s *service) post(p webhook.WebhookPayload) error {
-	// Callback the client webhook
-	err := s.w.Post(s.app.Callback, s.app.CallbackSecret, p)
-	if err != nil {
-		s.logger.With(context.Background()).Info("error calling back ", err.Error())
+	// Skip if callback is not configured.
+	if len(s.app.Callback) == 0 {
+		return nil
 	}
-	return err
+
+	return s.wp.Send(worker.CallbackTask{
+		AppID:          s.selfID,
+		WebhookPayload: p,
+	})
+}
+
+func (s *service) SendCallback(p webhook.WebhookPayload) error {
+	return s.w.Post(s.app.Callback, s.app.CallbackSecret, p)
 }

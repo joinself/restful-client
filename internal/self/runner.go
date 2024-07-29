@@ -16,7 +16,9 @@ import (
 	"github.com/joinself/restful-client/pkg/log"
 	"github.com/joinself/restful-client/pkg/support"
 	"github.com/joinself/restful-client/pkg/webhook"
+	"github.com/joinself/restful-client/pkg/worker"
 	selfsdk "github.com/joinself/self-go-sdk"
+	"github.com/maragudk/goqite"
 )
 
 type Runner interface {
@@ -47,6 +49,7 @@ type runner struct {
 	rService   request.Service
 	storageKey string
 	storageDir string
+	wp         *worker.CallbackWorkerPool
 }
 
 type RunnerConfig struct {
@@ -62,10 +65,11 @@ type RunnerConfig struct {
 	RequestService request.Service
 	StorageKey     string
 	StorageDir     string
+	Queue          *goqite.Queue
 }
 
 func NewRunner(config RunnerConfig) Runner {
-	return &runner{
+	r := runner{
 		runners:    map[string]Service{},
 		cRepo:      config.ConnectionRepo,
 		fRepo:      config.FactRepo,
@@ -80,6 +84,13 @@ func NewRunner(config RunnerConfig) Runner {
 		storageKey: config.StorageKey,
 		storageDir: config.StorageDir,
 	}
+
+	wp := worker.NewCallbackWorkerPool(config.Queue, config.Logger, &r, 3)
+	wp.Start()
+
+	r.wp = wp
+
+	return &r
 }
 
 func (r *runner) Get(id string) (*selfsdk.Client, bool) {
@@ -105,18 +116,19 @@ func (r *runner) Run(app entity.App) error {
 	}
 
 	r.runners[app.ID] = NewService(Config{
-		ConnectionRepo: r.cRepo,
-		FactRepo:       r.fRepo,
-		MessageRepo:    r.mRepo,
-		RequestRepo:    r.rRepo,
-		Logger:         r.logger,
-		RequestService: r.rService,
-		MetricRepo:     r.metRepo,
-		VoiceRepo:      r.vRepo,
-		SignRepo:       r.sRepo,
-		SelfClient:     support.NewSelfClient(client),
-		Poster:         webhook.NewWebhook(),
-		App:            app,
+		ConnectionRepo:     r.cRepo,
+		FactRepo:           r.fRepo,
+		MessageRepo:        r.mRepo,
+		RequestRepo:        r.rRepo,
+		Logger:             r.logger,
+		RequestService:     r.rService,
+		MetricRepo:         r.metRepo,
+		VoiceRepo:          r.vRepo,
+		SignRepo:           r.sRepo,
+		SelfClient:         support.NewSelfClient(client),
+		Poster:             webhook.NewWebhook(),
+		App:                app,
+		CallbackWorkerPool: r.wp,
 	})
 	r.logger.Infof("trying to start %s", app.ID)
 	err = r.runners[app.ID].Run()
@@ -133,6 +145,7 @@ func (r *runner) Run(app entity.App) error {
 
 func (r *runner) Stop(id string) {
 	r.runners[id].Stop()
+	r.wp.Stop()
 }
 
 func (r *runner) SetApp(app entity.App) error {
@@ -141,6 +154,13 @@ func (r *runner) SetApp(app entity.App) error {
 	}
 	r.runners[app.ID].SetApp(app)
 	return nil
+}
+
+func (r *runner) SendCallback(appID string, payload webhook.WebhookPayload) error {
+	if _, ok := r.runners[appID]; !ok {
+		return errors.New("runner not found")
+	}
+	return r.runners[appID].SendCallback(payload)
 }
 
 // StopAll stops all runners.
