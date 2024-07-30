@@ -177,6 +177,7 @@ func TestCallbackWorkerPool_Send(t *testing.T) {
 	err := pool.Send(qm)
 	assert.NoError(t, err)
 
+	time.Sleep(1 * time.Second) // Allow some time for workers to start
 	mockQueue.AssertExpectations(t)
 	pool.Stop()
 }
