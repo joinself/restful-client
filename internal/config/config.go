@@ -31,6 +31,7 @@ type SelfAppConfig struct {
 type Config struct {
 	// File Filesystem YAML based configuration.
 	DefaultSelfApp *SelfAppConfig
+
 	// OPTIONAL based configuration
 	// RefreshTokenExpiration JWT refresh expiration in hours.
 	RefreshTokenExpirationInHours int `env:"REFRESH_TOKEN_EXPIRATION"`
@@ -42,7 +43,10 @@ type Config struct {
 	ServerPort int `env:"SERVER_PORT"`
 	// DefaultAppCallbackURL the default callback url for any incoming messages.
 	DefaultAppCallbackURL string `env:"APP_MESSAGE_NOTIFICATION_URL"`
+
 	// REQUIRED ENV based configuration
+	// DSN database data source name
+	DSN string `env:"DSN"`
 	// JWTSigningKey The signing key used to build the jwt tokens shared with the api clients.
 	JWTSigningKey string `env:"JWT_SIGNING_KEY"`
 	// User The default user used on the authentication endpoints.
@@ -71,6 +75,7 @@ func (c Config) Validate() error {
 		validation.Field(&c.Password, validation.Required),
 		validation.Field(&c.StorageDir, validation.Required),
 		validation.Field(&c.StorageKey, validation.Required),
+		validation.Field(&c.DSN, validation.Required),
 		// validation.Field(&c.DefaultAppID, validation.Required), // this is no longer required
 		// validation.Field(&c.DefaultAppEnv, validation.Required), // this is no longer required
 	)
