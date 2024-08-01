@@ -8,12 +8,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
-	"testing"
 	"time"
 
-	dbx "github.com/go-ozzo/ozzo-dbx"
 	"github.com/joinself/restful-client/internal/account"
 	"github.com/joinself/restful-client/internal/apikey"
 	"github.com/joinself/restful-client/internal/app"
@@ -34,6 +31,7 @@ import (
 	"github.com/joinself/restful-client/internal/signature"
 	"github.com/joinself/restful-client/internal/voice"
 	"github.com/joinself/restful-client/pkg/acl"
+	"github.com/joinself/restful-client/pkg/database"
 	"github.com/joinself/restful-client/pkg/dbcontext"
 	"github.com/joinself/restful-client/pkg/filter"
 	"github.com/joinself/restful-client/pkg/log"
@@ -61,25 +59,13 @@ func main() {
 		os.Exit(-1)
 	}
 
-	// connect to the database
-	err = os.MkdirAll(cfg.StorageDir, 0744)
+	// setup database
+	db, err := database.SetupDB(cfg, logger)
 	if err != nil {
-		logger.Error(err)
+		logger.Errorf("error setting up the database: %s", err.Error())
 		os.Exit(-1)
-	}
 
-	dbName := "client.db"
-	if testing.Testing() {
-		dbName = "client-test.db"
 	}
-
-	db, err := dbx.MustOpen("sqlite3", filepath.Join(cfg.StorageDir, dbName))
-	if err != nil {
-		logger.Error(err)
-		os.Exit(-1)
-	}
-	db.QueryLogFunc = logDBQuery(logger)
-	db.ExecLogFunc = logDBExec(logger)
 	defer func() {
 		if err := db.Close(); err != nil {
 			logger.Error(err)
@@ -302,26 +288,4 @@ func buildHandler(logger log.Logger, db *dbcontext.DB, cfg *config.Config, q *go
 	}
 
 	return e
-}
-
-// logDBQuery returns a logging function that can be used to log SQL queries.
-func logDBQuery(logger log.Logger) dbx.QueryLogFunc {
-	return func(ctx context.Context, t time.Duration, sql string, rows *sql.Rows, err error) {
-		if err == nil {
-			logger.With(ctx, "duration", t.Milliseconds(), "sql", sql).Info("DB query successful")
-		} else {
-			logger.With(ctx, "sql", sql).Errorf("DB query error: %v", err)
-		}
-	}
-}
-
-// logDBExec returns a logging function that can be used to log SQL executions.
-func logDBExec(logger log.Logger) dbx.ExecLogFunc {
-	return func(ctx context.Context, t time.Duration, sql string, result sql.Result, err error) {
-		if err == nil {
-			logger.With(ctx, "duration", t.Milliseconds(), "sql", sql).Info("DB execution successful")
-		} else {
-			logger.With(ctx, "sql", sql).Errorf("DB execution error: %v", err)
-		}
-	}
 }
